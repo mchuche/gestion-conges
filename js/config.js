@@ -80,10 +80,16 @@ function setupEventListeners() {
         }
     });
 
-    // Fermer la modal
-    document.querySelector('.close').addEventListener('click', () => {
-        this.closeModal();
-    });
+    // Fermer la modal principale (pas celle de config)
+    const modalCloseBtn = document.querySelector('#modal .close');
+    if (modalCloseBtn) {
+        // Retirer les anciens listeners pour éviter les doublons
+        const newCloseBtn = modalCloseBtn.cloneNode(true);
+        modalCloseBtn.parentNode.replaceChild(newCloseBtn, modalCloseBtn);
+        newCloseBtn.addEventListener('click', () => {
+            this.closeModal();
+        });
+    }
 
     // Fermer la modal en cliquant en dehors
     window.addEventListener('click', (event) => {
