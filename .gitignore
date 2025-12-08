@@ -1,0 +1,11 @@
+# Configuration Supabase (contient les clés API)
+config.js
+
+# Backup files
+*.backup
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+

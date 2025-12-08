@@ -54,16 +54,20 @@ header {
 
 .header-top {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     gap: 20px;
     margin-bottom: 20px;
     position: relative;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 .config-btn {
-    position: absolute;
-    right: 0;
     background: var(--primary-color);
     color: white;
     border: none;
@@ -77,11 +81,34 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .config-btn:hover {
     background: #357abd;
     transform: scale(1.1) rotate(90deg);
+}
+
+.help-btn {
+    background: var(--warning-color);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.help-btn:hover {
+    background: #d68910;
+    transform: scale(1.1);
 }
 
 .view-toggle {
@@ -383,7 +410,7 @@ header h1 {
     background: var(--secondary-color);
 }
 
-.leave-badge.congé-sans-solde {
+.leave-badge.jours-hiver {
     background: #95a5a6;
 }
 
@@ -595,7 +622,7 @@ header h1 {
     background: var(--secondary-color);
 }
 
-.year-leave-badge.congé-sans-solde {
+.year-leave-badge.jours-hiver {
     background: #95a5a6;
 }
 
@@ -670,6 +697,61 @@ header h1 {
     max-width: 700px;
     max-height: 80vh;
     overflow-y: auto;
+}
+
+.help-modal-content {
+    max-width: 800px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.help-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.help-section:last-child {
+    border-bottom: none;
+}
+
+.help-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 12px;
+    font-size: 1.1em;
+}
+
+.help-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.help-list li {
+    margin-bottom: 10px;
+    padding-left: 25px;
+    position: relative;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.help-list li:before {
+    content: "•";
+    color: var(--primary-color);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    font-size: 1.2em;
+}
+
+.help-list li strong {
+    color: var(--primary-color);
+}
+
+.help-actions {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-color);
+    margin-top: 20px;
 }
 
 @keyframes slideDown {
@@ -802,7 +884,7 @@ header h1 {
     border-color: var(--secondary-color);
 }
 
-.leave-btn[data-type="congé-sans-solde"]:hover {
+.leave-btn[data-type="jours-hiver"]:hover {
     background: #95a5a6;
     color: white;
     border-color: #95a5a6;
@@ -1057,6 +1139,59 @@ header h1 {
     transform: translateY(-2px);
 }
 
+/* Section de débogage */
+.debug-section {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 4px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.debug-section .config-hint {
+    color: #856404;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.debug-btn {
+    padding: 12px 20px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.debug-btn:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.delete-account-btn-full {
+    padding: 12px 20px;
+    background: #8b0000;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.delete-account-btn-full:hover {
+    background: #6b0000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+}
+
 /* Responsive Design */
 @media (max-width: 1400px) {
     .year-calendar {
@@ -1161,13 +1296,18 @@ header h1 {
         flex-shrink: 0;
     }
 
+    .header-right {
+        flex-direction: column;
+        gap: 10px;
+    }
+
     .config-btn {
-        position: static;
-        margin-bottom: 10px;
+        margin-bottom: 0;
     }
 
     .header-top {
         flex-direction: column;
+        gap: 15px;
     }
 
     .year-month-header {
@@ -1179,6 +1319,131 @@ header h1 {
         font-size: 0.7em;
         padding: 3px 4px;
     }
+}
+
+/* Authentification */
+.auth-modal-content {
+    max-width: 400px;
+}
+
+.auth-input-group {
+    margin-bottom: 20px;
+}
+
+.auth-input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.auth-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.auth-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.auth-switch {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--text-color);
+}
+
+.auth-switch a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    background: #fee;
+    border: 2px solid #fcc;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 20px;
+    color: #c33;
+    font-size: 0.9em;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-name {
+    font-size: 0.9em;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.logout-btn {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logout-btn:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.delete-account-btn {
+    background: #8b0000;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-account-btn:hover {
+    background: #6b0000;
+    transform: scale(1.1);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    position: relative;
 }
 
 @media (max-width: 480px) {

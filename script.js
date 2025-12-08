@@ -1,18 +1,313 @@
 // Gestionnaire de congés - Application JavaScript
 
+// Initialiser Supabase
+let supabase;
+try {
+    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
+        supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        console.log('Supabase initialisé');
+    } else {
+        console.error('Configuration Supabase manquante. Vérifiez config.js');
+    }
+} catch (e) {
+    console.error('Erreur initialisation Supabase:', e);
+}
+
 class LeaveManager {
     constructor() {
         this.currentDate = new Date();
         this.currentYear = this.currentDate.getFullYear();
-        this.leaves = this.loadLeaves();
-        this.leaveTypesConfig = this.loadLeaveTypesConfig();
-        this.leaveQuotasByYear = this.loadLeaveQuotasByYear();
-        this.selectedCountry = this.loadSelectedCountry();
+        this.user = null;
+        this.leaves = {};
+        this.leaveTypesConfig = [];
+        this.leaveQuotasByYear = {};
+        this.selectedCountry = 'FR';
         this.selectedDate = null;
         this.selectedDates = []; // Pour la sélection multiple
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
         this.viewMode = 'semester'; // 'semester' (vue mensuelle temporairement désactivée)
+        
+        // Initialiser l'authentification
+        this.initAuth();
+    }
+
+    async initAuth() {
+        if (!supabase) {
+            alert('Erreur : Supabase n\'est pas initialisé. Vérifiez config.js');
+            return;
+        }
+
+        // Vérifier si l'utilisateur est déjà connecté
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+            console.error('Erreur lors de la vérification de session:', error);
+        }
+        
+        if (session) {
+            this.user = session.user;
+            await this.loadUserData();
+            this.showMainApp();
+        } else {
+            this.showAuthModal();
+        }
+        
+        // Écouter les changements d'authentification
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                this.user = session.user;
+                await this.loadUserData();
+                this.showMainApp();
+            } else if (event === 'SIGNED_OUT') {
+                this.user = null;
+                this.leaves = {};
+                this.leaveTypesConfig = [];
+                this.leaveQuotasByYear = {};
+                this.selectedCountry = 'FR';
+                this.showAuthModal();
+            }
+        });
+
+        // Event listeners pour l'authentification
+        this.setupAuthListeners();
+    }
+
+    showAuthModal() {
+        const authModal = document.getElementById('authModal');
+        const mainContainer = document.getElementById('mainContainer');
+        if (authModal) {
+            authModal.style.display = 'block';
+            authModal.classList.add('active');
+        }
+        if (mainContainer) mainContainer.style.display = 'none';
+    }
+
+    showMainApp() {
+        const authModal = document.getElementById('authModal');
+        const mainContainer = document.getElementById('mainContainer');
+        if (authModal) {
+            authModal.style.display = 'none';
+            authModal.classList.remove('active');
+        }
+        if (mainContainer) mainContainer.style.display = 'block';
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl && this.user) {
+            userNameEl.textContent = this.user.email || 'Utilisateur';
+        }
         this.init();
+    }
+
+    setupAuthListeners() {
+        // Connexion
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', async () => {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                await this.login(email, password);
+            });
+        }
+
+        // Inscription
+        const signupBtn = document.getElementById('signupBtn');
+        if (signupBtn) {
+            signupBtn.addEventListener('click', async () => {
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const name = document.getElementById('signupName').value;
+                await this.signup(email, password, name);
+            });
+        }
+
+        // Déconnexion
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                await this.logout();
+            });
+        }
+
+        // Suppression de compte
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        if (deleteAccountBtn) {
+            deleteAccountBtn.addEventListener('click', async () => {
+                await this.deleteAccount();
+            });
+        }
+
+        // Basculer entre connexion et inscription
+        const showSignup = document.getElementById('showSignup');
+        const showLogin = document.getElementById('showLogin');
+        if (showSignup) {
+            showSignup.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'block';
+            });
+        }
+        if (showLogin) {
+            showLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+            });
+        }
+
+        // Permettre la connexion avec Enter
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        if (loginEmail && loginPassword) {
+            [loginEmail, loginPassword].forEach(input => {
+                input.addEventListener('keypress', async (e) => {
+                    if (e.key === 'Enter') {
+                        await this.login(loginEmail.value, loginPassword.value);
+                    }
+                });
+            });
+        }
+    }
+
+    async login(email, password) {
+        const errorEl = document.getElementById('authError');
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+            
+            if (error) throw error;
+            
+            if (errorEl) {
+                errorEl.style.display = 'none';
+                errorEl.textContent = '';
+            }
+        } catch (error) {
+            console.error('Erreur de connexion:', error);
+            if (errorEl) {
+                errorEl.textContent = error.message || 'Erreur de connexion';
+                errorEl.style.display = 'block';
+            }
+        }
+    }
+
+    async signup(email, password, name) {
+        const errorEl = document.getElementById('authError');
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        name: name
+                    }
+                }
+            });
+            
+            if (error) throw error;
+            
+            if (errorEl) {
+                errorEl.textContent = 'Inscription réussie ! Vous pouvez maintenant vous connecter.';
+                errorEl.style.display = 'block';
+                errorEl.style.color = 'green';
+                // Basculer vers le formulaire de connexion
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Erreur d\'inscription:', error);
+            if (errorEl) {
+                errorEl.textContent = error.message || 'Erreur d\'inscription';
+                errorEl.style.display = 'block';
+                errorEl.style.color = '';
+            }
+        }
+    }
+
+    async logout() {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Erreur de déconnexion:', error);
+        }
+    }
+
+    async deleteAccount() {
+        if (!this.user || !supabase) {
+            alert('Erreur : Vous devez être connecté pour supprimer votre compte.');
+            return;
+        }
+
+        const confirmMessage = `⚠️ ATTENTION : Cette action est IRRÉVERSIBLE !\n\nÊtes-vous ABSOLUMENT sûr de vouloir supprimer votre compte ?\n\nCette action va :\n- Supprimer tous vos jours de congé\n- Supprimer tous vos types de congés personnalisés\n- Supprimer tous vos quotas\n- Supprimer toutes vos préférences\n- Supprimer votre compte utilisateur\n\nCette action ne peut PAS être annulée !\n\nTapez "SUPPRIMER" pour confirmer :`;
+        
+        const userInput = prompt(confirmMessage);
+        if (userInput !== 'SUPPRIMER') {
+            return;
+        }
+
+        try {
+            // Supprimer toutes les données utilisateur dans Supabase
+            // Les politiques RLS et les contraintes ON DELETE CASCADE s'occuperont de tout
+            
+            // 1. Supprimer tous les congés
+            const { error: leavesError } = await supabase
+                .from('leaves')
+                .delete()
+                .eq('user_id', this.user.id);
+            if (leavesError) throw leavesError;
+
+            // 2. Supprimer tous les types de congés
+            const { error: typesError } = await supabase
+                .from('leave_types')
+                .delete()
+                .eq('user_id', this.user.id);
+            if (typesError) throw typesError;
+
+            // 3. Supprimer tous les quotas
+            const { error: quotasError } = await supabase
+                .from('leave_quotas')
+                .delete()
+                .eq('user_id', this.user.id);
+            if (quotasError) throw quotasError;
+
+            // 4. Supprimer les préférences
+            const { error: prefsError } = await supabase
+                .from('user_preferences')
+                .delete()
+                .eq('user_id', this.user.id);
+            if (prefsError) throw prefsError;
+
+            // 5. Déconnecter l'utilisateur
+            const { error: signOutError } = await supabase.auth.signOut();
+            if (signOutError) throw signOutError;
+
+            alert('✅ Votre compte et toutes vos données ont été supprimés avec succès.\n\nVous allez être redirigé vers la page de connexion.');
+            
+            // Réinitialiser l'état local
+            this.user = null;
+            this.leaves = {};
+            this.leaveTypesConfig = [];
+            this.leaveQuotasByYear = {};
+            this.selectedCountry = 'FR';
+            
+            // Afficher la modale de connexion
+            this.showAuthModal();
+        } catch (e) {
+            console.error('Erreur lors de la suppression du compte:', e);
+            alert('❌ Erreur lors de la suppression du compte. Vérifiez la console pour plus de détails.');
+        }
+    }
+
+    async loadUserData() {
+        if (!this.user) return;
+        
+        try {
+            await Promise.all([
+                this.loadLeaves(),
+                this.loadLeaveTypesConfig(),
+                this.loadLeaveQuotasByYear(),
+                this.loadSelectedCountry()
+            ]);
+        } catch (error) {
+            console.error('Erreur lors du chargement des données utilisateur:', error);
+        }
     }
 
     init() {
@@ -63,27 +358,77 @@ class LeaveManager {
         }
     }
 
-    // Charger les congés depuis le localStorage
-    loadLeaves() {
-        const stored = localStorage.getItem('leaves');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                console.log('Jours de congé chargés:', Object.keys(parsed).length, 'entrées');
-                return parsed;
-            } catch (e) {
-                console.error('Erreur lors du chargement des jours de congé:', e);
-                return {};
-            }
+    // Charger les congés depuis Supabase
+    async loadLeaves() {
+        if (!this.user || !supabase) {
+            this.leaves = {};
+            return;
         }
-        console.log('Aucun jour de congé trouvé dans le localStorage');
-        return {};
+
+        try {
+            const { data, error } = await supabase
+                .from('leaves')
+                .select('*')
+                .eq('user_id', this.user.id);
+
+            if (error) throw error;
+
+            // Convertir les données en format interne
+            this.leaves = {};
+            if (data) {
+                data.forEach(leave => {
+                    this.leaves[leave.date_key] = leave.leave_type_id;
+                });
+            }
+            console.log('Jours de congé chargés:', Object.keys(this.leaves).length, 'entrées');
+        } catch (e) {
+            console.error('Erreur lors du chargement des jours de congé:', e);
+            this.leaves = {};
+        }
     }
 
-    // Sauvegarder les congés dans le localStorage
-    saveLeaves() {
+    // Sauvegarder les congés dans Supabase
+    async saveLeaves() {
+        if (!this.user || !supabase) return;
+
         try {
-            localStorage.setItem('leaves', JSON.stringify(this.leaves));
+            // Récupérer tous les congés existants pour cet utilisateur
+            const { data: existingLeaves } = await supabase
+                .from('leaves')
+                .select('id, date_key')
+                .eq('user_id', this.user.id);
+
+            const existingKeys = new Set(existingLeaves?.map(l => l.date_key) || []);
+            const currentKeys = new Set(Object.keys(this.leaves));
+
+            // Supprimer les congés qui n'existent plus
+            const toDelete = existingLeaves?.filter(l => !currentKeys.has(l.date_key)) || [];
+            if (toDelete.length > 0) {
+                const idsToDelete = toDelete.map(l => l.id);
+                await supabase
+                    .from('leaves')
+                    .delete()
+                    .in('id', idsToDelete);
+            }
+
+            // Insérer ou mettre à jour les congés
+            const leavesToInsert = [];
+            Object.keys(this.leaves).forEach(dateKey => {
+                if (!existingKeys.has(dateKey)) {
+                    leavesToInsert.push({
+                        user_id: this.user.id,
+                        date_key: dateKey,
+                        leave_type_id: this.leaves[dateKey]
+                    });
+                }
+            });
+
+            if (leavesToInsert.length > 0) {
+                await supabase
+                    .from('leaves')
+                    .insert(leavesToInsert);
+            }
+
             console.log('Jours de congé sauvegardés:', Object.keys(this.leaves).length, 'entrées');
             this.updateStats();
             this.updateLeaveQuotas();
@@ -92,18 +437,46 @@ class LeaveManager {
         }
     }
 
-    // Charger la configuration des types de congés
-    loadLeaveTypesConfig() {
-        const stored = localStorage.getItem('leaveTypesConfig');
-        if (stored) {
-            return JSON.parse(stored);
+    // Charger la configuration des types de congés depuis Supabase
+    async loadLeaveTypesConfig() {
+        if (!this.user || !supabase) {
+            // Configuration par défaut si pas d'utilisateur
+            this.leaveTypesConfig = this.getDefaultLeaveTypes();
+            return;
         }
-        // Configuration par défaut
+
+        try {
+            const { data, error } = await supabase
+                .from('leave_types')
+                .select('*')
+                .eq('user_id', this.user.id)
+                .order('created_at');
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                this.leaveTypesConfig = data.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    label: t.label,
+                    color: t.color
+                }));
+            } else {
+                // Si aucun type n'existe, créer les types par défaut
+                this.leaveTypesConfig = this.getDefaultLeaveTypes();
+                await this.saveLeaveTypesConfig();
+            }
+        } catch (e) {
+            console.error('Erreur lors du chargement des types de congés:', e);
+            this.leaveTypesConfig = this.getDefaultLeaveTypes();
+        }
+    }
+
+    getDefaultLeaveTypes() {
         return [
             { id: 'congé-payé', name: 'Congé Payé', label: 'P', color: '#4a90e2' },
             { id: 'rtt', name: 'RTT', label: 'RTT', color: '#50c878' },
-            { id: 'congé-sans-solde', name: 'Congé Sans Solde', label: 'CSS', color: '#95a5a6' },
-            { id: 'permission', name: 'Permission', label: 'Perm', color: '#e67e22' },
+            { id: 'jours-hiver', name: 'Jours Hiver', label: 'JH', color: '#95a5a6' },
             { id: 'maladie', name: 'Maladie', label: 'Maladie', color: '#e74c3c' },
             { id: 'télétravail', name: 'Télétravail', label: 'T', color: '#9b59b6' },
             { id: 'formation', name: 'Formation', label: 'Form', color: '#f39c12' },
@@ -111,38 +484,129 @@ class LeaveManager {
         ];
     }
 
-    // Charger les quotas par année
-    loadLeaveQuotasByYear() {
-        const stored = localStorage.getItem('leaveQuotasByYear');
-        if (stored) {
-            const parsed = JSON.parse(stored);
+    // Charger les quotas par année depuis Supabase
+    async loadLeaveQuotasByYear() {
+        if (!this.user || !supabase) {
+            this.leaveQuotasByYear = {};
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('leave_quotas')
+                .select('*')
+                .eq('user_id', this.user.id);
+
+            if (error) throw error;
+
+            // Convertir les données en format interne
+            this.leaveQuotasByYear = {};
+            if (data) {
+                data.forEach(quota => {
+                    if (!this.leaveQuotasByYear[quota.year]) {
+                        this.leaveQuotasByYear[quota.year] = {};
+                    }
+                    this.leaveQuotasByYear[quota.year][quota.leave_type_id] = quota.quota;
+                });
+            }
+
             // S'assurer que l'année en cours a des quotas par défaut si elle n'existe pas
             const currentYear = new Date().getFullYear();
-            if (!parsed[currentYear]) {
-                parsed[currentYear] = {
+            if (!this.leaveQuotasByYear[currentYear]) {
+                this.leaveQuotasByYear[currentYear] = {
                     'congé-payé': 25,
-                    'rtt': 10
+                    'rtt': 22,
+                    'jours-hiver': 2
                 };
-                localStorage.setItem('leaveQuotasByYear', JSON.stringify(parsed));
+                await this.saveLeaveQuotasByYear();
             }
-            return parsed;
+        } catch (e) {
+            console.error('Erreur lors du chargement des quotas:', e);
+            this.leaveQuotasByYear = {};
         }
-        // Quotas par défaut pour l'année en cours
-        const currentYear = new Date().getFullYear();
-        const defaultQuotas = {
-            [currentYear]: {
-                'congé-payé': 25,
-                'rtt': 10
-            }
-        };
-        // Sauvegarder les quotas par défaut
-        localStorage.setItem('leaveQuotasByYear', JSON.stringify(defaultQuotas));
-        return defaultQuotas;
     }
 
-    // Sauvegarder les quotas par année
-    saveLeaveQuotasByYear() {
-        localStorage.setItem('leaveQuotasByYear', JSON.stringify(this.leaveQuotasByYear));
+    // Sauvegarder les quotas par année dans Supabase
+    async saveLeaveQuotasByYear() {
+        if (!this.user || !supabase) return;
+
+        try {
+            // Récupérer tous les quotas existants
+            const { data: existingQuotas } = await supabase
+                .from('leave_quotas')
+                .select('id, leave_type_id, year')
+                .eq('user_id', this.user.id);
+
+            const existingMap = new Map();
+            existingQuotas?.forEach(q => {
+                const key = `${q.year}-${q.leave_type_id}`;
+                existingMap.set(key, q.id);
+            });
+
+            // Insérer ou mettre à jour les quotas
+            const quotasToInsert = [];
+            const quotasToUpdate = [];
+
+            Object.keys(this.leaveQuotasByYear).forEach(year => {
+                Object.keys(this.leaveQuotasByYear[year]).forEach(leaveTypeId => {
+                    const quota = this.leaveQuotasByYear[year][leaveTypeId];
+                    const key = `${year}-${leaveTypeId}`;
+                    const existingId = existingMap.get(key);
+
+                    if (existingId) {
+                        quotasToUpdate.push({
+                            id: existingId,
+                            quota: quota
+                        });
+                    } else {
+                        quotasToInsert.push({
+                            user_id: this.user.id,
+                            leave_type_id: leaveTypeId,
+                            year: parseInt(year),
+                            quota: quota
+                        });
+                    }
+                });
+            });
+
+            // Supprimer les quotas qui n'existent plus
+            const currentKeys = new Set();
+            Object.keys(this.leaveQuotasByYear).forEach(year => {
+                Object.keys(this.leaveQuotasByYear[year]).forEach(leaveTypeId => {
+                    currentKeys.add(`${year}-${leaveTypeId}`);
+                });
+            });
+
+            const toDelete = existingQuotas?.filter(q => {
+                const key = `${q.year}-${q.leave_type_id}`;
+                return !currentKeys.has(key);
+            }) || [];
+
+            if (toDelete.length > 0) {
+                const idsToDelete = toDelete.map(q => q.id);
+                await supabase
+                    .from('leave_quotas')
+                    .delete()
+                    .in('id', idsToDelete);
+            }
+
+            // Mettre à jour les quotas existants
+            for (const quota of quotasToUpdate) {
+                await supabase
+                    .from('leave_quotas')
+                    .update({ quota: quota.quota, updated_at: new Date().toISOString() })
+                    .eq('id', quota.id);
+            }
+
+            // Insérer les nouveaux quotas
+            if (quotasToInsert.length > 0) {
+                await supabase
+                    .from('leave_quotas')
+                    .insert(quotasToInsert);
+            }
+        } catch (e) {
+            console.error('Erreur lors de la sauvegarde des quotas:', e);
+        }
     }
 
     // Formater un nombre (afficher les décimales seulement si nécessaire)
@@ -175,23 +639,130 @@ class LeaveManager {
         return null;
     }
 
-    // Sauvegarder la configuration des types de congés
-    saveLeaveTypesConfig() {
-        localStorage.setItem('leaveTypesConfig', JSON.stringify(this.leaveTypesConfig));
-        this.renderLeaveTypeButtons();
-        this.updateLeaveQuotas();
+    // Sauvegarder la configuration des types de congés dans Supabase
+    async saveLeaveTypesConfig() {
+        if (!this.user || !supabase) {
+            this.renderLeaveTypeButtons();
+            this.updateLeaveQuotas();
+            return;
+        }
+
+        try {
+            // Récupérer tous les types existants
+            const { data: existingTypes } = await supabase
+                .from('leave_types')
+                .select('id')
+                .eq('user_id', this.user.id);
+
+            const existingIds = new Set(existingTypes?.map(t => t.id) || []);
+            const currentIds = new Set(this.leaveTypesConfig.map(t => t.id));
+
+            // Supprimer les types qui n'existent plus
+            const toDelete = existingTypes?.filter(t => !currentIds.has(t.id)) || [];
+            if (toDelete.length > 0) {
+                const idsToDelete = toDelete.map(t => t.id);
+                await supabase
+                    .from('leave_types')
+                    .delete()
+                    .in('id', idsToDelete);
+            }
+
+            // Insérer ou mettre à jour les types
+            const typesToInsert = [];
+            const typesToUpdate = [];
+
+            this.leaveTypesConfig.forEach(type => {
+                if (existingIds.has(type.id)) {
+                    typesToUpdate.push(type);
+                } else {
+                    typesToInsert.push({
+                        id: type.id,
+                        user_id: this.user.id,
+                        name: type.name,
+                        label: type.label,
+                        color: type.color
+                    });
+                }
+            });
+
+            // Insérer les nouveaux types
+            if (typesToInsert.length > 0) {
+                await supabase
+                    .from('leave_types')
+                    .insert(typesToInsert);
+            }
+
+            // Mettre à jour les types existants
+            for (const type of typesToUpdate) {
+                await supabase
+                    .from('leave_types')
+                    .update({
+                        name: type.name,
+                        label: type.label,
+                        color: type.color
+                    })
+                    .eq('id', type.id)
+                    .eq('user_id', this.user.id);
+            }
+
+            this.renderLeaveTypeButtons();
+            this.updateLeaveQuotas();
+        } catch (e) {
+            console.error('Erreur lors de la sauvegarde des types de congés:', e);
+        }
     }
 
-    // Charger le pays sélectionné
-    loadSelectedCountry() {
-        const stored = localStorage.getItem('selectedCountry');
-        return stored || 'FR'; // Par défaut France
+    // Charger le pays sélectionné depuis Supabase
+    async loadSelectedCountry() {
+        if (!this.user || !supabase) {
+            this.selectedCountry = 'FR';
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('user_preferences')
+                .select('selected_country')
+                .eq('user_id', this.user.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+
+            if (data) {
+                this.selectedCountry = data.selected_country || 'FR';
+            } else {
+                this.selectedCountry = 'FR';
+                await this.saveSelectedCountry();
+            }
+        } catch (e) {
+            console.error('Erreur lors du chargement du pays:', e);
+            this.selectedCountry = 'FR';
+        }
     }
 
-    // Sauvegarder le pays sélectionné
-    saveSelectedCountry() {
-        localStorage.setItem('selectedCountry', this.selectedCountry);
-        this.renderCalendar();
+    // Sauvegarder le pays sélectionné dans Supabase
+    async saveSelectedCountry() {
+        if (!this.user || !supabase) {
+            this.renderCalendar();
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('user_preferences')
+                .upsert({
+                    user_id: this.user.id,
+                    selected_country: this.selectedCountry,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'user_id'
+                });
+
+            if (error) throw error;
+            this.renderCalendar();
+        } catch (e) {
+            console.error('Erreur lors de la sauvegarde du pays:', e);
+        }
     }
 
     // Obtenir les jours fériés pour un pays et une année
@@ -980,7 +1551,7 @@ class LeaveManager {
     }
 
     // Ajouter ou modifier un congé
-    setLeave(date, type) {
+    async setLeave(date, type) {
         // Si plusieurs dates sont sélectionnées, appliquer à toutes
         const datesToProcess = this.selectedDates.length > 1 ? this.selectedDates : [date];
         const period = this.selectedPeriod || 'full';
@@ -1003,13 +1574,13 @@ class LeaveManager {
         // Réinitialiser la sélection multiple
         this.selectedDates = [];
         
-        this.saveLeaves();
+        await this.saveLeaves();
         this.renderCalendar();
         this.closeModal();
     }
 
     // Supprimer un congé
-    removeLeave(date) {
+    async removeLeave(date) {
         // Si plusieurs dates sont sélectionnées, supprimer pour toutes
         const datesToProcess = this.selectedDates.length > 1 ? this.selectedDates : [date];
         const period = this.selectedPeriod || 'full';
@@ -1031,7 +1602,7 @@ class LeaveManager {
         // Réinitialiser la sélection multiple
         this.selectedDates = [];
         
-        this.saveLeaves();
+        await this.saveLeaves();
         this.renderCalendar();
         this.closeModal();
     }
@@ -1063,12 +1634,19 @@ class LeaveManager {
         this.updateLeaveQuotas();
     }
 
+    // Vérifier si un type de congé a un quota valide (> 0)
+    hasValidQuota(typeId, year) {
+        const quota = this.getQuotaForYear(typeId, year);
+        return quota !== null && quota !== undefined && quota > 0;
+    }
+
     // Mettre à jour les statistiques
     updateStats() {
         // Utiliser l'année de la vue actuelle
         const currentYear = this.currentDate.getFullYear();
         
         // Compter les jours (0.5 pour demi-journée, 1 pour journée complète) pour l'année en cours uniquement
+        // Exclure les types sans quota ou avec quota = 0
         let totalDays = 0;
         const processedDates = new Set();
 
@@ -1086,11 +1664,16 @@ class LeaveManager {
                 processedDates.add(baseDateKey);
                 const leaveInfo = this.getLeaveForDate(date);
                 
-                if (leaveInfo.full) {
+                // Ne compter que les jours de types avec quota valide (> 0)
+                if (leaveInfo.full && this.hasValidQuota(leaveInfo.full, currentYear)) {
                     totalDays += 1;
                 } else {
-                    if (leaveInfo.morning) totalDays += 0.5;
-                    if (leaveInfo.afternoon) totalDays += 0.5;
+                    if (leaveInfo.morning && this.hasValidQuota(leaveInfo.morning, currentYear)) {
+                        totalDays += 0.5;
+                    }
+                    if (leaveInfo.afternoon && this.hasValidQuota(leaveInfo.afternoon, currentYear)) {
+                        totalDays += 0.5;
+                    }
                 }
             }
         });
@@ -1102,6 +1685,7 @@ class LeaveManager {
         const processedDatesForQuota = new Set();
         
         // Compter les jours utilisés par type (0.5 pour demi-journée, 1 pour journée complète) pour l'année en cours
+        // Exclure les types sans quota ou avec quota = 0
         const usedDays = {};
 
         Object.keys(this.leaves).forEach(dateKey => {
@@ -1117,13 +1701,14 @@ class LeaveManager {
                 processedDatesForQuota.add(baseDateKey);
                 const leaveInfo = this.getLeaveForDate(date);
                 
-                if (leaveInfo.full) {
+                // Ne compter que les jours de types avec quota valide (> 0)
+                if (leaveInfo.full && this.hasValidQuota(leaveInfo.full, currentYear)) {
                     usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1;
                 } else {
-                    if (leaveInfo.morning) {
+                    if (leaveInfo.morning && this.hasValidQuota(leaveInfo.morning, currentYear)) {
                         usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5;
                     }
-                    if (leaveInfo.afternoon) {
+                    if (leaveInfo.afternoon && this.hasValidQuota(leaveInfo.afternoon, currentYear)) {
                         usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5;
                     }
                 }
@@ -1161,6 +1746,7 @@ class LeaveManager {
         const currentYear = this.currentDate.getFullYear();
 
         // Compter les jours utilisés par type (0.5 pour demi-journée, 1 pour journée complète) pour l'année en cours uniquement
+        // Exclure les types sans quota ou avec quota = 0
         const usedDays = {};
         const processedDates = new Set();
 
@@ -1177,13 +1763,14 @@ class LeaveManager {
                 processedDates.add(baseDateKey);
                 const leaveInfo = this.getLeaveForDate(date);
                 
-                if (leaveInfo.full) {
+                // Ne compter que les jours de types avec quota valide (> 0)
+                if (leaveInfo.full && this.hasValidQuota(leaveInfo.full, currentYear)) {
                     usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1;
                 } else {
-                    if (leaveInfo.morning) {
+                    if (leaveInfo.morning && this.hasValidQuota(leaveInfo.morning, currentYear)) {
                         usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5;
                     }
-                    if (leaveInfo.afternoon) {
+                    if (leaveInfo.afternoon && this.hasValidQuota(leaveInfo.afternoon, currentYear)) {
                         usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5;
                     }
                 }
@@ -1191,9 +1778,10 @@ class LeaveManager {
         });
 
         // Créer les cartes de quota (pour l'année en cours)
+        // Exclure les types sans quota ou avec quota = 0
         this.leaveTypesConfig.forEach(typeConfig => {
             const quota = this.getQuotaForYear(typeConfig.id, currentYear);
-            if (quota !== null && quota !== undefined) {
+            if (quota !== null && quota !== undefined && quota > 0) {
                 const used = usedDays[typeConfig.id] || 0;
                 const remaining = quota - used;
                 const percentage = quota > 0 ? (used / quota) * 100 : 0;
@@ -1283,16 +1871,16 @@ class LeaveManager {
         });
 
         // Boutons de type de congé (déléguation d'événement pour les boutons dynamiques)
-        document.getElementById('leaveTypes').addEventListener('click', (e) => {
+        document.getElementById('leaveTypes').addEventListener('click', async (e) => {
             if (e.target.classList.contains('leave-btn') && this.selectedDate) {
-                this.setLeave(this.selectedDate, e.target.dataset.type);
+                await this.setLeave(this.selectedDate, e.target.dataset.type);
             }
         });
 
         // Bouton supprimer
-        document.getElementById('removeLeave').addEventListener('click', () => {
+        document.getElementById('removeLeave').addEventListener('click', async () => {
             if (this.selectedDate) {
-                this.removeLeave(this.selectedDate);
+                await this.removeLeave(this.selectedDate);
             }
         });
 
@@ -1311,6 +1899,10 @@ class LeaveManager {
             if (event.target === configModal) {
                 this.closeConfigModal();
             }
+            const helpModal = document.getElementById('helpModal');
+            if (event.target === helpModal) {
+                this.closeHelpModal();
+            }
         });
 
         // Navigation au clavier
@@ -1318,8 +1910,31 @@ class LeaveManager {
             if (event.key === 'Escape') {
                 this.closeModal();
                 this.closeConfigModal();
+                this.closeHelpModal();
             }
         });
+
+        // Aide
+        const helpBtn = document.getElementById('helpBtn');
+        if (helpBtn) {
+            helpBtn.addEventListener('click', () => {
+                this.openHelpModal();
+            });
+        }
+
+        const closeHelpBtn = document.getElementById('closeHelpBtn');
+        if (closeHelpBtn) {
+            closeHelpBtn.addEventListener('click', () => {
+                this.closeHelpModal();
+            });
+        }
+
+        const helpClose = document.querySelector('.help-close');
+        if (helpClose) {
+            helpClose.addEventListener('click', () => {
+                this.closeHelpModal();
+            });
+        }
 
         // Configuration
         const configBtn = document.getElementById('configBtn');
@@ -1336,8 +1951,8 @@ class LeaveManager {
             this.closeConfigModal();
         });
 
-        document.getElementById('saveConfigBtn').addEventListener('click', () => {
-            this.saveConfig();
+        document.getElementById('saveConfigBtn').addEventListener('click', async () => {
+            await this.saveConfig();
         });
 
         document.getElementById('cancelConfigBtn').addEventListener('click', () => {
@@ -1347,6 +1962,28 @@ class LeaveManager {
         document.getElementById('addLeaveTypeBtn').addEventListener('click', () => {
             this.addLeaveType();
         });
+
+        document.getElementById('resetLeavesBtn').addEventListener('click', async () => {
+            await this.resetAllLeaves();
+        });
+    }
+
+    // Ouvrir la modale d'aide
+    openHelpModal() {
+        const modal = document.getElementById('helpModal');
+        if (modal) {
+            modal.style.display = 'block';
+            modal.classList.add('active');
+        }
+    }
+
+    // Fermer la modale d'aide
+    closeHelpModal() {
+        const modal = document.getElementById('helpModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+        }
     }
 
     // Ouvrir la modale de configuration
@@ -1425,7 +2062,7 @@ class LeaveManager {
 
         // Ajouter les événements
         container.querySelectorAll('.delete-type-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const index = parseInt(e.target.dataset.index);
                 const typeToDelete = this.leaveTypesConfig[index];
                 
@@ -1443,7 +2080,7 @@ class LeaveManager {
                 if (confirm(confirmMessage)) {
                     // Supprimer les congés de ce type
                     if (isUsed) {
-                        this.removeLeavesOfType(typeToDelete.id);
+                        await this.removeLeavesOfType(typeToDelete.id);
                     }
                     
                     // Supprimer le type de la configuration
@@ -1496,7 +2133,7 @@ class LeaveManager {
     }
 
     // Supprimer tous les congés d'un type donné
-    removeLeavesOfType(typeId) {
+    async removeLeavesOfType(typeId) {
         const keysToDelete = [];
         
         Object.keys(this.leaves).forEach(dateKey => {
@@ -1510,8 +2147,48 @@ class LeaveManager {
         });
         
         if (keysToDelete.length > 0) {
-            this.saveLeaves();
+            await this.saveLeaves();
             this.renderCalendar();
+        }
+    }
+
+    // Réinitialiser tous les jours de congé (pour débogage)
+    async resetAllLeaves() {
+        if (!this.user || !supabase) {
+            alert('Erreur : Vous devez être connecté pour réinitialiser les congés.');
+            return;
+        }
+
+        const confirmMessage = `⚠️ ATTENTION : Cette action est irréversible !\n\nÊtes-vous sûr de vouloir supprimer TOUS vos jours de congé ?\n\nCette action supprimera ${Object.keys(this.leaves).length} jour(s) de congé.`;
+        
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            // Supprimer tous les congés de la base de données
+            const { error } = await supabase
+                .from('leaves')
+                .delete()
+                .eq('user_id', this.user.id);
+
+            if (error) throw error;
+
+            // Réinitialiser l'objet local
+            this.leaves = {};
+            
+            // Mettre à jour l'affichage
+            this.renderCalendar();
+            this.updateStats();
+            this.updateLeaveQuotas();
+            
+            // Fermer la modale de configuration
+            this.closeConfigModal();
+            
+            alert('✅ Tous les jours de congé ont été supprimés avec succès.');
+        } catch (e) {
+            console.error('Erreur lors de la réinitialisation des congés:', e);
+            alert('❌ Erreur lors de la suppression des congés. Vérifiez la console pour plus de détails.');
         }
     }
 
@@ -1529,12 +2206,12 @@ class LeaveManager {
     }
 
     // Sauvegarder la configuration
-    saveConfig() {
+    async saveConfig() {
         // Sauvegarder le pays sélectionné
         const countrySelect = document.getElementById('countrySelect');
         if (countrySelect) {
             this.selectedCountry = countrySelect.value;
-            this.saveSelectedCountry();
+            await this.saveSelectedCountry();
         }
 
         const inputs = document.querySelectorAll('#leaveTypesConfig .leave-type-item');
@@ -1583,8 +2260,8 @@ class LeaveManager {
             console.log('Jours de congé avant sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');
             
             this.leaveTypesConfig = newConfig;
-            this.saveLeaveTypesConfig();
-            this.saveLeaveQuotasByYear();
+            await this.saveLeaveTypesConfig();
+            await this.saveLeaveQuotasByYear();
             
             // Vérifier que les jours de congé sont toujours présents
             console.log('Jours de congé après sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');

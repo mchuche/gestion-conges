@@ -6,13 +6,61 @@
     <meta name="description" content="Gestionnaire de jours de congé - Calendrier interactif">
     <title>Gestionnaire de Congés</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="container">
+    <!-- Modal de connexion/inscription -->
+    <div id="authModal" class="modal active" style="display: block;">
+        <div class="modal-content auth-modal-content">
+            <h3>🔐 Connexion</h3>
+            <div id="authError" class="error-message" style="display: none;"></div>
+            
+            <div id="loginForm">
+                <div class="auth-input-group">
+                    <label for="loginEmail">Email :</label>
+                    <input type="email" id="loginEmail" class="auth-input" placeholder="votre@email.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="loginPassword">Mot de passe :</label>
+                    <input type="password" id="loginPassword" class="auth-input" placeholder="••••••••" required>
+                </div>
+                <button id="loginBtn" class="save-btn">Se connecter</button>
+                <p class="auth-switch">Pas encore de compte ? <a href="#" id="showSignup">S'inscrire</a></p>
+            </div>
+            
+            <div id="signupForm" style="display: none;">
+                <div class="auth-input-group">
+                    <label for="signupEmail">Email :</label>
+                    <input type="email" id="signupEmail" class="auth-input" placeholder="votre@email.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signupPassword">Mot de passe :</label>
+                    <input type="password" id="signupPassword" class="auth-input" placeholder="••••••••" required>
+                    <small class="auth-hint">Minimum 6 caractères</small>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signupName">Nom :</label>
+                    <input type="text" id="signupName" class="auth-input" placeholder="Votre nom" required>
+                </div>
+                <button id="signupBtn" class="save-btn">S'inscrire</button>
+                <p class="auth-switch">Déjà un compte ? <a href="#" id="showLogin">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
         <header>
             <div class="header-top">
                 <h1>📅 Gestionnaire de Congés</h1>
-                <button id="configBtn" class="config-btn" title="Configuration">⚙️</button>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span id="userName" class="user-name"></span>
+                    </div>
+                    <button id="helpBtn" class="help-btn" title="Aide">❓</button>
+                    <button id="configBtn" class="config-btn" title="Configuration">⚙️</button>
+                    <button id="logoutBtn" class="logout-btn" title="Déconnexion">⏻</button>
+                </div>
             </div>
             <div class="header-controls">
                 <button id="prevMonth" class="nav-btn">◀</button>
@@ -100,9 +148,95 @@
                     <button id="addLeaveTypeBtn" class="add-btn">+ Ajouter un type</button>
                 </div>
 
+                <div class="config-section">
+                    <h4>🔧 Débogage</h4>
+                    <div class="debug-section">
+                        <p class="config-hint">⚠️ Attention : Ces actions sont irréversibles</p>
+                        <button id="resetLeavesBtn" class="debug-btn">🗑️ Réinitialiser tous les jours de congé</button>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h4>🗑️ Suppression de compte</h4>
+                    <div class="debug-section">
+                        <p class="config-hint">⚠️ Danger : Cette action supprimera définitivement votre compte et toutes vos données</p>
+                        <button id="deleteAccountBtn" class="delete-account-btn-full" title="Supprimer le compte">🗑️ Supprimer mon compte</button>
+                    </div>
+                </div>
+
                 <div class="config-actions">
                     <button id="saveConfigBtn" class="save-btn">Enregistrer</button>
                     <button id="cancelConfigBtn" class="cancel-btn">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal d'aide -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content help-modal-content">
+                <span class="close help-close">&times;</span>
+                <h3>❓ Aide - Guide d'utilisation</h3>
+                
+                <div class="help-section">
+                    <h4>📅 Utilisation du calendrier</h4>
+                    <ul class="help-list">
+                        <li><strong>Ajouter un congé :</strong> Cliquez sur un jour dans le calendrier, choisissez la période (journée complète, matin ou après-midi) et sélectionnez le type de congé.</li>
+                        <li><strong>Sélection multiple :</strong> Maintenez <strong>Ctrl</strong> (ou <strong>Cmd</strong> sur Mac) et cliquez sur plusieurs jours pour les sélectionner, puis appliquez un congé à tous en une fois.</li>
+                        <li><strong>Modifier un congé :</strong> Cliquez sur un jour qui a déjà un congé pour le modifier ou le supprimer.</li>
+                        <li><strong>Navigation :</strong> Utilisez les flèches ◀ et ▶ pour naviguer entre les semestres.</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>🎨 Types de congés</h4>
+                    <ul class="help-list">
+                        <li>Chaque type de congé peut avoir un <strong>quota</strong> (nombre de jours maximum par an).</li>
+                        <li>Les types <strong>sans quota</strong> ou avec <strong>quota = 0</strong> ne sont <strong>pas comptabilisés</strong> dans les statistiques.</li>
+                        <li>Vous pouvez personnaliser les types de congés via la configuration (⚙️).</li>
+                        <li>Les types par défaut sont : Congé Payé, RTT, Jours Hiver, Maladie, Télétravail, Formation, Grève.</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>⏰ Demi-journées</h4>
+                    <ul class="help-list">
+                        <li>Vous pouvez poser des congés pour le <strong>matin</strong> ou l'<strong>après-midi</strong> uniquement.</li>
+                        <li>Une demi-journée compte pour <strong>0.5 jour</strong> dans les statistiques.</li>
+                        <li>Si vous posez une journée complète, les demi-journées existantes sont automatiquement remplacées.</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>📊 Statistiques et quotas</h4>
+                    <ul class="help-list">
+                        <li><strong>Congés posés :</strong> Nombre total de jours de congé posés (seulement pour les types avec quota > 0).</li>
+                        <li><strong>Jours restants :</strong> Format "restants/total" - montre les jours restants sur le quota total.</li>
+                        <li>Les cartes de quota affichent l'utilisation par type avec une barre de progression.</li>
+                        <li>Les dépassements sont affichés en rouge.</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>⚙️ Configuration</h4>
+                    <ul class="help-list">
+                        <li><strong>Pays :</strong> Sélectionnez votre pays pour afficher les jours fériés correspondants.</li>
+                        <li><strong>Types de congés :</strong> Ajoutez, modifiez ou supprimez des types de congés. Personnalisez les noms, labels et couleurs.</li>
+                        <li><strong>Quotas :</strong> Configurez les quotas par type et par année. Laissez vide pour un quota illimité.</li>
+                        <li><strong>Débogage :</strong> Réinitialisez tous vos jours de congé si nécessaire.</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>🔐 Compte utilisateur</h4>
+                    <ul class="help-list">
+                        <li>Chaque utilisateur a son propre compte et ses propres données.</li>
+                        <li>Vos données sont sauvegardées automatiquement dans le cloud (Supabase).</li>
+                        <li>Vous pouvez vous déconnecter (⏻) ou supprimer votre compte depuis la configuration.</li>
+                    </ul>
+                </div>
+
+                <div class="help-actions">
+                    <button id="closeHelpBtn" class="save-btn">Fermer</button>
                 </div>
             </div>
         </div>
@@ -135,7 +269,21 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Scripts -->
+    <!-- Configuration Supabase (doit être chargé en premier) -->
+    <script src="config.js"></script>
+    
+    <!-- Modules JavaScript (dans l'ordre de dépendance) -->
+    <script src="js/supabase-init.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/holidays.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/leaveManager.js"></script>
 </body>
 </html>
 
