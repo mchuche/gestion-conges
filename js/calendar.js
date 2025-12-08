@@ -225,15 +225,54 @@ function createYearDayElement(date) {
 
     dayElement.appendChild(dayContent);
 
+    // Gestion du long press pour activer le mode sélection multiple (mobile)
+    let longPressTimer = null;
+    let hasLongPress = false;
+    
+    const handleTouchStart = (e) => {
+        hasLongPress = false;
+        longPressTimer = setTimeout(() => {
+            hasLongPress = true;
+            this.multiSelectMode = true;
+            // Feedback visuel : vibration si disponible
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            // Ajouter la date au début de la sélection
+            this.toggleDateSelection(date);
+            // Afficher un message d'aide
+            const helpHint = document.getElementById('helpHint');
+            if (helpHint) {
+                helpHint.textContent = 'Mode sélection multiple activé. Touchez d\'autres jours pour les ajouter.';
+                helpHint.classList.add('mobile-active');
+                helpHint.style.display = 'block';
+            }
+        }, 500); // 500ms pour le long press
+    };
+    
+    const handleTouchEnd = (e) => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    };
+    
+    const handleTouchCancel = (e) => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    };
+    
     // Ajouter l'événement de clic sur l'élément jour
     const handleDayClick = (e) => {
         e.stopPropagation();
         
-        // Détecter Ctrl ou Cmd
-        const isMultiSelect = e.ctrlKey || e.metaKey;
+        // Si le mode sélection multiple est activé (par long press ou Ctrl/Cmd)
+        const isMultiSelect = this.multiSelectMode || e.ctrlKey || e.metaKey;
         
         if (isMultiSelect) {
-            // Sélection multiple avec Ctrl (ou Cmd sur Mac)
+            // Sélection multiple
             e.preventDefault();
             this.toggleDateSelection(date);
             // Ne pas ouvrir la modale automatiquement, permettre de continuer à sélectionner
@@ -250,6 +289,14 @@ function createYearDayElement(date) {
             }
         }
     };
+    
+    // Événements tactiles pour le long press
+    dayElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+    dayElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+    dayElement.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+    dayContent.addEventListener('touchstart', handleTouchStart, { passive: true });
+    dayContent.addEventListener('touchend', handleTouchEnd, { passive: true });
+    dayContent.addEventListener('touchcancel', handleTouchCancel, { passive: true });
     
     dayElement.addEventListener('click', handleDayClick);
     // Également sur le contenu pour s'assurer que ça fonctionne partout
@@ -384,11 +431,12 @@ function toggleDateSelection(date) {
     // Mettre à jour l'affichage visuel immédiatement
     this.updateDateSelectionVisual();
     
-    // Afficher l'aide si c'est la première sélection multiple
+    // Masquer l'aide si on a plusieurs jours sélectionnés (l'utilisateur a compris)
     if (this.selectedDates.length > 1) {
         const helpHint = document.getElementById('helpHint');
         if (helpHint) {
-            helpHint.style.display = 'none'; // Masquer l'aide une fois qu'on a compris
+            helpHint.classList.remove('mobile-active');
+            // Ne pas masquer complètement, juste retirer le style mobile
         }
     }
     
@@ -620,6 +668,14 @@ function closeModal() {
     this.selectedDate = null;
     // Réinitialiser la sélection multiple après fermeture
     this.selectedDates = [];
+    this.multiSelectMode = false; // Désactiver le mode sélection multiple
+    
+    // Masquer le message d'aide mobile
+    const helpHint = document.getElementById('helpHint');
+    if (helpHint) {
+        helpHint.classList.remove('mobile-active');
+    }
+    
     this.updateDateSelectionVisual();
 }
 
@@ -646,6 +702,7 @@ async function setLeave(date, type) {
     
     // Réinitialiser la sélection multiple
     this.selectedDates = [];
+    this.multiSelectMode = false; // Désactiver le mode sélection multiple
     
     await this.saveLeaves();
     this.renderCalendar();
@@ -674,6 +731,7 @@ async function removeLeave(date) {
     
     // Réinitialiser la sélection multiple
     this.selectedDates = [];
+    this.multiSelectMode = false; // Désactiver le mode sélection multiple
     
     await this.saveLeaves();
     this.renderCalendar();

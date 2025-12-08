@@ -12,6 +12,7 @@ class LeaveManager {
         this.selectedCountry = 'FR';
         this.selectedDate = null;
         this.selectedDates = []; // Pour la sélection multiple
+        this.multiSelectMode = false; // Mode sélection multiple activé par long press
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
         this.viewMode = 'semester'; // 'semester' (vue mensuelle temporairement désactivée)
         
