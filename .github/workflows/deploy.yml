@@ -1,0 +1,70 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          echo "Verification des secrets GitHub..."
+          
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "::error::Le secret SUPABASE_URL n'est pas configur�"
+            echo "ERREUR CRITIQUE: SUPABASE_URL manquant"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::Le secret SUPABASE_ANON_KEY n'est pas configur�"
+            echo "ERREUR CRITIQUE: SUPABASE_ANON_KEY manquant"
+            exit 1
+          fi
+          
+          echo "Tous les secrets sont configur�s"
+
+      - name: Create config.js from secrets
+        run: |
+          cat > config.js << EOF
+          const SUPABASE_CONFIG = {
+              url: '${{ secrets.SUPABASE_URL }}',
+              anonKey: '${{ secrets.SUPABASE_ANON_KEY }}'
+          };
+          EOF
+          
+          if [ ! -f config.js ] || [ ! -s config.js ]; then
+            echo "::error::Échec de la création de config.js"
+            exit 1
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
