@@ -134,20 +134,41 @@ if (typeof openHelpModal !== 'undefined') {
 
 // Config
 if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
-    safeAssign(LeaveManager.prototype, {
-        init,
-        setupEventListeners
-    });
+    LeaveManager.prototype.init = init;
+    LeaveManager.prototype.setupEventListeners = setupEventListeners;
 } else {
     console.error('Erreur: init ou setupEventListeners non définis. Vérifiez que js/config.js est chargé.');
+    // Définir des fonctions par défaut pour éviter les erreurs
+    LeaveManager.prototype.init = async function() {
+        console.warn('init non disponible - js/config.js non chargé');
+    };
+    LeaveManager.prototype.setupEventListeners = function() {
+        console.warn('setupEventListeners non disponible - js/config.js non chargé');
+    };
 }
 
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM chargé, initialisation du gestionnaire de congés...');
+    
+    // Vérifier que toutes les fonctions nécessaires sont disponibles
+    if (typeof init === 'undefined' || typeof setupEventListeners === 'undefined') {
+        console.error('Erreur: js/config.js n\'a pas été chargé correctement');
+        console.log('Fonctions disponibles:', {
+            init: typeof init,
+            setupEventListeners: typeof setupEventListeners
+        });
+    }
+    
     try {
         const manager = new LeaveManager();
         console.log('Gestionnaire de congés initialisé avec succès', manager);
+        
+        // Vérifier que init est bien une fonction
+        if (typeof manager.init !== 'function') {
+            console.error('ERREUR: manager.init n\'est pas une fonction', typeof manager.init);
+            console.log('Prototype LeaveManager:', Object.getOwnPropertyNames(LeaveManager.prototype));
+        }
     } catch (error) {
         console.error('Erreur lors de l\'initialisation:', error);
         alert('Erreur lors du chargement de l\'application. Veuillez vérifier la console pour plus de détails.');
