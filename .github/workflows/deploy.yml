@@ -27,6 +27,9 @@ jobs:
 
       - name: Create config.js from secrets
         run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "⚠️  Attention: Les secrets SUPABASE_URL ou SUPABASE_ANON_KEY ne sont pas configurés"
+          fi
           cat > config.js << EOF
           // Configuration Supabase - Générée automatiquement par GitHub Actions
           // Ne pas modifier manuellement - Les valeurs proviennent de GitHub Secrets
@@ -35,9 +38,20 @@ jobs:
               anonKey: '${{ secrets.SUPABASE_ANON_KEY }}'
           };
           EOF
+          echo "✅ config.js créé"
+          ls -la config.js
+          echo "--- Contenu de config.js (sans les secrets) ---"
+          head -n 2 config.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+
+      - name: Verify config.js before upload
+        run: |
+          echo "Vérification des fichiers avant upload..."
+          ls -la config.js
+          echo "--- Vérification que config.js sera inclus ---"
+          find . -name "config.js" -type f
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
