@@ -526,6 +526,16 @@ function openModal(date) {
         this.selectedPeriod = 'full';
     }
     
+    // S'assurer que leaveTypesConfig est chargé avant de rendre les boutons
+    if (!this.leaveTypesConfig || this.leaveTypesConfig.length === 0) {
+        console.warn('leaveTypesConfig vide, chargement des types par défaut...');
+        if (typeof getDefaultLeaveTypes === 'function') {
+            this.leaveTypesConfig = getDefaultLeaveTypes();
+        } else {
+            console.error('getDefaultLeaveTypes non disponible');
+        }
+    }
+    
     // S'assurer que les boutons de types de congé sont rendus
     this.renderLeaveTypeButtons();
     
@@ -566,8 +576,27 @@ function getLeaveColor(type) {
 // Rendre les boutons de types de congé dynamiquement
 function renderLeaveTypeButtons() {
     const container = document.getElementById('leaveTypes');
+    if (!container) {
+        console.error('Conteneur #leaveTypes non trouvé');
+        return;
+    }
+    
     container.innerHTML = '';
 
+    // Vérifier que leaveTypesConfig est chargé
+    if (!this.leaveTypesConfig || this.leaveTypesConfig.length === 0) {
+        console.warn('leaveTypesConfig est vide, utilisation des types par défaut');
+        // Charger les types par défaut si la config est vide
+        if (typeof getDefaultLeaveTypes === 'function') {
+            this.leaveTypesConfig = getDefaultLeaveTypes();
+        } else {
+            console.error('getDefaultLeaveTypes n\'est pas défini');
+            container.innerHTML = '<p style="color: red;">Erreur: Aucun type de congé disponible</p>';
+            return;
+        }
+    }
+
+    console.log('Rendu de', this.leaveTypesConfig.length, 'types de congé');
     this.leaveTypesConfig.forEach(typeConfig => {
         const btn = document.createElement('button');
         btn.className = 'leave-btn';
@@ -579,6 +608,8 @@ function renderLeaveTypeButtons() {
         btn.style.borderColor = typeConfig.color;
         container.appendChild(btn);
     });
+    
+    console.log('Boutons de types de congé rendus:', container.children.length);
 }
 
 // Fermer la modal
