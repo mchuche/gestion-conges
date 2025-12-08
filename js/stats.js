@@ -69,6 +69,7 @@ function updateStats() {
 
     // Calculer les jours restants et le total des quotas pour chaque type avec quota (pour l'année en cours)
     let totalQuotas = 0;
+    let totalUsed = 0; // Total des jours posés
     console.log('Calcul des jours restants pour l\'année:', currentYear);
     console.log('Quotas disponibles:', this.leaveQuotasByYear);
     this.leaveTypesConfig.forEach(typeConfig => {
@@ -77,14 +78,21 @@ function updateStats() {
         if (quota !== null && quota !== undefined && quota > 0) {
             totalQuotas += quota; // Ajouter au total des quotas
             const used = usedDays[typeConfig.id] || 0;
+            totalUsed += used; // Ajouter au total des jours posés
             const remaining = quota - used;
             totalRemaining += Math.max(0, remaining); // Ne pas compter les dépassements négatifs
             console.log(`  -> Utilisé: ${used}, Restant: ${remaining}`);
         }
     });
     
-    console.log(`Total jours restants: ${totalRemaining}, Total quotas: ${totalQuotas}`);
+    console.log(`Total jours posés: ${totalUsed}, Total jours restants: ${totalRemaining}, Total quotas: ${totalQuotas}`);
 
+    // Afficher le total des jours posés
+    const totalDaysElement = document.getElementById('totalDays');
+    if (totalDaysElement) {
+        totalDaysElement.textContent = formatNumber(totalUsed);
+    }
+    
     // Afficher au format "restants/total" (ex: 24/49 ou 24.5/49.5)
     document.getElementById('remainingDays').textContent = `${formatNumber(totalRemaining)}/${formatNumber(totalQuotas)}`;
 }
