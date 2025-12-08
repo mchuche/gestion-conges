@@ -228,9 +228,11 @@ function createYearDayElement(date) {
     // Gestion du long press pour activer le mode sélection multiple (mobile)
     let longPressTimer = null;
     let hasLongPress = false;
+    let touchStartTime = 0;
     
     const handleTouchStart = (e) => {
         hasLongPress = false;
+        touchStartTime = Date.now();
         longPressTimer = setTimeout(() => {
             hasLongPress = true;
             this.multiSelectMode = true;
@@ -243,7 +245,7 @@ function createYearDayElement(date) {
             // Afficher un message d'aide
             const helpHint = document.getElementById('helpHint');
             if (helpHint) {
-                helpHint.textContent = 'Mode sélection multiple activé. Touchez d\'autres jours pour les ajouter.';
+                helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
                 helpHint.classList.add('mobile-active');
                 helpHint.style.display = 'block';
             }
@@ -251,9 +253,19 @@ function createYearDayElement(date) {
     };
     
     const handleTouchEnd = (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        
         if (longPressTimer) {
             clearTimeout(longPressTimer);
             longPressTimer = null;
+        }
+        
+        // Si c'était un long press, empêcher le clic normal
+        if (hasLongPress || touchDuration > 500) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Ne pas déclencher le clic normal après un long press
+            return false;
         }
     };
     
@@ -266,6 +278,14 @@ function createYearDayElement(date) {
     
     // Ajouter l'événement de clic sur l'élément jour
     const handleDayClick = (e) => {
+        // Si on vient de faire un long press, ignorer le clic
+        if (hasLongPress) {
+            e.preventDefault();
+            e.stopPropagation();
+            hasLongPress = false; // Réinitialiser pour le prochain clic
+            return;
+        }
+        
         e.stopPropagation();
         
         // Si le mode sélection multiple est activé (par long press ou Ctrl/Cmd)
@@ -370,14 +390,74 @@ function createDayElement(container, date, isOtherMonth) {
         }
     }
 
+    // Gestion du long press pour activer le mode sélection multiple (mobile)
+    let longPressTimer = null;
+    let hasLongPress = false;
+    let touchStartTime = 0;
+    
+    const handleTouchStart = (e) => {
+        hasLongPress = false;
+        touchStartTime = Date.now();
+        longPressTimer = setTimeout(() => {
+            hasLongPress = true;
+            this.multiSelectMode = true;
+            // Feedback visuel : vibration si disponible
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            // Ajouter la date au début de la sélection
+            this.toggleDateSelection(date);
+            // Afficher un message d'aide
+            const helpHint = document.getElementById('helpHint');
+            if (helpHint) {
+                helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
+                helpHint.classList.add('mobile-active');
+                helpHint.style.display = 'block';
+            }
+        }, 500); // 500ms pour le long press
+    };
+    
+    const handleTouchEnd = (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        
+        // Si c'était un long press, empêcher le clic normal
+        if (hasLongPress || touchDuration > 500) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Ne pas déclencher le clic normal après un long press
+            return false;
+        }
+    };
+    
+    const handleTouchCancel = (e) => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    };
+    
     // Ajouter l'événement de clic
-    day.addEventListener('click', (e) => {
+    const handleDayClick = (e) => {
+        // Si on vient de faire un long press, ignorer le clic
+        if (hasLongPress) {
+            e.preventDefault();
+            e.stopPropagation();
+            hasLongPress = false; // Réinitialiser pour le prochain clic
+            return;
+        }
+        
         e.stopPropagation();
         
-        const isMultiSelect = e.ctrlKey || e.metaKey;
+        // Si le mode sélection multiple est activé (par long press ou Ctrl/Cmd)
+        const isMultiSelect = this.multiSelectMode || e.ctrlKey || e.metaKey;
         
         if (isMultiSelect) {
-            // Sélection multiple avec Ctrl (ou Cmd sur Mac)
+            // Sélection multiple
             e.preventDefault();
             this.toggleDateSelection(date);
             // Ne pas ouvrir la modale automatiquement, permettre de continuer à sélectionner
@@ -393,7 +473,14 @@ function createDayElement(container, date, isOtherMonth) {
                 this.openModal(date);
             }
         }
-    });
+    };
+    
+    // Événements tactiles pour le long press
+    day.addEventListener('touchstart', handleTouchStart, { passive: true });
+    day.addEventListener('touchend', handleTouchEnd, { passive: true });
+    day.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+    
+    day.addEventListener('click', handleDayClick);
 
     container.appendChild(day);
 }

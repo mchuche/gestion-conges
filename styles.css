@@ -201,7 +201,7 @@ header h1 {
     z-index: 100;
 }
 
-.help-hint.mobile-mode {
+.help-hint.mobile-active {
     position: fixed;
     bottom: 20px;
     left: 50%;
@@ -213,6 +213,8 @@ header h1 {
     z-index: 1000;
     max-width: 90%;
     animation: slideUp 0.3s ease-out;
+    font-weight: 500;
+    font-size: 14px;
 }
 
 @keyframes slideUp {
