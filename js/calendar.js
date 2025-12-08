@@ -290,14 +290,16 @@ function createYearDayElement(date) {
             longPressTimer = null;
         }
         
-        // Si c'était un long press ET que ce n'était pas un scroll, empêcher le clic normal qui suivra
-        if ((wasLongPress || touchDuration > 500) && !hasMoved) {
-            // Marquer que c'était un long press pour empêcher le clic
+        // Ne bloquer le clic que si c'était un VRAI long press (wasLongPress = true)
+        // et que ce n'était pas un scroll
+        if (wasLongPress && !hasMoved) {
+            // C'était un long press réel, empêcher le clic normal qui suivra
+            // Réinitialiser après un court délai pour permettre le prochain clic
             setTimeout(() => {
-                wasLongPress = false; // Réinitialiser après un court délai
+                wasLongPress = false;
             }, 100);
         } else {
-            // Si c'était un scroll, réinitialiser immédiatement
+            // C'était un simple tap ou un scroll, permettre le clic normal
             wasLongPress = false;
         }
     };
@@ -314,10 +316,9 @@ function createYearDayElement(date) {
     // Ajouter l'événement de clic sur l'élément jour
     const handleDayClick = (e) => {
         // Si on vient de faire un long press sur CET élément, ne pas traiter le clic
+        // (le flag wasLongPress est géré par handleTouchEnd avec un timeout)
         if (wasLongPress) {
-            wasLongPress = false;
-            e.preventDefault();
-            e.stopPropagation();
+            // Le clic a été déclenché trop tôt après le long press, l'ignorer
             return;
         }
         
@@ -495,14 +496,16 @@ function createDayElement(container, date, isOtherMonth) {
             longPressTimer = null;
         }
         
-        // Si c'était un long press ET que ce n'était pas un scroll, empêcher le clic normal qui suivra
-        if ((wasLongPress || touchDuration > 500) && !hasMoved) {
-            // Marquer que c'était un long press pour empêcher le clic
+        // Ne bloquer le clic que si c'était un VRAI long press (wasLongPress = true)
+        // et que ce n'était pas un scroll
+        if (wasLongPress && !hasMoved) {
+            // C'était un long press réel, empêcher le clic normal qui suivra
+            // Réinitialiser après un court délai pour permettre le prochain clic
             setTimeout(() => {
-                wasLongPress = false; // Réinitialiser après un court délai
+                wasLongPress = false;
             }, 100);
         } else {
-            // Si c'était un scroll, réinitialiser immédiatement
+            // C'était un simple tap ou un scroll, permettre le clic normal
             wasLongPress = false;
         }
     };
