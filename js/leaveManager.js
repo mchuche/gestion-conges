@@ -15,9 +15,33 @@ class LeaveManager {
         this.multiSelectMode = false; // Mode sélection multiple activé par long press
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
         this.viewMode = 'semester'; // 'semester' (vue mensuelle temporairement désactivée)
+        this.ctrlKeyPressed = false; // État de la touche Ctrl/Cmd
+        
+        // Suivre l'état de la touche Ctrl/Cmd
+        this.setupCtrlTracking();
         
         // Initialiser l'authentification
         this.initAuth();
+    }
+    
+    setupCtrlTracking() {
+        // Suivre l'état de Ctrl/Cmd via les événements clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Control' || e.key === 'Meta') {
+                this.ctrlKeyPressed = true;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Control' || e.key === 'Meta') {
+                this.ctrlKeyPressed = false;
+            }
+        });
+        
+        // Réinitialiser si la fenêtre perd le focus
+        window.addEventListener('blur', () => {
+            this.ctrlKeyPressed = false;
+        });
     }
 }
 

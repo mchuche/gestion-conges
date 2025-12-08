@@ -233,13 +233,15 @@ function createYearDayElement(date) {
         const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         
         // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple (uniquement sur desktop)
-        const hasCtrl = e.ctrlKey || e.metaKey;
+        // Utiliser à la fois l'état tracké et l'événement pour plus de fiabilité
+        const hasCtrl = this.ctrlKeyPressed || e.ctrlKey || e.metaKey;
         const isMultiSelect = !isMobile && hasCtrl;
         
         console.log('Clic sur jour:', {
             date: date.toISOString().split('T')[0],
-            ctrlKey: e.ctrlKey,
-            metaKey: e.metaKey,
+            ctrlKeyPressed: this.ctrlKeyPressed,
+            eventCtrlKey: e.ctrlKey,
+            eventMetaKey: e.metaKey,
             hasCtrl: hasCtrl,
             isMobile: isMobile,
             isMultiSelect: isMultiSelect,
@@ -359,13 +361,15 @@ function createDayElement(container, date, isOtherMonth) {
         const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         
         // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple (uniquement sur desktop)
-        const hasCtrl = e.ctrlKey || e.metaKey;
+        // Utiliser à la fois l'état tracké et l'événement pour plus de fiabilité
+        const hasCtrl = this.ctrlKeyPressed || e.ctrlKey || e.metaKey;
         const isMultiSelect = !isMobile && hasCtrl;
         
         console.log('Clic sur jour:', {
             date: date.toISOString().split('T')[0],
-            ctrlKey: e.ctrlKey,
-            metaKey: e.metaKey,
+            ctrlKeyPressed: this.ctrlKeyPressed,
+            eventCtrlKey: e.ctrlKey,
+            eventMetaKey: e.metaKey,
             hasCtrl: hasCtrl,
             isMobile: isMobile,
             isMultiSelect: isMultiSelect,
