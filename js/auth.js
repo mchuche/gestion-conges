@@ -69,7 +69,8 @@ function showMainApp() {
 function setupAuthListeners() {
     // Connexion
     const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
+    if (loginBtn && !loginBtn.hasAttribute('data-listener-added')) {
+        loginBtn.setAttribute('data-listener-added', 'true');
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
@@ -79,7 +80,8 @@ function setupAuthListeners() {
 
     // Inscription
     const signupBtn = document.getElementById('signupBtn');
-    if (signupBtn) {
+    if (signupBtn && !signupBtn.hasAttribute('data-listener-added')) {
+        signupBtn.setAttribute('data-listener-added', 'true');
         signupBtn.addEventListener('click', async () => {
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
@@ -90,10 +92,14 @@ function setupAuthListeners() {
 
     // Déconnexion
     const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
+    if (logoutBtn && !logoutBtn.hasAttribute('data-listener-added')) {
+        logoutBtn.setAttribute('data-listener-added', 'true');
         logoutBtn.addEventListener('click', async () => {
+            console.log('Bouton de déconnexion cliqué');
             await this.logout();
         });
+    } else if (!logoutBtn) {
+        console.warn('Bouton logoutBtn non trouvé dans le DOM');
     }
 
     // Suppression de compte
