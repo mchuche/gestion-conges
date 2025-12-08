@@ -92,8 +92,6 @@ if (typeof getLeaveForDate !== 'undefined') {
         createDayElement,
         getLeaveTypeLabel,
         getLeaveTypeConfig,
-        toggleDateSelection,
-        updateModalForSelection,
         updateDateSelectionVisual,
         openModal,
         updateLeaveButtonsHighlight,
