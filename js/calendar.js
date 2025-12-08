@@ -257,7 +257,7 @@ function createYearDayElement(date) {
                 // Afficher un message d'aide
                 const helpHint = document.getElementById('helpHint');
                 if (helpHint) {
-                    helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
+                    helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter, ou ce jour pour ouvrir la modale';
                     helpHint.classList.add('mobile-active');
                     helpHint.style.display = 'block';
                 }
@@ -324,28 +324,32 @@ function createYearDayElement(date) {
         
         e.stopPropagation();
         
-        // Si le mode sélection multiple est activé (par long press ou Ctrl/Cmd)
-        const isMultiSelect = this.multiSelectMode || e.ctrlKey || e.metaKey;
+        // Vérifier si cette date est déjà sélectionnée
+        const isDateSelected = this.selectedDates.some(d => getDateKey(d) === getDateKey(date));
+        
+        // Si le mode sélection multiple est activé (par long press uniquement, pas Ctrl/Cmd sur mobile)
+        // Sur desktop, on garde Ctrl/Cmd pour la sélection multiple
+        const isMultiSelect = this.multiSelectMode || (e.ctrlKey || e.metaKey);
         
         if (isMultiSelect) {
-            // Sélection multiple
-            e.preventDefault();
-            this.toggleDateSelection(date);
-            // Ne pas ouvrir la modale automatiquement, permettre de continuer à sélectionner
+            // Mode sélection multiple activé
+            if (isDateSelected) {
+                // Si on clique sur un jour déjà sélectionné, ouvrir la modale
+                this.openModal(date);
+            } else {
+                // Si on clique sur un jour non sélectionné, l'ajouter à la sélection
+                e.preventDefault();
+                this.toggleDateSelection(date);
+            }
         } else {
-            // Clic simple : sélection unique ou ouvrir la modale si des dates sont déjà sélectionnées
+            // Clic simple : sélection unique
             // Désactiver le mode sélection multiple si on fait un clic simple
             this.multiSelectMode = false;
             
-            if (this.selectedDates.length > 0 && this.selectedDates.some(d => getDateKey(d) === getDateKey(date))) {
-                // On clique sur une date déjà sélectionnée, ouvrir la modale
-                this.openModal(date);
-            } else {
-                // Nouvelle sélection unique
-                this.selectedDates = [date];
-                this.updateDateSelectionVisual();
-                this.openModal(date);
-            }
+            // Nouvelle sélection unique
+            this.selectedDates = [date];
+            this.updateDateSelectionVisual();
+            this.openModal(date);
         }
     };
     
@@ -463,7 +467,7 @@ function createDayElement(container, date, isOtherMonth) {
                 // Afficher un message d'aide
                 const helpHint = document.getElementById('helpHint');
                 if (helpHint) {
-                    helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
+                    helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter, ou ce jour pour ouvrir la modale';
                     helpHint.classList.add('mobile-active');
                     helpHint.style.display = 'block';
                 }
@@ -531,28 +535,32 @@ function createDayElement(container, date, isOtherMonth) {
         
         e.stopPropagation();
         
-        // Si le mode sélection multiple est activé (par long press ou Ctrl/Cmd)
-        const isMultiSelect = this.multiSelectMode || e.ctrlKey || e.metaKey;
+        // Vérifier si cette date est déjà sélectionnée
+        const isDateSelected = this.selectedDates.some(d => getDateKey(d) === getDateKey(date));
+        
+        // Si le mode sélection multiple est activé (par long press uniquement, pas Ctrl/Cmd sur mobile)
+        // Sur desktop, on garde Ctrl/Cmd pour la sélection multiple
+        const isMultiSelect = this.multiSelectMode || (e.ctrlKey || e.metaKey);
         
         if (isMultiSelect) {
-            // Sélection multiple
-            e.preventDefault();
-            this.toggleDateSelection(date);
-            // Ne pas ouvrir la modale automatiquement, permettre de continuer à sélectionner
+            // Mode sélection multiple activé
+            if (isDateSelected) {
+                // Si on clique sur un jour déjà sélectionné, ouvrir la modale
+                this.openModal(date);
+            } else {
+                // Si on clique sur un jour non sélectionné, l'ajouter à la sélection
+                e.preventDefault();
+                this.toggleDateSelection(date);
+            }
         } else {
-            // Clic simple : sélection unique ou ouvrir la modale si des dates sont déjà sélectionnées
+            // Clic simple : sélection unique
             // Désactiver le mode sélection multiple si on fait un clic simple
             this.multiSelectMode = false;
             
-            if (this.selectedDates.length > 0 && this.selectedDates.some(d => getDateKey(d) === getDateKey(date))) {
-                // On clique sur une date déjà sélectionnée, ouvrir la modale
-                this.openModal(date);
-            } else {
-                // Nouvelle sélection unique
-                this.selectedDates = [date];
-                this.updateDateSelectionVisual();
-                this.openModal(date);
-            }
+            // Nouvelle sélection unique
+            this.selectedDates = [date];
+            this.updateDateSelectionVisual();
+            this.openModal(date);
         }
     };
     
@@ -601,18 +609,14 @@ function toggleDateSelection(date) {
     this.updateDateSelectionVisual();
     
     // Mettre à jour le message d'aide si on a plusieurs jours sélectionnés
-    if (this.selectedDates.length > 1) {
-        const helpHint = document.getElementById('helpHint');
-        if (helpHint && this.multiSelectMode) {
-            helpHint.innerHTML = `✅ <strong>${this.selectedDates.length} jours sélectionnés</strong><br>Touchez un jour sélectionné pour ouvrir la modale`;
-            helpHint.classList.add('mobile-active');
-            helpHint.style.display = 'block';
-        }
-    } else if (this.selectedDates.length === 0 && this.multiSelectMode) {
-        // Si on a désélectionné tous les jours mais que le mode est encore actif
+    if (this.selectedDates.length > 0 && this.multiSelectMode) {
         const helpHint = document.getElementById('helpHint');
         if (helpHint) {
-            helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
+            if (this.selectedDates.length > 1) {
+                helpHint.innerHTML = `✅ <strong>${this.selectedDates.length} jours sélectionnés</strong><br>Touchez un jour sélectionné pour ouvrir la modale, ou un jour non sélectionné pour l'ajouter`;
+            } else {
+                helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter, ou ce jour pour ouvrir la modale';
+            }
             helpHint.classList.add('mobile-active');
             helpHint.style.display = 'block';
         }
