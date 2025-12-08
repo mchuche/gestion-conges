@@ -204,12 +204,24 @@ async function logout() {
         const { error } = await supabase.auth.signOut();
         
         // Ignorer l'erreur si c'est juste une session manquante (déjà déconnecté)
-        if (error && error.message && !error.message.includes('session missing')) {
-            console.warn('Erreur de déconnexion:', error);
+        if (error) {
+            const errorMsg = error.message || error.toString() || '';
+            const isSessionMissing = errorMsg.includes('session missing') || 
+                                   errorMsg.includes('Auth session missing') ||
+                                   error.name === 'AuthSessionMissingError';
+            
+            if (!isSessionMissing) {
+                console.warn('Erreur de déconnexion:', error);
+            }
         }
     } catch (error) {
         // Ignorer les erreurs de session manquante
-        if (error.message && !error.message.includes('session missing')) {
+        const errorMsg = error.message || error.toString() || '';
+        const isSessionMissing = errorMsg.includes('session missing') || 
+                               errorMsg.includes('Auth session missing') ||
+                               error.name === 'AuthSessionMissingError';
+        
+        if (!isSessionMissing) {
             console.warn('Erreur lors de la déconnexion:', error);
         }
     } finally {
