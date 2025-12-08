@@ -113,6 +113,34 @@ Pour installer l'application sur votre téléphone ou tablette :
 2. Utilisez l'option "Ajouter à l'écran d'accueil" de votre navigateur
 3. L'application sera accessible comme une app native
 
+## 🛠️ Outils et Technologies
+
+### Frontend
+- **HTML5** : Structure de l'application
+- **CSS3** : Styles et design responsive avec variables CSS
+- **JavaScript (ES6+)** : Logique de l'application, modules ES6
+- **Vanilla JS** : Pas de framework, JavaScript pur pour la performance
+
+### Backend & Base de données
+- **Supabase** : Backend as a Service (BaaS)
+  - **PostgreSQL** : Base de données relationnelle
+  - **Supabase Auth** : Authentification et gestion des utilisateurs
+  - **Row Level Security (RLS)** : Sécurité au niveau des lignes
+  - **API REST automatique** : Générée automatiquement par Supabase
+
+### Déploiement & CI/CD
+- **GitHub Pages** : Hébergement de l'application
+- **GitHub Actions** : Déploiement automatique et génération de `config.js`
+- **Git** : Contrôle de version
+
+### Outils de développement
+- **GitHub** : Hébergement du code source et gestion des secrets
+- **Supabase Dashboard** : Interface d'administration de la base de données
+
+### Bibliothèques externes
+- **@supabase/supabase-js** (v2) : Client JavaScript officiel pour Supabase
+  - Chargé via CDN : `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2`
+
 ## 💡 Notes techniques
 
 - **Backend** : Supabase (PostgreSQL + API REST automatique)
