@@ -229,8 +229,11 @@ function createYearDayElement(date) {
     const handleDayClick = (e) => {
         e.stopPropagation();
         
-        // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple
-        const isMultiSelect = e.ctrlKey || e.metaKey;
+        // Détecter si on est sur mobile (pas de sélection multiple sur mobile)
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple (uniquement sur desktop)
+        const isMultiSelect = !isMobile && (e.ctrlKey || e.metaKey);
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
@@ -339,8 +342,11 @@ function createDayElement(container, date, isOtherMonth) {
     const handleDayClick = (e) => {
         e.stopPropagation();
         
-        // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple
-        const isMultiSelect = e.ctrlKey || e.metaKey;
+        // Détecter si on est sur mobile (pas de sélection multiple sur mobile)
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple (uniquement sur desktop)
+        const isMultiSelect = !isMobile && (e.ctrlKey || e.metaKey);
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
