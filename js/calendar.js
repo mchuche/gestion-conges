@@ -234,6 +234,7 @@ function createYearDayElement(date) {
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
+            e.preventDefault();
             const dateKey = getDateKey(date);
             const index = this.selectedDates.findIndex(d => getDateKey(d) === dateKey);
             
@@ -248,8 +249,11 @@ function createYearDayElement(date) {
             this.updateDateSelectionVisual();
             
             // Si plusieurs jours sont sélectionnés, ouvrir la modale avec le premier
+            // Sinon, si on a désélectionné tous les jours, fermer la modale
             if (this.selectedDates.length > 0) {
                 this.openModal(this.selectedDates[0]);
+            } else {
+                this.closeModal();
             }
         } else {
             // Sélection unique : sélectionner ce jour et ouvrir la modale
@@ -340,6 +344,7 @@ function createDayElement(container, date, isOtherMonth) {
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
+            e.preventDefault();
             const dateKey = getDateKey(date);
             const index = this.selectedDates.findIndex(d => getDateKey(d) === dateKey);
             
@@ -354,8 +359,11 @@ function createDayElement(container, date, isOtherMonth) {
             this.updateDateSelectionVisual();
             
             // Si plusieurs jours sont sélectionnés, ouvrir la modale avec le premier
+            // Sinon, si on a désélectionné tous les jours, fermer la modale
             if (this.selectedDates.length > 0) {
                 this.openModal(this.selectedDates[0]);
+            } else {
+                this.closeModal();
             }
         } else {
             // Sélection unique : sélectionner ce jour et ouvrir la modale
