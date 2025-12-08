@@ -134,6 +134,10 @@ Pour installer l'application sur votre téléphone ou tablette :
 - **Git** : Contrôle de version
 
 ### Outils de développement
+- **Cursor** : Éditeur de code avec IA intégrée
+  - Éditeur basé sur VS Code avec des fonctionnalités d'IA avancées
+  - Aide au développement avec suggestions de code intelligentes
+  - Utilisé pour le développement et la maintenance de ce projet
 - **GitHub** : Hébergement du code source et gestion des secrets
 - **Supabase Dashboard** : Interface d'administration de la base de données
 
