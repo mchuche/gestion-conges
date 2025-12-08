@@ -31,6 +31,8 @@ function setupEventListeners() {
             // On est au 2ème semestre, aller au 1er semestre
             this.currentDate.setMonth(0);
         }
+        // Synchroniser currentYear avec currentDate
+        this.currentYear = this.currentDate.getFullYear();
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
@@ -48,6 +50,8 @@ function setupEventListeners() {
             this.currentDate.setFullYear(this.currentYear);
             this.currentDate.setMonth(0);
         }
+        // Synchroniser currentYear avec currentDate
+        this.currentYear = this.currentDate.getFullYear();
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
