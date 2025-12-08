@@ -228,28 +228,58 @@ function createYearDayElement(date) {
     // Gestion du long press pour activer le mode sélection multiple (mobile)
     let longPressTimer = null;
     let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
     let wasLongPress = false; // Variable partagée pour cette date
+    let hasMoved = false; // Pour détecter le scroll
     
     const handleTouchStart = (e) => {
         wasLongPress = false;
+        hasMoved = false;
         touchStartTime = Date.now();
+        // Enregistrer la position initiale du touch
+        if (e.touches && e.touches.length > 0) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+        
         longPressTimer = setTimeout(() => {
-            wasLongPress = true;
-            this.multiSelectMode = true;
-            // Feedback visuel : vibration si disponible
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
-            // Ajouter la date au début de la sélection
-            this.toggleDateSelection(date);
-            // Afficher un message d'aide
-            const helpHint = document.getElementById('helpHint');
-            if (helpHint) {
-                helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
-                helpHint.classList.add('mobile-active');
-                helpHint.style.display = 'block';
+            // Vérifier que le touch n'a pas bougé (pas de scroll)
+            if (!hasMoved) {
+                wasLongPress = true;
+                this.multiSelectMode = true;
+                // Feedback visuel : vibration si disponible
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                // Ajouter la date au début de la sélection
+                this.toggleDateSelection(date);
+                // Afficher un message d'aide
+                const helpHint = document.getElementById('helpHint');
+                if (helpHint) {
+                    helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
+                    helpHint.classList.add('mobile-active');
+                    helpHint.style.display = 'block';
+                }
             }
         }, 500); // 500ms pour le long press
+    };
+    
+    const handleTouchMove = (e) => {
+        // Détecter si le touch a bougé (scroll)
+        if (e.touches && e.touches.length > 0) {
+            const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+            const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+            // Si le touch a bougé de plus de 10px, c'est un scroll
+            if (deltaX > 10 || deltaY > 10) {
+                hasMoved = true;
+                // Annuler le timer du long press
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            }
+        }
     };
     
     const handleTouchEnd = (e) => {
@@ -260,12 +290,15 @@ function createYearDayElement(date) {
             longPressTimer = null;
         }
         
-        // Si c'était un long press, empêcher le clic normal qui suivra
-        if (wasLongPress || touchDuration > 500) {
+        // Si c'était un long press ET que ce n'était pas un scroll, empêcher le clic normal qui suivra
+        if ((wasLongPress || touchDuration > 500) && !hasMoved) {
             // Marquer que c'était un long press pour empêcher le clic
             setTimeout(() => {
                 wasLongPress = false; // Réinitialiser après un court délai
             }, 100);
+        } else {
+            // Si c'était un scroll, réinitialiser immédiatement
+            wasLongPress = false;
         }
     };
     
@@ -275,6 +308,7 @@ function createYearDayElement(date) {
             longPressTimer = null;
         }
         wasLongPress = false;
+        hasMoved = false;
     };
     
     // Ajouter l'événement de clic sur l'élément jour
