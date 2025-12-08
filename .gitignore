@@ -1,5 +1,5 @@
-# Configuration Supabase (contient les clés API)
-config.js
+# Configuration Supabase (contient les clés API) - seulement à la racine
+/config.js
 
 # Backup files
 *.backup
