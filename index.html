@@ -271,7 +271,7 @@
 
     <!-- Scripts -->
     <!-- Configuration Supabase (doit être chargé en premier) -->
-    <script src="config.js"></script>
+    <script src="config.js" onerror="console.warn('config.js non trouvé - sera généré par GitHub Actions lors du déploiement')"></script>
     
     <!-- Modules JavaScript (dans l'ordre de dépendance) -->
     <script src="js/supabase-init.js"></script>

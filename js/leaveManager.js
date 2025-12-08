@@ -21,95 +21,126 @@ class LeaveManager {
 }
 
 // Ajouter toutes les méthodes au prototype de LeaveManager
+// Fonction helper pour assigner seulement si les fonctions existent
+function safeAssign(target, source) {
+    const filtered = {};
+    for (const key in source) {
+        if (typeof source[key] === 'function') {
+            filtered[key] = source[key];
+        } else {
+            console.warn(`Fonction ${key} non définie, ignorée`);
+        }
+    }
+    Object.assign(target, filtered);
+}
+
 // Utils
-Object.assign(LeaveManager.prototype, {
-    formatNumber,
-    getDateKey,
-    getDateKeyWithPeriod,
-    getDateKeys
-});
+if (typeof formatNumber !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        formatNumber,
+        getDateKey,
+        getDateKeyWithPeriod,
+        getDateKeys
+    });
+}
 
 // Holidays
-Object.assign(LeaveManager.prototype, {
-    getPublicHolidays
-});
+if (typeof getPublicHolidays !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        getPublicHolidays
+    });
+}
 
 // Database
-Object.assign(LeaveManager.prototype, {
-    loadLeaves,
-    saveLeaves,
-    loadLeaveTypesConfig,
-    saveLeaveTypesConfig,
-    loadLeaveQuotasByYear,
-    saveLeaveQuotasByYear,
-    loadSelectedCountry,
-    saveSelectedCountry
-});
+if (typeof loadLeaves !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        loadLeaves,
+        saveLeaves,
+        loadLeaveTypesConfig,
+        saveLeaveTypesConfig,
+        loadLeaveQuotasByYear,
+        saveLeaveQuotasByYear,
+        loadSelectedCountry,
+        saveSelectedCountry
+    });
+}
 
 // Auth
-Object.assign(LeaveManager.prototype, {
-    initAuth,
-    showAuthModal,
-    showMainApp,
-    setupAuthListeners,
-    login,
-    signup,
-    logout,
-    deleteAccount,
-    loadUserData
-});
+if (typeof initAuth !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        initAuth,
+        showAuthModal,
+        showMainApp,
+        setupAuthListeners,
+        login,
+        signup,
+        logout,
+        deleteAccount,
+        loadUserData
+    });
+}
 
 // Calendar
-Object.assign(LeaveManager.prototype, {
-    getLeaveForDate,
-    renderCalendar,
-    renderMonthView,
-    renderSemesterView,
-    createYearDayElement,
-    createDayElement,
-    getLeaveTypeLabel,
-    getLeaveTypeConfig,
-    toggleDateSelection,
-    updateModalForSelection,
-    updateDateSelectionVisual,
-    openModal,
-    updateLeaveButtonsHighlight,
-    getLeaveColor,
-    renderLeaveTypeButtons,
-    closeModal,
-    setLeave,
-    removeLeave,
-    switchView
-});
+if (typeof getLeaveForDate !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        getLeaveForDate,
+        renderCalendar,
+        renderMonthView,
+        renderSemesterView,
+        createYearDayElement,
+        createDayElement,
+        getLeaveTypeLabel,
+        getLeaveTypeConfig,
+        toggleDateSelection,
+        updateModalForSelection,
+        updateDateSelectionVisual,
+        openModal,
+        updateLeaveButtonsHighlight,
+        getLeaveColor,
+        renderLeaveTypeButtons,
+        closeModal,
+        setLeave,
+        removeLeave,
+        switchView
+    });
+}
 
 // Stats
-Object.assign(LeaveManager.prototype, {
-    getQuotaForYear,
-    hasValidQuota,
-    updateStats,
-    updateLeaveQuotas
-});
+if (typeof getQuotaForYear !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        getQuotaForYear,
+        hasValidQuota,
+        updateStats,
+        updateLeaveQuotas
+    });
+}
 
 // Modals
-Object.assign(LeaveManager.prototype, {
-    openHelpModal,
-    closeHelpModal,
-    openConfigModal,
-    closeConfigModal,
-    renderConfigModal,
-    isLeaveTypeUsed,
-    countLeaveTypeUsage,
-    removeLeavesOfType,
-    resetAllLeaves,
-    addLeaveType,
-    saveConfig
-});
+if (typeof openHelpModal !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        openHelpModal,
+        closeHelpModal,
+        openConfigModal,
+        closeConfigModal,
+        renderConfigModal,
+        isLeaveTypeUsed,
+        countLeaveTypeUsage,
+        removeLeavesOfType,
+        resetAllLeaves,
+        addLeaveType,
+        saveConfig
+    });
+}
 
 // Config
-Object.assign(LeaveManager.prototype, {
-    init,
-    setupEventListeners
-});
+if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        init,
+        setupEventListeners
+    });
+} else {
+    console.error('Erreur: init ou setupEventListeners non définis. Vérifiez que js/config.js est chargé.');
+}
 
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', () => {
