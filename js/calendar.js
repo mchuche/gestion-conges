@@ -229,10 +229,34 @@ function createYearDayElement(date) {
     const handleDayClick = (e) => {
         e.stopPropagation();
         
-        // Sélection unique : sélectionner ce jour et ouvrir la modale
-        this.selectedDates = [date];
-        this.updateDateSelectionVisual();
-        this.openModal(date);
+        // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple
+        const isMultiSelect = e.ctrlKey || e.metaKey;
+        
+        if (isMultiSelect) {
+            // Sélection multiple : ajouter/retirer ce jour de la sélection
+            const dateKey = getDateKey(date);
+            const index = this.selectedDates.findIndex(d => getDateKey(d) === dateKey);
+            
+            if (index > -1) {
+                // Déjà sélectionné, le retirer
+                this.selectedDates.splice(index, 1);
+            } else {
+                // Pas sélectionné, l'ajouter
+                this.selectedDates.push(date);
+            }
+            
+            this.updateDateSelectionVisual();
+            
+            // Si plusieurs jours sont sélectionnés, ouvrir la modale avec le premier
+            if (this.selectedDates.length > 0) {
+                this.openModal(this.selectedDates[0]);
+            }
+        } else {
+            // Sélection unique : sélectionner ce jour et ouvrir la modale
+            this.selectedDates = [date];
+            this.updateDateSelectionVisual();
+            this.openModal(date);
+        }
     };
     
     dayElement.addEventListener('click', handleDayClick);
@@ -311,10 +335,34 @@ function createDayElement(container, date, isOtherMonth) {
     const handleDayClick = (e) => {
         e.stopPropagation();
         
-        // Sélection unique : sélectionner ce jour et ouvrir la modale
-        this.selectedDates = [date];
-        this.updateDateSelectionVisual();
-        this.openModal(date);
+        // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple
+        const isMultiSelect = e.ctrlKey || e.metaKey;
+        
+        if (isMultiSelect) {
+            // Sélection multiple : ajouter/retirer ce jour de la sélection
+            const dateKey = getDateKey(date);
+            const index = this.selectedDates.findIndex(d => getDateKey(d) === dateKey);
+            
+            if (index > -1) {
+                // Déjà sélectionné, le retirer
+                this.selectedDates.splice(index, 1);
+            } else {
+                // Pas sélectionné, l'ajouter
+                this.selectedDates.push(date);
+            }
+            
+            this.updateDateSelectionVisual();
+            
+            // Si plusieurs jours sont sélectionnés, ouvrir la modale avec le premier
+            if (this.selectedDates.length > 0) {
+                this.openModal(this.selectedDates[0]);
+            }
+        } else {
+            // Sélection unique : sélectionner ce jour et ouvrir la modale
+            this.selectedDates = [date];
+            this.updateDateSelectionVisual();
+            this.openModal(date);
+        }
     };
     
     day.addEventListener('click', handleDayClick);
@@ -533,19 +581,27 @@ function closeModal() {
 
 // Ajouter ou modifier un congé
 async function setLeave(date, type) {
+    // Si plusieurs dates sont sélectionnées, appliquer à toutes
+    const datesToProcess = this.selectedDates.length > 1 ? this.selectedDates : [date];
     const period = this.selectedPeriod || 'full';
-    const keys = getDateKeys(date);
     
-    // Si on pose une journée complète, supprimer les demi-journées
-    if (period === 'full') {
-        delete this.leaves[keys.morning];
-        delete this.leaves[keys.afternoon];
-        this.leaves[keys.full] = type;
-    } else {
-        // Si on pose une demi-journée, supprimer la journée complète
-        delete this.leaves[keys.full];
-        this.leaves[keys[period]] = type;
-    }
+    datesToProcess.forEach(d => {
+        const keys = getDateKeys(d);
+        
+        // Si on pose une journée complète, supprimer les demi-journées
+        if (period === 'full') {
+            delete this.leaves[keys.morning];
+            delete this.leaves[keys.afternoon];
+            this.leaves[keys.full] = type;
+        } else {
+            // Si on pose une demi-journée, supprimer la journée complète
+            delete this.leaves[keys.full];
+            this.leaves[keys[period]] = type;
+        }
+    });
+    
+    // Réinitialiser la sélection multiple
+    this.selectedDates = [];
     
     await this.saveLeaves();
     this.renderCalendar();
@@ -554,18 +610,26 @@ async function setLeave(date, type) {
 
 // Supprimer un congé
 async function removeLeave(date) {
+    // Si plusieurs dates sont sélectionnées, supprimer pour toutes
+    const datesToProcess = this.selectedDates.length > 1 ? this.selectedDates : [date];
     const period = this.selectedPeriod || 'full';
-    const keys = getDateKeys(date);
     
-    if (period === 'full') {
-        // Supprimer tout
-        delete this.leaves[keys.full];
-        delete this.leaves[keys.morning];
-        delete this.leaves[keys.afternoon];
-    } else {
-        // Supprimer seulement la période sélectionnée
-        delete this.leaves[keys[period]];
-    }
+    datesToProcess.forEach(d => {
+        const keys = getDateKeys(d);
+        
+        if (period === 'full') {
+            // Supprimer tout
+            delete this.leaves[keys.full];
+            delete this.leaves[keys.morning];
+            delete this.leaves[keys.afternoon];
+        } else {
+            // Supprimer seulement la période sélectionnée
+            delete this.leaves[keys[period]];
+        }
+    });
+    
+    // Réinitialiser la sélection multiple
+    this.selectedDates = [];
     
     await this.saveLeaves();
     this.renderCalendar();
