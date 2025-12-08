@@ -225,155 +225,15 @@ function createYearDayElement(date) {
 
     dayElement.appendChild(dayContent);
 
-    // Gestion du long press pour activer le mode sélection multiple (mobile)
-    let longPressTimer = null;
-    let touchStartTime = 0;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let wasLongPress = false; // Variable partagée pour cette date
-    let hasMoved = false; // Pour détecter le scroll
-    
-    const handleTouchStart = (e) => {
-        wasLongPress = false;
-        hasMoved = false;
-        touchStartTime = Date.now();
-        // Enregistrer la position initiale du touch
-        if (e.touches && e.touches.length > 0) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }
-        
-        longPressTimer = setTimeout(() => {
-            // Vérifier que le touch n'a pas bougé (pas de scroll)
-            if (!hasMoved) {
-                wasLongPress = true;
-                this.multiSelectMode = true;
-                // Feedback visuel : vibration si disponible
-                if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
-                // Ajouter la date au début de la sélection
-                this.toggleDateSelection(date);
-                // Afficher un message d'aide
-                const helpHint = document.getElementById('helpHint');
-                if (helpHint) {
-                    helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter, ou ce jour pour ouvrir la modale';
-                    helpHint.classList.add('mobile-active');
-                    helpHint.style.display = 'block';
-                }
-            }
-        }, 500); // 500ms pour le long press
-    };
-    
-    const handleTouchMove = (e) => {
-        // Détecter si le touch a bougé (scroll)
-        if (e.touches && e.touches.length > 0) {
-            const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-            const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-            // Si le touch a bougé de plus de 10px, c'est un scroll
-            if (deltaX > 10 || deltaY > 10) {
-                hasMoved = true;
-                // Annuler le timer du long press
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-            }
-        }
-    };
-    
-    const handleTouchEnd = (e) => {
-        const touchDuration = Date.now() - touchStartTime;
-        
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-        }
-        
-        // Si c'était un long press réel, empêcher le clic automatique qui suivra
-        if (wasLongPress && !hasMoved) {
-            // Empêcher le clic automatique qui sera généré après touchend
-            e.preventDefault();
-            // Réinitialiser après un délai pour permettre les prochains clics
-            setTimeout(() => {
-                wasLongPress = false;
-            }, 300);
-        } else if (!hasMoved && touchDuration < 500) {
-            // C'était un simple tap (pas de scroll, pas de long press)
-            // Laisser le clic se produire normalement (ne pas preventDefault)
-            wasLongPress = false;
-        } else {
-            // C'était un scroll, empêcher le clic
-            e.preventDefault();
-            wasLongPress = false;
-        }
-    };
-    
-    const handleTouchCancel = (e) => {
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-        }
-        wasLongPress = false;
-        hasMoved = false;
-    };
-    
     // Ajouter l'événement de clic sur l'élément jour
     const handleDayClick = (e) => {
-        // Si on vient de faire un long press sur CET élément, ne pas traiter le clic
-        if (wasLongPress) {
-            // Le clic a été déclenché après un long press, l'ignorer
-            wasLongPress = false;
-            return;
-        }
-        
         e.stopPropagation();
         
-        // Vérifier si cette date est déjà sélectionnée
-        const isDateSelected = this.selectedDates.some(d => getDateKey(d) === getDateKey(date));
-        
-        // Si le mode sélection multiple est activé (par long press uniquement, pas Ctrl/Cmd sur mobile)
-        // Sur desktop, on garde Ctrl/Cmd pour la sélection multiple
-        const isMultiSelect = this.multiSelectMode || (e.ctrlKey || e.metaKey);
-        
-        if (isMultiSelect) {
-            // Mode sélection multiple activé
-            if (isDateSelected) {
-                // Si on clique sur un jour déjà sélectionné, ouvrir la modale
-                this.openModal(date);
-            } else {
-                // Si on clique sur un jour non sélectionné, l'ajouter à la sélection
-                this.toggleDateSelection(date);
-            }
-        } else {
-            // Clic simple : sélection unique
-            // Désactiver le mode sélection multiple si on fait un clic simple
-            this.multiSelectMode = false;
-            
-            // Masquer le message d'aide mobile
-            const helpHint = document.getElementById('helpHint');
-            if (helpHint) {
-                helpHint.classList.remove('mobile-active');
-                helpHint.style.display = 'none';
-            }
-            
-            // Nouvelle sélection unique
-            this.selectedDates = [date];
-            this.updateDateSelectionVisual();
-            this.openModal(date);
-        }
+        // Sélection unique : sélectionner ce jour et ouvrir la modale
+        this.selectedDates = [date];
+        this.updateDateSelectionVisual();
+        this.openModal(date);
     };
-    
-    // Événements tactiles pour le long press
-    // Note: touchend n'est plus passive car on peut appeler preventDefault
-    dayElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-    dayElement.addEventListener('touchmove', handleTouchMove, { passive: true });
-    dayElement.addEventListener('touchend', handleTouchEnd, { passive: false });
-    dayElement.addEventListener('touchcancel', handleTouchCancel, { passive: true });
-    dayContent.addEventListener('touchstart', handleTouchStart, { passive: true });
-    dayContent.addEventListener('touchmove', handleTouchMove, { passive: true });
-    dayContent.addEventListener('touchend', handleTouchEnd, { passive: false });
-    dayContent.addEventListener('touchcancel', handleTouchCancel, { passive: true });
     
     dayElement.addEventListener('click', handleDayClick);
     // Également sur le contenu pour s'assurer que ça fonctionne partout
@@ -447,146 +307,15 @@ function createDayElement(container, date, isOtherMonth) {
         }
     }
 
-    // Gestion du long press pour activer le mode sélection multiple (mobile)
-    let longPressTimer = null;
-    let touchStartTime = 0;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let wasLongPress = false; // Variable partagée pour cette date
-    let hasMoved = false; // Pour détecter le scroll
-    
-    const handleTouchStart = (e) => {
-        wasLongPress = false;
-        hasMoved = false;
-        touchStartTime = Date.now();
-        // Enregistrer la position initiale du touch
-        if (e.touches && e.touches.length > 0) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }
-        
-        longPressTimer = setTimeout(() => {
-            // Vérifier que le touch n'a pas bougé (pas de scroll)
-            if (!hasMoved) {
-                wasLongPress = true;
-                this.multiSelectMode = true;
-                // Feedback visuel : vibration si disponible
-                if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
-                // Ajouter la date au début de la sélection
-                this.toggleDateSelection(date);
-                // Afficher un message d'aide
-                const helpHint = document.getElementById('helpHint');
-                if (helpHint) {
-                    helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter, ou ce jour pour ouvrir la modale';
-                    helpHint.classList.add('mobile-active');
-                    helpHint.style.display = 'block';
-                }
-            }
-        }, 500); // 500ms pour le long press
-    };
-    
-    const handleTouchMove = (e) => {
-        // Détecter si le touch a bougé (scroll)
-        if (e.touches && e.touches.length > 0) {
-            const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
-            const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
-            // Si le touch a bougé de plus de 10px, c'est un scroll
-            if (deltaX > 10 || deltaY > 10) {
-                hasMoved = true;
-                // Annuler le timer du long press
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-            }
-        }
-    };
-    
-    const handleTouchEnd = (e) => {
-        const touchDuration = Date.now() - touchStartTime;
-        
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-        }
-        
-        // Si c'était un long press réel, empêcher le clic automatique qui suivra
-        if (wasLongPress && !hasMoved) {
-            // Empêcher le clic automatique qui sera généré après touchend
-            e.preventDefault();
-            // Réinitialiser après un délai pour permettre les prochains clics
-            setTimeout(() => {
-                wasLongPress = false;
-            }, 300);
-        } else if (!hasMoved && touchDuration < 500) {
-            // C'était un simple tap (pas de scroll, pas de long press)
-            // Laisser le clic se produire normalement (ne pas preventDefault)
-            wasLongPress = false;
-        } else {
-            // C'était un scroll, empêcher le clic
-            e.preventDefault();
-            wasLongPress = false;
-        }
-    };
-    
-    const handleTouchCancel = (e) => {
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-        }
-        wasLongPress = false;
-        hasMoved = false;
-    };
-    
     // Ajouter l'événement de clic
     const handleDayClick = (e) => {
-        // Si on vient de faire un long press sur CET élément, ne pas traiter le clic
-        if (wasLongPress) {
-            wasLongPress = false;
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-        }
-        
         e.stopPropagation();
         
-        // Vérifier si cette date est déjà sélectionnée
-        const isDateSelected = this.selectedDates.some(d => getDateKey(d) === getDateKey(date));
-        
-        // Si le mode sélection multiple est activé (par long press uniquement, pas Ctrl/Cmd sur mobile)
-        // Sur desktop, on garde Ctrl/Cmd pour la sélection multiple
-        const isMultiSelect = this.multiSelectMode || (e.ctrlKey || e.metaKey);
-        
-        if (isMultiSelect) {
-            // Mode sélection multiple activé
-            if (isDateSelected) {
-                // Si on clique sur un jour déjà sélectionné, ouvrir la modale
-                this.openModal(date);
-            } else {
-                // Si on clique sur un jour non sélectionné, l'ajouter à la sélection
-                e.preventDefault();
-                this.toggleDateSelection(date);
-            }
-        } else {
-            // Clic simple : sélection unique
-            // Désactiver le mode sélection multiple si on fait un clic simple
-            this.multiSelectMode = false;
-            
-            // Nouvelle sélection unique
-            this.selectedDates = [date];
-            this.updateDateSelectionVisual();
-            this.openModal(date);
-        }
+        // Sélection unique : sélectionner ce jour et ouvrir la modale
+        this.selectedDates = [date];
+        this.updateDateSelectionVisual();
+        this.openModal(date);
     };
-    
-    // Événements tactiles pour le long press
-    // Note: touchend n'est plus passive car on peut appeler preventDefault
-    day.addEventListener('touchstart', handleTouchStart, { passive: true });
-    day.addEventListener('touchmove', handleTouchMove, { passive: true });
-    day.addEventListener('touchend', handleTouchEnd, { passive: false });
-    day.addEventListener('touchcancel', handleTouchCancel, { passive: true });
     
     day.addEventListener('click', handleDayClick);
 
@@ -866,16 +595,12 @@ function closeModal() {
     modal.style.display = 'none';
     modal.classList.remove('active');
     this.selectedDate = null;
+    this.selectedDates = [];
+    this.multiSelectMode = false;
     
-    // Ne réinitialiser la sélection multiple que si on n'est pas en mode sélection multiple
-    // (pour permettre de continuer à sélectionner après avoir fermé la modale)
-    if (!this.multiSelectMode) {
-        this.selectedDates = [];
-    }
-    
-    // Masquer le message d'aide mobile seulement si on n'est plus en mode sélection multiple
+    // Masquer le message d'aide mobile
     const helpHint = document.getElementById('helpHint');
-    if (helpHint && !this.multiSelectMode) {
+    if (helpHint) {
         helpHint.classList.remove('mobile-active');
         helpHint.style.display = 'none';
     }
@@ -885,28 +610,19 @@ function closeModal() {
 
 // Ajouter ou modifier un congé
 async function setLeave(date, type) {
-    // Si plusieurs dates sont sélectionnées, appliquer à toutes
-    const datesToProcess = this.selectedDates.length > 1 ? this.selectedDates : [date];
     const period = this.selectedPeriod || 'full';
+    const keys = getDateKeys(date);
     
-    datesToProcess.forEach(d => {
-        const keys = getDateKeys(d);
-        
-        // Si on pose une journée complète, supprimer les demi-journées
-        if (period === 'full') {
-            delete this.leaves[keys.morning];
-            delete this.leaves[keys.afternoon];
-            this.leaves[keys.full] = type;
-        } else {
-            // Si on pose une demi-journée, supprimer la journée complète
-            delete this.leaves[keys.full];
-            this.leaves[keys[period]] = type;
-        }
-    });
-    
-    // Réinitialiser la sélection multiple
-    this.selectedDates = [];
-    this.multiSelectMode = false; // Désactiver le mode sélection multiple
+    // Si on pose une journée complète, supprimer les demi-journées
+    if (period === 'full') {
+        delete this.leaves[keys.morning];
+        delete this.leaves[keys.afternoon];
+        this.leaves[keys.full] = type;
+    } else {
+        // Si on pose une demi-journée, supprimer la journée complète
+        delete this.leaves[keys.full];
+        this.leaves[keys[period]] = type;
+    }
     
     await this.saveLeaves();
     this.renderCalendar();
@@ -915,27 +631,18 @@ async function setLeave(date, type) {
 
 // Supprimer un congé
 async function removeLeave(date) {
-    // Si plusieurs dates sont sélectionnées, supprimer pour toutes
-    const datesToProcess = this.selectedDates.length > 1 ? this.selectedDates : [date];
     const period = this.selectedPeriod || 'full';
+    const keys = getDateKeys(date);
     
-    datesToProcess.forEach(d => {
-        const keys = getDateKeys(d);
-        
-        if (period === 'full') {
-            // Supprimer tout
-            delete this.leaves[keys.full];
-            delete this.leaves[keys.morning];
-            delete this.leaves[keys.afternoon];
-        } else {
-            // Supprimer seulement la période sélectionnée
-            delete this.leaves[keys[period]];
-        }
-    });
-    
-    // Réinitialiser la sélection multiple
-    this.selectedDates = [];
-    this.multiSelectMode = false; // Désactiver le mode sélection multiple
+    if (period === 'full') {
+        // Supprimer tout
+        delete this.leaves[keys.full];
+        delete this.leaves[keys.morning];
+        delete this.leaves[keys.afternoon];
+    } else {
+        // Supprimer seulement la période sélectionnée
+        delete this.leaves[keys[period]];
+    }
     
     await this.saveLeaves();
     this.renderCalendar();
