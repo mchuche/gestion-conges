@@ -227,14 +227,14 @@ function createYearDayElement(date) {
 
     // Gestion du long press pour activer le mode sélection multiple (mobile)
     let longPressTimer = null;
-    let hasLongPress = false;
     let touchStartTime = 0;
+    let wasLongPress = false; // Variable partagée pour cette date
     
     const handleTouchStart = (e) => {
-        hasLongPress = false;
+        wasLongPress = false;
         touchStartTime = Date.now();
         longPressTimer = setTimeout(() => {
-            hasLongPress = true;
+            wasLongPress = true;
             this.multiSelectMode = true;
             // Feedback visuel : vibration si disponible
             if (navigator.vibrate) {
@@ -260,12 +260,12 @@ function createYearDayElement(date) {
             longPressTimer = null;
         }
         
-        // Si c'était un long press, empêcher le clic normal
-        if (hasLongPress || touchDuration > 500) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Ne pas déclencher le clic normal après un long press
-            return false;
+        // Si c'était un long press, empêcher le clic normal qui suivra
+        if (wasLongPress || touchDuration > 500) {
+            // Marquer que c'était un long press pour empêcher le clic
+            setTimeout(() => {
+                wasLongPress = false; // Réinitialiser après un court délai
+            }, 100);
         }
     };
     
@@ -274,15 +274,16 @@ function createYearDayElement(date) {
             clearTimeout(longPressTimer);
             longPressTimer = null;
         }
+        wasLongPress = false;
     };
     
     // Ajouter l'événement de clic sur l'élément jour
     const handleDayClick = (e) => {
-        // Si on vient de faire un long press, ignorer le clic
-        if (hasLongPress) {
+        // Si on vient de faire un long press sur CET élément, ne pas traiter le clic
+        if (wasLongPress) {
+            wasLongPress = false;
             e.preventDefault();
             e.stopPropagation();
-            hasLongPress = false; // Réinitialiser pour le prochain clic
             return;
         }
         
@@ -298,6 +299,9 @@ function createYearDayElement(date) {
             // Ne pas ouvrir la modale automatiquement, permettre de continuer à sélectionner
         } else {
             // Clic simple : sélection unique ou ouvrir la modale si des dates sont déjà sélectionnées
+            // Désactiver le mode sélection multiple si on fait un clic simple
+            this.multiSelectMode = false;
+            
             if (this.selectedDates.length > 0 && this.selectedDates.some(d => getDateKey(d) === getDateKey(date))) {
                 // On clique sur une date déjà sélectionnée, ouvrir la modale
                 this.openModal(date);
@@ -392,14 +396,14 @@ function createDayElement(container, date, isOtherMonth) {
 
     // Gestion du long press pour activer le mode sélection multiple (mobile)
     let longPressTimer = null;
-    let hasLongPress = false;
     let touchStartTime = 0;
+    let wasLongPress = false; // Variable partagée pour cette date
     
     const handleTouchStart = (e) => {
-        hasLongPress = false;
+        wasLongPress = false;
         touchStartTime = Date.now();
         longPressTimer = setTimeout(() => {
-            hasLongPress = true;
+            wasLongPress = true;
             this.multiSelectMode = true;
             // Feedback visuel : vibration si disponible
             if (navigator.vibrate) {
@@ -425,12 +429,12 @@ function createDayElement(container, date, isOtherMonth) {
             longPressTimer = null;
         }
         
-        // Si c'était un long press, empêcher le clic normal
-        if (hasLongPress || touchDuration > 500) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Ne pas déclencher le clic normal après un long press
-            return false;
+        // Si c'était un long press, empêcher le clic normal qui suivra
+        if (wasLongPress || touchDuration > 500) {
+            // Marquer que c'était un long press pour empêcher le clic
+            setTimeout(() => {
+                wasLongPress = false; // Réinitialiser après un court délai
+            }, 100);
         }
     };
     
@@ -439,15 +443,16 @@ function createDayElement(container, date, isOtherMonth) {
             clearTimeout(longPressTimer);
             longPressTimer = null;
         }
+        wasLongPress = false;
     };
     
     // Ajouter l'événement de clic
     const handleDayClick = (e) => {
-        // Si on vient de faire un long press, ignorer le clic
-        if (hasLongPress) {
+        // Si on vient de faire un long press sur CET élément, ne pas traiter le clic
+        if (wasLongPress) {
+            wasLongPress = false;
             e.preventDefault();
             e.stopPropagation();
-            hasLongPress = false; // Réinitialiser pour le prochain clic
             return;
         }
         
@@ -463,6 +468,9 @@ function createDayElement(container, date, isOtherMonth) {
             // Ne pas ouvrir la modale automatiquement, permettre de continuer à sélectionner
         } else {
             // Clic simple : sélection unique ou ouvrir la modale si des dates sont déjà sélectionnées
+            // Désactiver le mode sélection multiple si on fait un clic simple
+            this.multiSelectMode = false;
+            
             if (this.selectedDates.length > 0 && this.selectedDates.some(d => getDateKey(d) === getDateKey(date))) {
                 // On clique sur une date déjà sélectionnée, ouvrir la modale
                 this.openModal(date);
@@ -518,12 +526,21 @@ function toggleDateSelection(date) {
     // Mettre à jour l'affichage visuel immédiatement
     this.updateDateSelectionVisual();
     
-    // Masquer l'aide si on a plusieurs jours sélectionnés (l'utilisateur a compris)
+    // Mettre à jour le message d'aide si on a plusieurs jours sélectionnés
     if (this.selectedDates.length > 1) {
         const helpHint = document.getElementById('helpHint');
+        if (helpHint && this.multiSelectMode) {
+            helpHint.innerHTML = `✅ <strong>${this.selectedDates.length} jours sélectionnés</strong><br>Touchez un jour sélectionné pour ouvrir la modale`;
+            helpHint.classList.add('mobile-active');
+            helpHint.style.display = 'block';
+        }
+    } else if (this.selectedDates.length === 0 && this.multiSelectMode) {
+        // Si on a désélectionné tous les jours mais que le mode est encore actif
+        const helpHint = document.getElementById('helpHint');
         if (helpHint) {
-            helpHint.classList.remove('mobile-active');
-            // Ne pas masquer complètement, juste retirer le style mobile
+            helpHint.innerHTML = '✅ <strong>Mode sélection multiple activé</strong><br>Touchez d\'autres jours pour les ajouter à la sélection';
+            helpHint.classList.add('mobile-active');
+            helpHint.style.display = 'block';
         }
     }
     
