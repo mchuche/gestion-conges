@@ -233,7 +233,18 @@ function createYearDayElement(date) {
         const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         
         // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple (uniquement sur desktop)
-        const isMultiSelect = !isMobile && (e.ctrlKey || e.metaKey);
+        const hasCtrl = e.ctrlKey || e.metaKey;
+        const isMultiSelect = !isMobile && hasCtrl;
+        
+        console.log('Clic sur jour:', {
+            date: date.toISOString().split('T')[0],
+            ctrlKey: e.ctrlKey,
+            metaKey: e.metaKey,
+            hasCtrl: hasCtrl,
+            isMobile: isMobile,
+            isMultiSelect: isMultiSelect,
+            selectedDatesCount: this.selectedDates.length
+        });
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
@@ -244,9 +255,11 @@ function createYearDayElement(date) {
             if (index > -1) {
                 // Déjà sélectionné, le retirer
                 this.selectedDates.splice(index, 1);
+                console.log('Jour retiré de la sélection');
             } else {
                 // Pas sélectionné, l'ajouter
                 this.selectedDates.push(date);
+                console.log('Jour ajouté à la sélection, total:', this.selectedDates.length);
             }
             
             this.updateDateSelectionVisual();
@@ -346,7 +359,18 @@ function createDayElement(container, date, isOtherMonth) {
         const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         
         // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple (uniquement sur desktop)
-        const isMultiSelect = !isMobile && (e.ctrlKey || e.metaKey);
+        const hasCtrl = e.ctrlKey || e.metaKey;
+        const isMultiSelect = !isMobile && hasCtrl;
+        
+        console.log('Clic sur jour:', {
+            date: date.toISOString().split('T')[0],
+            ctrlKey: e.ctrlKey,
+            metaKey: e.metaKey,
+            hasCtrl: hasCtrl,
+            isMobile: isMobile,
+            isMultiSelect: isMultiSelect,
+            selectedDatesCount: this.selectedDates.length
+        });
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
@@ -357,9 +381,11 @@ function createDayElement(container, date, isOtherMonth) {
             if (index > -1) {
                 // Déjà sélectionné, le retirer
                 this.selectedDates.splice(index, 1);
+                console.log('Jour retiré de la sélection');
             } else {
                 // Pas sélectionné, l'ajouter
                 this.selectedDates.push(date);
+                console.log('Jour ajouté à la sélection, total:', this.selectedDates.length);
             }
             
             this.updateDateSelectionVisual();
