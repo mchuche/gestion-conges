@@ -526,6 +526,9 @@ function openModal(date) {
         this.selectedPeriod = 'full';
     }
     
+    // S'assurer que les boutons de types de congé sont rendus
+    this.renderLeaveTypeButtons();
+    
     // Mettre en évidence le bouton du type de congé actuel selon la période
     this.updateLeaveButtonsHighlight(leaveInfo);
 
