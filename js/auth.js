@@ -199,9 +199,35 @@ async function signup(email, password, name) {
 }
 
 async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        console.error('Erreur de déconnexion:', error);
+    try {
+        // Vérifier d'abord si on a une session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            // Si on a une session, se déconnecter normalement
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Erreur de déconnexion:', error);
+            }
+        } else {
+            // Si pas de session, nettoyer l'état local quand même
+            console.log('Pas de session active, nettoyage de l\'état local');
+            this.user = null;
+            this.leaves = {};
+            this.leaveTypesConfig = [];
+            this.leaveQuotasByYear = {};
+            this.selectedCountry = 'FR';
+            this.showAuthModal();
+        }
+    } catch (error) {
+        // En cas d'erreur, nettoyer l'état local quand même
+        console.warn('Erreur lors de la déconnexion, nettoyage de l\'état local:', error);
+        this.user = null;
+        this.leaves = {};
+        this.leaveTypesConfig = [];
+        this.leaveQuotasByYear = {};
+        this.selectedCountry = 'FR';
+        this.showAuthModal();
     }
 }
 
