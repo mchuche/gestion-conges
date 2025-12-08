@@ -200,28 +200,20 @@ async function signup(email, password, name) {
 
 async function logout() {
     try {
-        // Vérifier d'abord si on a une session
-        const { data: { session } } = await supabase.auth.getSession();
+        // Essayer de se déconnecter (peut échouer si pas de session, c'est OK)
+        const { error } = await supabase.auth.signOut();
         
-        if (session) {
-            // Si on a une session, se déconnecter normalement
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                console.error('Erreur de déconnexion:', error);
-            }
-        } else {
-            // Si pas de session, nettoyer l'état local quand même
-            console.log('Pas de session active, nettoyage de l\'état local');
-            this.user = null;
-            this.leaves = {};
-            this.leaveTypesConfig = [];
-            this.leaveQuotasByYear = {};
-            this.selectedCountry = 'FR';
-            this.showAuthModal();
+        // Ignorer l'erreur si c'est juste une session manquante (déjà déconnecté)
+        if (error && error.message && !error.message.includes('session missing')) {
+            console.warn('Erreur de déconnexion:', error);
         }
     } catch (error) {
-        // En cas d'erreur, nettoyer l'état local quand même
-        console.warn('Erreur lors de la déconnexion, nettoyage de l\'état local:', error);
+        // Ignorer les erreurs de session manquante
+        if (error.message && !error.message.includes('session missing')) {
+            console.warn('Erreur lors de la déconnexion:', error);
+        }
+    } finally {
+        // Toujours nettoyer l'état local, même en cas d'erreur
         this.user = null;
         this.leaves = {};
         this.leaveTypesConfig = [];
