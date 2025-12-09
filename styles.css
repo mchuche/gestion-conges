@@ -330,6 +330,10 @@ header h1 {
     margin-bottom: 20px;
 }
 
+.month-view {
+    display: none; /* Vue mensuelle cachée par défaut, seule la vue semestrielle est utilisée */
+}
+
 .calendar-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
