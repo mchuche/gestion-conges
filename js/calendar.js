@@ -37,6 +37,8 @@ function renderCalendar() {
         // Utiliser le format sélectionné pour la vue annuelle
         if (this.yearViewFormat === 'heatmap') {
             this.renderYearViewHeatmap();
+        } else if (this.yearViewFormat === 'presence') {
+            this.renderYearViewPresence();
         } else {
             this.renderYearViewTimeline();
         }
