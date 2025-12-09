@@ -325,19 +325,16 @@ function createYearDayElement(date) {
     const dateKey = getDateKey(date);
     dayElement.setAttribute('data-date-key', dateKey);
 
-    const dayOfWeek = date.getDay();
+    const dayOfWeek = getDay(date);
     const dayNames = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
     const dayLetter = dayNames[dayOfWeek];
 
-    // Vérifier si c'est aujourd'hui, passé ou futur
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
+    // Vérifier si c'est aujourd'hui, passé ou futur avec date-fns
+    const todayDate = today();
     
-    if (compareDate.toDateString() === today.toDateString()) {
+    if (isSameDay(date, todayDate)) {
         dayElement.classList.add('today');
-    } else if (compareDate < today) {
+    } else if (isBefore(date, todayDate)) {
         dayElement.classList.add('past-day');
     } else {
         dayElement.classList.add('future-day');
@@ -349,7 +346,7 @@ function createYearDayElement(date) {
     }
 
     // Vérifier si c'est un jour férié (toujours français)
-    const publicHolidays = getPublicHolidays('FR', date.getFullYear());
+    const publicHolidays = getPublicHolidays('FR', getYear(date));
     if (publicHolidays[dateKey]) {
         dayElement.classList.add('public-holiday');
         dayElement.title = publicHolidays[dateKey];
@@ -509,7 +506,7 @@ function getLeaveTypeConfig(type) {
     if (!config) return null;
     
     // Ajouter le quota de l'année en cours
-    const currentYear = this.currentDate.getFullYear();
+    const currentYear = getYear(this.currentDate);
     const quota = this.getQuotaForYear(type, currentYear);
     return { ...config, quota };
 }
