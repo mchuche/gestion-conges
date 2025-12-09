@@ -255,18 +255,43 @@
 }
 
 .year-presence-user-label {
-    min-width: 150px;
-    max-width: 150px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
     padding: 10px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     font-weight: 600;
     display: flex;
     align-items: center;
+    justify-content: center;
     position: sticky;
     left: 0;
     z-index: 20;
     box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.year-presence-user-name {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    padding: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: sticky;
+    left: 0;
+    z-index: 15;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .year-presence-month-column {
