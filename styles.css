@@ -395,6 +395,15 @@ header h1 {
     background: #e8e8e8;
 }
 
+.day.past-day.weekend {
+    border-color: #bbb;
+    border-width: 2px;
+}
+
+.day.past-day.weekend:hover {
+    border-color: #999;
+}
+
 .day.future-day {
     background: #ffffff;
 }
@@ -604,6 +613,15 @@ header h1 {
 .year-day.past-day:hover {
     opacity: 0.8;
     background: #e8e8e8;
+}
+
+.year-day.past-day.weekend {
+    border-color: #bbb;
+    border-width: 2px;
+}
+
+.year-day.past-day.weekend:hover {
+    border-color: #999;
 }
 
 .year-day.future-day {

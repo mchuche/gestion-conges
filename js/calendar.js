@@ -330,6 +330,12 @@ function createDayElement(container, date, isOtherMonth) {
         day.classList.add('future-day');
     }
 
+    // Vérifier si c'est un week-end
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+        day.classList.add('weekend');
+    }
+
     // Vérifier si c'est un jour férié
     const publicHolidays = getPublicHolidays(this.selectedCountry, date.getFullYear());
     if (publicHolidays[dateKey]) {
