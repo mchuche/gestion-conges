@@ -54,8 +54,7 @@ function setupEventListeners() {
                 this.currentDate = new Date(prevYear, 6, 1); // 1er juillet de l'année précédente
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de la même année
-                this.currentDate.setMonth(0); // Janvier
-                this.currentDate.setDate(1); // 1er du mois pour éviter les problèmes
+                this.currentDate = new Date(currentYear, 0, 1); // 1er janvier de la même année
             }
             // Synchroniser currentYear avec currentDate
             this.currentYear = this.currentDate.getFullYear();

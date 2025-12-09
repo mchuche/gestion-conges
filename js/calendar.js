@@ -48,25 +48,6 @@ function renderCalendar() {
     }
 }
 
-// Entrer en mode plein écran pour la vue annuelle
-function enterYearViewFullscreen() {
-    const calendarContainer = document.querySelector('.calendar-container');
-    const semesterView = document.getElementById('semesterView');
-    if (calendarContainer && semesterView) {
-        calendarContainer.classList.add('year-view-fullscreen');
-        semesterView.classList.add('year-view-fullscreen');
-    }
-}
-
-// Sortir du mode plein écran
-function exitYearViewFullscreen() {
-    const calendarContainer = document.querySelector('.calendar-container');
-    const semesterView = document.getElementById('semesterView');
-    if (calendarContainer && semesterView) {
-        calendarContainer.classList.remove('year-view-fullscreen');
-        semesterView.classList.remove('year-view-fullscreen');
-    }
-}
 
 // Rendre la vue semestrielle
 function renderSemesterView() {
@@ -114,18 +95,22 @@ function renderSemesterView() {
         monthHeader.textContent = monthNames[month];
         monthColumn.appendChild(monthHeader);
 
-        // Jours du mois
-        const lastDay = new Date(year, month + 1, 0);
+        // Jours du mois - utiliser finalYear pour garantir la cohérence
+        const lastDay = new Date(finalYear, month + 1, 0);
         const daysInMonth = lastDay.getDate();
 
         for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(year, month, day);
+            const date = new Date(finalYear, month, day);
             const dayElement = this.createYearDayElement(date);
             monthColumn.appendChild(dayElement);
         }
 
         semesterCalendar.appendChild(monthColumn);
     }
+    
+    // Finaliser la synchronisation
+    this.currentYear = finalYear;
+    this.currentDate = new Date(finalYear, finalMonth, 1);
 }
 
 // Rendre la vue annuelle (mini-calendriers)
