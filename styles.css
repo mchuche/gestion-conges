@@ -1413,6 +1413,58 @@ header h1 {
     transform: rotate(20deg) scale(0.95);
 }
 
+/* Ajustements supplémentaires pour le mode sombre */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .stat-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .year-day,
+[data-theme="dark"] .day {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .year-day:hover,
+[data-theme="dark"] .day:hover {
+    background: var(--hover-color);
+}
+
+[data-theme="dark"] .auth-input {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .auth-input:focus {
+    border-color: var(--primary-color);
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .config-section {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .leave-type-inputs input,
+[data-theme="dark"] .leave-type-inputs select {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
 /* Authentification */
 .auth-modal-content {
     max-width: 400px;
