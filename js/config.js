@@ -40,24 +40,24 @@ function setupEventListeners() {
     document.getElementById('prevMonth').addEventListener('click', () => {
         if (this.viewMode === 'year') {
             // Vue annuelle : passer à l'année précédente
-            this.currentYear--;
-            this.currentDate.setFullYear(this.currentYear);
-            this.currentDate.setMonth(0); // Janvier pour éviter les problèmes
+            const prevYear = getYear(this.currentDate) - 1;
+            this.currentDate = startOfYear(setYear(this.currentDate, prevYear));
+            this.currentYear = prevYear;
         } else {
             // Vue semestrielle : passer au semestre précédent
-            const currentMonth = this.currentDate.getMonth();
-            const currentYear = this.currentDate.getFullYear();
+            const currentMonth = getMonth(this.currentDate);
+            const currentYear = getYear(this.currentDate);
             
             if (currentMonth < 6) {
                 // On est au 1er semestre (janvier-juin), aller au 2ème semestre de l'année précédente
                 const prevYear = currentYear - 1;
-                this.currentDate = new Date(prevYear, 6, 1); // 1er juillet de l'année précédente
+                this.currentDate = createDate(prevYear, 6, 1); // 1er juillet de l'année précédente
+                this.currentYear = prevYear;
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de la même année
-                this.currentDate = new Date(currentYear, 0, 1); // 1er janvier de la même année
+                this.currentDate = createDate(currentYear, 0, 1); // 1er janvier de la même année
+                this.currentYear = currentYear;
             }
-            // Synchroniser currentYear avec currentDate
-            this.currentYear = this.currentDate.getFullYear();
         }
         this.renderCalendar();
         this.updateStats();
@@ -67,27 +67,28 @@ function setupEventListeners() {
     document.getElementById('nextMonth').addEventListener('click', () => {
         if (this.viewMode === 'year') {
             // Vue annuelle : passer à l'année suivante
-            this.currentYear++;
-            this.currentDate = new Date(this.currentYear, 0, 1);
+            const nextYear = getYear(this.currentDate) + 1;
+            this.currentDate = startOfYear(setYear(this.currentDate, nextYear));
+            this.currentYear = nextYear;
         } else {
             // Vue semestrielle : passer au semestre suivant
-            const currentMonth = this.currentDate.getMonth();
-            const currentYear = this.currentDate.getFullYear();
+            const currentMonth = getMonth(this.currentDate);
+            const currentYear = getYear(this.currentDate);
             console.log('[Navigation] Avant changement - Mois actuel:', currentMonth, 'Année:', currentYear);
             
             if (currentMonth < 6) {
                 // On est au 1er semestre (janvier-juin), aller au 2ème semestre de la même année
-                this.currentDate = new Date(currentYear, 6, 1); // 1er juillet de la même année
-                console.log('[Navigation] Passage au 2ème semestre de', currentYear, '- Mois:', this.currentDate.getMonth());
+                this.currentDate = createDate(currentYear, 6, 1); // 1er juillet de la même année
+                this.currentYear = currentYear;
+                console.log('[Navigation] Passage au 2ème semestre de', currentYear, '- Mois:', getMonth(this.currentDate));
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de l'année suivante
                 const nextYear = currentYear + 1;
-                this.currentDate = new Date(nextYear, 0, 1); // 1er janvier de l'année suivante
-                console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', this.currentDate.getMonth(), 'Année:', this.currentDate.getFullYear());
+                this.currentDate = createDate(nextYear, 0, 1); // 1er janvier de l'année suivante
+                this.currentYear = nextYear;
+                console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
             }
-            // Synchroniser currentYear avec currentDate
-            this.currentYear = this.currentDate.getFullYear();
-            console.log('[Navigation] Après changement - Mois:', this.currentDate.getMonth(), 'Année:', this.currentYear, 'Date complète:', this.currentDate.toISOString());
+            console.log('[Navigation] Après changement - Mois:', getMonth(this.currentDate), 'Année:', this.currentYear, 'Date complète:', this.currentDate.toISOString());
         }
         // Forcer le rendu immédiatement après la mise à jour
         this.renderCalendar();

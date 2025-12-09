@@ -3,8 +3,8 @@
 
 class LeaveManager {
     constructor() {
-        this.currentDate = new Date();
-        this.currentYear = this.currentDate.getFullYear();
+        this.currentDate = today();
+        this.currentYear = getYear(this.currentDate);
         this.user = null;
         this.leaves = {};
         this.leaveTypesConfig = [];

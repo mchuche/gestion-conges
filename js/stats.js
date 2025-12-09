@@ -31,8 +31,8 @@ function hasValidQuota(typeId, year) {
 
 // Mettre à jour les statistiques
 function updateStats() {
-    // Utiliser l'année de la vue actuelle
-    const currentYear = this.currentDate.getFullYear();
+    // Utiliser l'année de la vue actuelle avec date-fns
+    const currentYear = getYear(this.currentDate);
     
     // Compter les jours (0.5 pour demi-journée, 1 pour journée complète) pour l'année en cours uniquement
     // Exclure les types sans quota ou avec quota = 0
@@ -44,8 +44,8 @@ function updateStats() {
         const baseDateKey = dateKey.split('-').slice(0, 3).join('-');
         const date = new Date(baseDateKey);
         
-        // Filtrer par année
-        if (date.getFullYear() !== currentYear) {
+        // Filtrer par année avec date-fns
+        if (getYear(date) !== currentYear) {
             return;
         }
         

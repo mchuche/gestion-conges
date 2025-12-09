@@ -254,8 +254,12 @@
     <!-- Configuration Supabase (doit être chargé en premier) -->
     <script src="config.js" onerror="console.warn('config.js non trouvé - sera généré par GitHub Actions lors du déploiement')"></script>
     
+    <!-- Bibliothèques externes -->
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.30.0/index.min.js"></script>
+    
     <!-- Modules JavaScript (dans l'ordre de dépendance) -->
     <script src="js/supabase-init.js"></script>
+    <script src="js/dateUtils.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/holidays.js"></script>
     <script src="js/database.js"></script>

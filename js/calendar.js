@@ -31,7 +31,7 @@ function renderCalendar() {
         return;
     }
     
-    console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', this.currentDate.getMonth(), 'Année:', this.currentDate.getFullYear());
+    console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
     
     if (this.viewMode === 'year') {
         this.renderYearView();
@@ -43,7 +43,7 @@ function renderCalendar() {
             semesterView.className = 'semester-view';
         }
         // Vérifier que currentDate est bien à jour avant le rendu
-        console.log('[RenderCalendar] Avant renderSemesterView - currentDate:', this.currentDate.toISOString(), 'Mois:', this.currentDate.getMonth());
+        console.log('[RenderCalendar] Avant renderSemesterView - currentDate:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate));
         this.renderSemesterView();
     }
 }
@@ -129,8 +129,8 @@ function renderYearView() {
         semesterView.className = 'semester-view';
     }
 
-    // Utiliser currentDate pour obtenir l'année actuelle et synchroniser
-    const year = this.currentDate.getFullYear();
+    // Utiliser date-fns pour obtenir l'année actuelle et synchroniser
+    const year = getYear(this.currentDate);
     this.currentYear = year;
     console.log('[YearView] Rendu de la vue annuelle pour l\'année', year);
     const monthNames = [
@@ -169,11 +169,10 @@ function renderYearView() {
         const daysGrid = document.createElement('div');
         daysGrid.className = 'year-days-grid';
 
-        // Calculer le premier jour du mois et le nombre de jours
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const daysInMonth = lastDay.getDate();
-        const startingDayOfWeek = firstDay.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
+        // Calculer le premier jour du mois et le nombre de jours avec date-fns
+        const firstDay = createDate(year, month, 1);
+        const daysInMonth = getDaysInMonth(firstDay);
+        const startingDayOfWeek = getDay(firstDay); // 0 = Dimanche, 1 = Lundi, etc.
 
         // Ajouter des cellules vides pour aligner le premier jour
         for (let i = 0; i < startingDayOfWeek; i++) {
@@ -184,7 +183,7 @@ function renderYearView() {
 
         // Ajouter les jours du mois
         for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(year, month, day);
+            const date = createDate(year, month, day);
             const dayElement = this.createYearViewDayElement(date);
             daysGrid.appendChild(dayElement);
         }
@@ -256,7 +255,7 @@ function createYearViewDayElement(date) {
     // Numéro du jour
     const dayNumber = document.createElement('span');
     dayNumber.className = 'year-view-day-number';
-    dayNumber.textContent = dayOfMonth;
+    dayNumber.textContent = getDate(date);
     dayElement.appendChild(dayNumber);
 
     // Event listeners pour le clic

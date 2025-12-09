@@ -15,6 +15,10 @@ function getDateKey(date) {
         console.error('[Utils] Date invalide dans getDateKey:', date);
         throw new Error('Invalid date');
     }
+    // Utiliser formatDateKey si disponible, sinon fallback sur toISOString
+    if (typeof formatDateKey !== 'undefined') {
+        return formatDateKey(date);
+    }
     return date.toISOString().split('T')[0];
 }
 
