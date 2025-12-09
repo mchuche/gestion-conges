@@ -118,3 +118,6 @@ Une fois déployé, vérifiez que :
 
 **Note** : Le fichier `config.js` est généré automatiquement lors du déploiement et n'est **jamais** commité dans le dépôt. Vos secrets restent sécurisés dans GitHub Secrets.
 
+
+
+

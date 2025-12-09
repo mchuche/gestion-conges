@@ -21,3 +21,6 @@ echo ✅ Configuration terminée !
 echo    Vous pouvez maintenant ouvrir index.html dans votre navigateur
 pause
 
+
+
+

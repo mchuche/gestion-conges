@@ -178,3 +178,4 @@ function createYearViewHeatmapSquare(date) {
     return square;
 }
 
+

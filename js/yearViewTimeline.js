@@ -81,3 +81,4 @@ function renderYearViewTimeline() {
     semesterCalendar.appendChild(timelineContainer);
 }
 
+

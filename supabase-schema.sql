@@ -96,3 +96,6 @@ CREATE POLICY "Users can insert own preferences" ON user_preferences
 CREATE POLICY "Users can update own preferences" ON user_preferences
     FOR UPDATE USING (auth.uid() = user_id);
 
+
+
+

@@ -60,3 +60,4 @@ Pour vérifier que les icônes sont correctement configurées :
 3. Allez dans l'onglet "Application" (Chrome) ou "Manifest" (Firefox)
 4. Vérifiez que toutes les icônes sont chargées sans erreur
 
+

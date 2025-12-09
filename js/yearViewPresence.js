@@ -2,6 +2,7 @@
 // Cette vue permet de voir les présences/absences de plusieurs utilisateurs
 
 function renderYearViewPresence() {
+    const manager = this; // Capturer le contexte
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
         console.error('[YearViewPresence] semesterCalendar element not found');
@@ -115,7 +116,7 @@ function renderYearViewPresence() {
             
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = createDate(year, month, day);
-                const dayCell = this.createPresenceDayCell(date, user);
+                const dayCell = manager.createPresenceDayCell(date, user);
                 daysContainer.appendChild(dayCell);
             }
             
@@ -153,23 +154,25 @@ function renderYearViewPresence() {
             
             // Compter combien d'utilisateurs sont présents ce jour
             let presentCount = 0;
-            users.forEach(user => {
-                const userLeaves = user.leaves || {};
-                // Présent si pas de congé ce jour
-                const hasLeave = userLeaves[dateKey] || 
-                                userLeaves[`${dateKey}-morning`] || 
-                                userLeaves[`${dateKey}-afternoon`];
-                
-                // Vérifier aussi si c'est un weekend ou jour férié (ne compte pas comme absence)
-                const dayOfWeek = getDay(date);
-                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                const publicHolidays = this.getPublicHolidays('FR', year);
-                const isHoliday = publicHolidays[dateKey];
-                
-                if (!hasLeave && !isWeekend && !isHoliday) {
-                    presentCount++;
-                }
-            });
+            const dayOfWeek = getDay(date);
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const publicHolidays = manager.getPublicHolidays('FR', year);
+            const isHoliday = publicHolidays[dateKey];
+            
+            // Ne compter que les jours ouvrés (pas weekend, pas férié)
+            if (!isWeekend && !isHoliday) {
+                users.forEach(user => {
+                    const userLeaves = user.leaves || {};
+                    // Présent si pas de congé ce jour
+                    const hasLeave = userLeaves[dateKey] || 
+                                    userLeaves[`${dateKey}-morning`] || 
+                                    userLeaves[`${dateKey}-afternoon`];
+                    
+                    if (!hasLeave) {
+                        presentCount++;
+                    }
+                });
+            }
             
             const statsCell = document.createElement('div');
             statsCell.className = 'year-presence-stats-cell';
