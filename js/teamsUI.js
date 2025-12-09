@@ -15,11 +15,14 @@ function updateTeamSelectorVisibility() {
     if (this.user) {
         teamsBtn.style.display = 'inline-block';
         console.log('[TeamsUI] Bouton équipes affiché pour utilisateur:', this.user.email);
+        console.log('[TeamsUI] Équipes disponibles:', this.userTeams?.length || 0);
         
         // Afficher le sélecteur s'il y a des équipes ou si on est en vue présence
         if (this.userTeams && this.userTeams.length > 0) {
             teamSelect.style.display = 'inline-block';
             console.log('[TeamsUI] Sélecteur d\'équipe affiché (équipes disponibles:', this.userTeams.length, ')');
+            // S'assurer que le sélecteur est rempli
+            this.populateTeamSelector();
         } else if (this.viewMode === 'year' && this.yearViewFormat === 'presence') {
             teamSelect.style.display = 'inline-block';
             console.log('[TeamsUI] Sélecteur d\'équipe affiché (vue présence)');
@@ -36,7 +39,13 @@ function updateTeamSelectorVisibility() {
 // Remplir le sélecteur d'équipe
 function populateTeamSelector() {
     const teamSelect = document.getElementById('teamSelect');
-    if (!teamSelect) return;
+    if (!teamSelect) {
+        console.warn('[populateTeamSelector] Élément teamSelect non trouvé');
+        return;
+    }
+    
+    console.log('[populateTeamSelector] Remplissage du sélecteur...');
+    console.log('[populateTeamSelector] Équipes disponibles:', this.userTeams?.length || 0);
     
     // Vider le sélecteur
     teamSelect.innerHTML = '<option value="">Mon calendrier</option>';
@@ -51,7 +60,11 @@ function populateTeamSelector() {
                 option.selected = true;
             }
             teamSelect.appendChild(option);
+            console.log('[populateTeamSelector] Équipe ajoutée:', team.name, team.id);
         });
+        console.log('[populateTeamSelector] Total équipes ajoutées:', this.userTeams.length);
+    } else {
+        console.warn('[populateTeamSelector] Aucune équipe disponible');
     }
 }
 
