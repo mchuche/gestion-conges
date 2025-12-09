@@ -127,7 +127,7 @@ async function handleAcceptInvitation(invitationId) {
             this.updateTeamSelectorVisibility();
         }
         
-        alert('Invitation acceptée ! Vous avez rejoint l\'équipe.');
+        await swalSuccess('✅ Invitation acceptée', 'Vous avez rejoint l\'équipe avec succès !', 3000);
         
         // Fermer la modale si plus d'invitations
         const pendingInvitations = await this.loadUserPendingInvitations();
@@ -136,7 +136,7 @@ async function handleAcceptInvitation(invitationId) {
         }
     } catch (error) {
         console.error('Erreur lors de l\'acceptation de l\'invitation:', error);
-        alert('Erreur lors de l\'acceptation de l\'invitation: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors de l\'acceptation de l\'invitation: ' + (error.message || error));
     }
 }
 
