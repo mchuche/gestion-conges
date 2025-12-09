@@ -140,10 +140,15 @@ async function showTeamDetails(teamId) {
     // Charger les membres
     const members = await this.loadTeamMembers(teamId);
     
+    // Charger les invitations en attente
+    const invitations = await this.loadTeamInvitations(teamId);
+    const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
+    
     // Rendre la liste des membres
     teamMembersList.innerHTML = '';
     
-    if (members.length === 0) {
+    // Afficher les membres actifs
+    if (members.length === 0 && pendingInvitations.length === 0) {
         teamMembersList.innerHTML = '<p class="no-members">Aucun membre dans cette équipe.</p>';
     } else {
         members.forEach(member => {
@@ -168,6 +173,36 @@ async function showTeamDetails(teamId) {
             
             teamMembersList.appendChild(memberCard);
         });
+        
+        // Afficher les invitations en attente
+        if (pendingInvitations.length > 0) {
+            const invitationsHeader = document.createElement('div');
+            invitationsHeader.className = 'invitations-header';
+            invitationsHeader.innerHTML = '<h5 style="margin: 20px 0 10px 0; color: var(--text-color);">Invitations en attente</h5>';
+            teamMembersList.appendChild(invitationsHeader);
+            
+            pendingInvitations.forEach(invitation => {
+                const invitationCard = document.createElement('div');
+                invitationCard.className = 'member-card invitation-card';
+                const canDelete = team.role === 'owner' || team.role === 'admin';
+                
+                invitationCard.innerHTML = `
+                    <div class="member-info">
+                        <span class="member-email">${invitation.email}</span>
+                        <span class="member-role" style="opacity: 0.7;">⏳ En attente</span>
+                    </div>
+                    ${canDelete ? `<button class="remove-member-btn" data-invitation-id="${invitation.id}">Annuler</button>` : ''}
+                `;
+                
+                if (canDelete) {
+                    invitationCard.querySelector('.remove-member-btn').addEventListener('click', () => {
+                        this.handleDeleteInvitation(invitation.id, teamId);
+                    });
+                }
+                
+                teamMembersList.appendChild(invitationCard);
+            });
+        }
     }
     
     // Configurer le bouton d'ajout de membre
@@ -261,13 +296,20 @@ async function handleCreateTeam() {
 }
 
 // Afficher le dialogue d'ajout de membre
-function showAddMemberDialog(teamId) {
-    const email = prompt('Entrez l\'email de l\'utilisateur à ajouter :');
+async function showAddMemberDialog(teamId) {
+    const email = prompt('Entrez l\'email de l\'utilisateur à inviter :');
     if (!email || !email.trim()) return;
     
-    // Pour l'instant, on ne peut pas ajouter directement par email
-    // Il faudrait que l'utilisateur existe déjà dans Supabase
-    alert('Pour ajouter un membre, l\'utilisateur doit d\'abord s\'inscrire à l\'application. Partagez-lui le lien d\'inscription, puis vous pourrez l\'ajouter à l\'équipe.');
+    try {
+        await this.inviteUserToTeam(teamId, email.trim());
+        alert(`Invitation envoyée à ${email.trim()} !\n\nL'utilisateur recevra une notification lorsqu'il se connectera à l'application.`);
+        
+        // Rafraîchir les détails de l'équipe pour afficher les invitations
+        await this.showTeamDetails(teamId);
+    } catch (error) {
+        console.error('Erreur lors de l\'invitation:', error);
+        alert('Erreur lors de l\'invitation: ' + (error.message || error));
+    }
 }
 
 // Retirer un membre
@@ -283,6 +325,22 @@ async function handleRemoveMember(teamId, userId) {
     } catch (error) {
         console.error('Erreur lors du retrait du membre:', error);
         alert('Erreur lors du retrait du membre: ' + (error.message || error));
+    }
+}
+
+// Supprimer une invitation
+async function handleDeleteInvitation(invitationId, teamId) {
+    if (!confirm('Êtes-vous sûr de vouloir annuler cette invitation ?')) {
+        return;
+    }
+    
+    try {
+        await this.deleteTeamInvitation(invitationId);
+        await this.showTeamDetails(teamId);
+        alert('Invitation annulée avec succès');
+    } catch (error) {
+        console.error('Erreur lors de la suppression de l\'invitation:', error);
+        alert('Erreur lors de la suppression de l\'invitation: ' + (error.message || error));
     }
 }
 

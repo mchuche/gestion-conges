@@ -70,6 +70,7 @@
                 <div class="header-right">
                     <div class="user-info">
                         <span id="userName" class="user-name"></span>
+                        <span id="invitationsBadge" class="invitations-badge" style="display: none;" title="Vous avez des invitations en attente">📨</span>
                     </div>
                     <button id="themeToggle" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème">🌙</button>
                     <button id="helpBtn" class="help-btn" title="Aide">❓</button>
@@ -206,6 +207,22 @@
             </div>
         </div>
 
+        <!-- Modal des invitations -->
+        <div id="invitationsModal" class="modal">
+            <div class="modal-content invitations-modal-content">
+                <span class="close invitations-close">&times;</span>
+                <h3>📨 Invitations en attente</h3>
+                
+                <div id="invitationsList" class="invitations-list">
+                    <p class="no-invitations">Chargement...</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="closeInvitationsModalBtn" class="cancel-btn">Fermer</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal d'aide -->
         <div id="helpModal" class="modal">
             <div class="modal-content help-modal-content">
@@ -319,6 +336,7 @@
     <script src="js/auth.js"></script>
     <script src="js/teams.js"></script>
     <script src="js/teamsUI.js"></script>
+    <script src="js/invitationsUI.js"></script>
     <script src="js/calendar.js"></script>
     <script src="js/yearViewTimeline.js"></script>
     <script src="js/yearViewHeatmap.js"></script>

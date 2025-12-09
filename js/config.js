@@ -39,6 +39,11 @@ async function init() {
         this.setupTeamsEventListeners();
     }
     
+    // Configurer les event listeners pour les invitations
+    if (typeof this.setupInvitationsEventListeners === 'function') {
+        this.setupInvitationsEventListeners();
+    }
+    
     // S'assurer que le bouton de thème est bien initialisé
     if (typeof this.updateThemeToggleButton === 'function') {
         const currentTheme = this.getCurrentTheme ? this.getCurrentTheme() : 'light';

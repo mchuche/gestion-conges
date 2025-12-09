@@ -142,17 +142,271 @@ async function inviteUserToTeam(teamId, email) {
             throw new Error('Vous n\'avez pas les droits pour inviter des membres');
         }
 
-        // Chercher l'utilisateur par email dans Supabase Auth
-        // Note: Supabase ne permet pas de rechercher directement par email via l'API publique
-        // On va créer une entrée dans team_members avec l'email en attente
-        // Pour une vraie implémentation, il faudrait utiliser Supabase Admin API ou un système d'invitation
-        
-        // Pour l'instant, on va simplement retourner une erreur indiquant que l'utilisateur doit s'inscrire d'abord
-        // Une meilleure solution serait d'avoir une table d'invitations
-        
-        throw new Error('L\'utilisateur doit d\'abord s\'inscrire à l\'application. Partagez-lui le lien d\'inscription.');
+        // Vérifier que l'email est valide
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            throw new Error('Email invalide');
+        }
+
+        // Vérifier que l'utilisateur n'est pas déjà membre
+        const existingMembers = await this.loadTeamMembers(teamId);
+        if (existingMembers.some(m => m.email.toLowerCase() === email.toLowerCase())) {
+            throw new Error('Cet utilisateur est déjà membre de l\'équipe');
+        }
+
+        // Vérifier qu'il n'y a pas déjà une invitation en attente pour cet email
+        const { data: existingInvitations, error: checkError } = await supabase
+            .from('team_invitations')
+            .select('id, status')
+            .eq('team_id', teamId)
+            .eq('email', email.toLowerCase().trim())
+            .eq('status', 'pending');
+
+        if (checkError) throw checkError;
+
+        if (existingInvitations && existingInvitations.length > 0) {
+            throw new Error('Une invitation est déjà en attente pour cet email');
+        }
+
+        // Créer l'invitation
+        const { data, error } = await supabase
+            .from('team_invitations')
+            .insert({
+                team_id: teamId,
+                email: email.toLowerCase().trim(),
+                invited_by: this.user.id,
+                status: 'pending'
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        console.log('Invitation créée avec succès:', data);
+        return data;
     } catch (e) {
         console.error('Erreur lors de l\'invitation:', e);
+        throw e;
+    }
+}
+
+// Charger les invitations d'une équipe
+async function loadTeamInvitations(teamId) {
+    if (!this.user || !supabase || !teamId) {
+        return [];
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('team_invitations')
+            .select(`
+                id,
+                email,
+                status,
+                created_at,
+                accepted_at,
+                invited_by,
+                teams:team_id (
+                    name
+                )
+            `)
+            .eq('team_id', teamId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return (data || []).map(invitation => ({
+            id: invitation.id,
+            email: invitation.email,
+            status: invitation.status,
+            createdAt: invitation.created_at,
+            acceptedAt: invitation.accepted_at,
+            invitedBy: invitation.invited_by,
+            teamName: invitation.teams?.name || 'Équipe inconnue'
+        }));
+    } catch (e) {
+        console.error('Erreur lors du chargement des invitations:', e);
+        return [];
+    }
+}
+
+// Charger les invitations en attente pour l'utilisateur actuel (par email)
+async function loadUserPendingInvitations() {
+    if (!this.user || !supabase) {
+        return [];
+    }
+
+    try {
+        // Récupérer l'email de l'utilisateur actuel
+        const userEmail = this.user.email?.toLowerCase();
+
+        if (!userEmail) {
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('team_invitations')
+            .select(`
+                id,
+                team_id,
+                email,
+                status,
+                created_at,
+                teams:team_id (
+                    id,
+                    name,
+                    description
+                ),
+                inviter:invited_by (
+                    email
+                )
+            `)
+            .eq('email', userEmail)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return (data || []).map(invitation => ({
+            id: invitation.id,
+            teamId: invitation.team_id,
+            email: invitation.email,
+            status: invitation.status,
+            createdAt: invitation.created_at,
+            team: invitation.teams,
+            inviterEmail: invitation.inviter?.email || 'Utilisateur inconnu'
+        }));
+    } catch (e) {
+        console.error('Erreur lors du chargement des invitations en attente:', e);
+        return [];
+    }
+}
+
+// Accepter une invitation
+async function acceptTeamInvitation(invitationId) {
+    if (!this.user || !supabase || !invitationId) {
+        throw new Error('Paramètres manquants');
+    }
+
+    try {
+        // Récupérer l'invitation
+        const { data: invitation, error: fetchError } = await supabase
+            .from('team_invitations')
+            .select('*')
+            .eq('id', invitationId)
+            .eq('email', this.user.email?.toLowerCase())
+            .eq('status', 'pending')
+            .single();
+
+        if (fetchError) throw fetchError;
+        if (!invitation) {
+            throw new Error('Invitation non trouvée ou déjà traitée');
+        }
+
+        // Vérifier que l'utilisateur n'est pas déjà membre
+        const existingMembers = await this.loadTeamMembers(invitation.team_id);
+        if (existingMembers.some(m => m.userId === this.user.id)) {
+            // L'utilisateur est déjà membre, marquer l'invitation comme acceptée
+            await supabase
+                .from('team_invitations')
+                .update({
+                    status: 'accepted',
+                    accepted_at: new Date().toISOString()
+                })
+                .eq('id', invitationId);
+            return true;
+        }
+
+        // Ajouter l'utilisateur à l'équipe
+        const { error: memberError } = await supabase
+            .from('team_members')
+            .insert({
+                team_id: invitation.team_id,
+                user_id: this.user.id,
+                role: 'member',
+                invited_by: invitation.invited_by
+            });
+
+        if (memberError) throw memberError;
+
+        // Marquer l'invitation comme acceptée
+        const { error: updateError } = await supabase
+            .from('team_invitations')
+            .update({
+                status: 'accepted',
+                accepted_at: new Date().toISOString()
+            })
+            .eq('id', invitationId);
+
+        if (updateError) throw updateError;
+
+        // Recharger les équipes de l'utilisateur
+        await this.loadUserTeams();
+
+        return true;
+    } catch (e) {
+        console.error('Erreur lors de l\'acceptation de l\'invitation:', e);
+        throw e;
+    }
+}
+
+// Refuser une invitation
+async function declineTeamInvitation(invitationId) {
+    if (!this.user || !supabase || !invitationId) {
+        throw new Error('Paramètres manquants');
+    }
+
+    try {
+        const { error } = await supabase
+            .from('team_invitations')
+            .update({
+                status: 'declined'
+            })
+            .eq('id', invitationId)
+            .eq('email', this.user.email?.toLowerCase())
+            .eq('status', 'pending');
+
+        if (error) throw error;
+
+        return true;
+    } catch (e) {
+        console.error('Erreur lors du refus de l\'invitation:', e);
+        throw e;
+    }
+}
+
+// Supprimer une invitation (pour les owners/admins)
+async function deleteTeamInvitation(invitationId) {
+    if (!this.user || !supabase || !invitationId) {
+        throw new Error('Paramètres manquants');
+    }
+
+    try {
+        // Récupérer l'invitation pour vérifier les droits
+        const { data: invitation, error: fetchError } = await supabase
+            .from('team_invitations')
+            .select('team_id')
+            .eq('id', invitationId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // Vérifier que l'utilisateur a les droits
+        const userTeam = this.userTeams.find(t => t.id === invitation.team_id);
+        if (!userTeam || !['owner', 'admin'].includes(userTeam.role)) {
+            throw new Error('Vous n\'avez pas les droits pour supprimer cette invitation');
+        }
+
+        const { error } = await supabase
+            .from('team_invitations')
+            .delete()
+            .eq('id', invitationId);
+
+        if (error) throw error;
+
+        return true;
+    } catch (e) {
+        console.error('Erreur lors de la suppression de l\'invitation:', e);
         throw e;
     }
 }

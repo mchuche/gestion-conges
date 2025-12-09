@@ -470,12 +470,29 @@ async function loadUserData() {
             await this.loadUserTeams();
         }
         
+        // Vérifier les invitations en attente
+        if (typeof this.loadUserPendingInvitations === 'function') {
+            const pendingInvitations = await this.loadUserPendingInvitations();
+            if (pendingInvitations.length > 0) {
+                console.log('Invitations en attente trouvées:', pendingInvitations.length);
+                // Mettre à jour le badge d'invitations
+                if (typeof this.updateInvitationsBadge === 'function') {
+                    await this.updateInvitationsBadge();
+                }
+            }
+        }
+        
         // Mettre à jour l'interface des équipes après le chargement
         if (typeof this.updateTeamSelectorVisibility === 'function') {
             this.updateTeamSelectorVisibility();
         }
         if (typeof this.populateTeamSelector === 'function') {
             this.populateTeamSelector();
+        }
+        
+        // Mettre à jour le badge d'invitations
+        if (typeof this.updateInvitationsBadge === 'function') {
+            await this.updateInvitationsBadge();
         }
     } catch (error) {
         console.error('Erreur lors du chargement des données utilisateur:', error);

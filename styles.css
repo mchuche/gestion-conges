@@ -2198,3 +2198,125 @@ header h1 {
     }
 }
 
+/* Styles pour les invitations */
+.invitations-badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 4px 8px;
+    background: var(--warning-color);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.9em;
+    cursor: pointer;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.invitations-badge:hover {
+    background: #e68900;
+    transform: scale(1.1);
+}
+
+.invitation-card {
+    opacity: 0.8;
+    border-style: dashed;
+}
+
+.invitations-header {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.invitations-modal-content {
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.invitations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.invitation-item {
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+}
+
+.invitation-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.invitation-team-name {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1.1em;
+}
+
+.invitation-email {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.invitation-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.accept-invitation-btn {
+    padding: 8px 16px;
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.accept-invitation-btn:hover {
+    background: #45b869;
+}
+
+.decline-invitation-btn {
+    padding: 8px 16px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.decline-invitation-btn:hover {
+    background: #c0392b;
+}
+
+.no-invitations {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.6;
+    padding: 20px;
+    font-style: italic;
+}
+

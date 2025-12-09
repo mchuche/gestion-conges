@@ -135,6 +135,18 @@ CREATE TABLE IF NOT EXISTS team_members (
     UNIQUE(team_id, user_id)
 );
 
+-- Table pour les invitations d'équipe
+CREATE TABLE IF NOT EXISTS team_invitations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    team_id UUID REFERENCES teams(id) ON DELETE CASCADE NOT NULL,
+    email TEXT NOT NULL,
+    invited_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    accepted_at TIMESTAMP WITH TIME ZONE,
+    UNIQUE(team_id, email)
+);
+
 -- Activer RLS pour les équipes
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
@@ -283,6 +295,59 @@ CREATE POLICY "Team members can view team leave_types" ON leave_types
     FOR SELECT USING (
         auth.uid() = user_id OR
         users_in_same_team(auth.uid(), user_id)
+    );
+
+-- Politiques RLS pour les invitations d'équipe
+DROP POLICY IF EXISTS "Team members can view invitations" ON team_invitations;
+DROP POLICY IF EXISTS "Team owners/admins can create invitations" ON team_invitations;
+DROP POLICY IF EXISTS "Users can view their invitations" ON team_invitations;
+DROP POLICY IF EXISTS "Users can accept invitations" ON team_invitations;
+
+-- Les membres d'équipe peuvent voir les invitations de leur équipe
+CREATE POLICY "Team members can view invitations" ON team_invitations
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM teams
+            WHERE teams.id = team_invitations.team_id
+            AND teams.created_by = auth.uid()
+        )
+        OR user_is_team_member(team_invitations.team_id, auth.uid())
+    );
+
+-- Les owners/admins peuvent créer des invitations
+CREATE POLICY "Team owners/admins can create invitations" ON team_invitations
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM teams
+            WHERE teams.id = team_invitations.team_id
+            AND teams.created_by = auth.uid()
+        )
+        OR is_team_owner_or_admin(team_invitations.team_id, auth.uid())
+    );
+
+-- Les utilisateurs peuvent voir leurs propres invitations (par email)
+CREATE POLICY "Users can view their invitations" ON team_invitations
+    FOR SELECT USING (
+        -- L'utilisateur peut voir les invitations à son email
+        email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    );
+
+-- Les utilisateurs peuvent accepter/refuser leurs invitations
+CREATE POLICY "Users can accept invitations" ON team_invitations
+    FOR UPDATE USING (
+        email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    );
+
+-- Les owners/admins peuvent supprimer les invitations de leur équipe
+DROP POLICY IF EXISTS "Team owners/admins can delete invitations" ON team_invitations;
+CREATE POLICY "Team owners/admins can delete invitations" ON team_invitations
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM teams
+            WHERE teams.id = team_invitations.team_id
+            AND teams.created_by = auth.uid()
+        )
+        OR is_team_owner_or_admin(team_invitations.team_id, auth.uid())
     );
 
 

@@ -191,7 +191,12 @@ if (typeof loadUserTeams !== 'undefined') {
         removeMemberFromTeam,
         loadTeamLeaves,
         loadTeamLeaveTypes,
-        deleteTeam
+        deleteTeam,
+        loadTeamInvitations,
+        loadUserPendingInvitations,
+        acceptTeamInvitation,
+        declineTeamInvitation,
+        deleteTeamInvitation
     });
 }
 
@@ -210,7 +215,21 @@ if (typeof updateTeamSelectorVisibility !== 'undefined') {
         handleRemoveMember,
         handleDeleteTeam,
         handleTeamSelectChange,
-        setupTeamsEventListeners
+        setupTeamsEventListeners,
+        handleDeleteInvitation
+    });
+}
+
+// InvitationsUI
+if (typeof updateInvitationsBadge !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        updateInvitationsBadge,
+        openInvitationsModal,
+        closeInvitationsModal,
+        renderInvitationsList,
+        handleAcceptInvitation,
+        handleDeclineInvitation,
+        setupInvitationsEventListeners
     });
 }
 
