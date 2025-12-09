@@ -345,19 +345,33 @@ async function loadAuditLogs(limit = 100) {
                 entity_type,
                 entity_id,
                 details,
-                created_at,
-                user_emails!audit_logs_user_id_fkey(email)
+                created_at
             `)
             .order('created_at', { ascending: false })
             .limit(limit);
 
         if (error) throw error;
 
+        // Récupérer les emails des utilisateurs séparément
+        const userIds = [...new Set((data || []).map(log => log.user_id).filter(Boolean))];
+        const userEmailsMap = {};
+        
+        if (userIds.length > 0) {
+            const { data: emailsData } = await supabase
+                .from('user_emails')
+                .select('user_id, email')
+                .in('user_id', userIds);
+            
+            (emailsData || []).forEach(user => {
+                userEmailsMap[user.user_id] = user.email;
+            });
+        }
+
         // Formater les logs avec les emails des utilisateurs
         return (data || []).map(log => ({
             id: log.id,
             userId: log.user_id,
-            userEmail: log.user_emails?.email || 'Système',
+            userEmail: log.user_id ? (userEmailsMap[log.user_id] || 'Utilisateur inconnu') : 'Système',
             action: log.action,
             entityType: log.entity_type,
             entityId: log.entity_id,
