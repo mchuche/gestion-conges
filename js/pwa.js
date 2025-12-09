@@ -34,10 +34,10 @@ if ('serviceWorker' in navigator) {
         // Forcer la mise à jour immédiatement
         registration.update();
 
-        // Vérifier les mises à jour périodiquement
+        // Vérifier les mises à jour périodiquement (toutes les 30 secondes pour une détection plus rapide)
         setInterval(() => {
           registration.update();
-        }, 60000); // Vérifier toutes les minutes
+        }, 30000);
 
         // Écouter les mises à jour du service worker
         registration.addEventListener('updatefound', () => {

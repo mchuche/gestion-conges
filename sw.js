@@ -61,9 +61,9 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            // Supprimer tous les anciens caches (v1, v2, etc.)
-            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE && 
-                (cacheName.startsWith('gestion-conges-') || cacheName.startsWith('gestion-conges-runtime-'))) {
+            // Supprimer TOUS les anciens caches, même ceux qui ne commencent pas par 'gestion-conges-'
+            // Cela garantit un nettoyage complet en cas de changement de nom ou de structure
+            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
               console.log('[Service Worker] Suppression de l\'ancien cache:', cacheName);
               return caches.delete(cacheName);
             }
