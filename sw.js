@@ -61,8 +61,9 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            // Supprimer les anciens caches
-            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+            // Supprimer tous les anciens caches (v1, v2, etc.)
+            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE && 
+                (cacheName.startsWith('gestion-conges-') || cacheName.startsWith('gestion-conges-runtime-'))) {
               console.log('[Service Worker] Suppression de l\'ancien cache:', cacheName);
               return caches.delete(cacheName);
             }
@@ -71,7 +72,14 @@ self.addEventListener('activate', (event) => {
       })
       .then(() => {
         // Prendre le contrôle de toutes les pages immédiatement
-        return self.clients.claim();
+        return self.clients.claim().then(() => {
+          // Notifier tous les clients pour qu'ils rechargent si nécessaire
+          return self.clients.matchAll().then((clients) => {
+            clients.forEach((client) => {
+              client.postMessage({ type: 'RELOAD' });
+            });
+          });
+        });
       })
   );
 });
