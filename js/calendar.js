@@ -228,6 +228,7 @@ function createYearDayElement(date) {
     // Ajouter l'événement de clic sur l'élément jour
     const handleDayClick = (e) => {
         e.stopPropagation();
+        e.preventDefault();
         
         // Détecter si on est sur mobile (pas de sélection multiple sur mobile)
         const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -250,14 +251,13 @@ function createYearDayElement(date) {
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
-            e.preventDefault();
             const dateKey = getDateKey(date);
             const index = this.selectedDates.findIndex(d => getDateKey(d) === dateKey);
             
             if (index > -1) {
                 // Déjà sélectionné, le retirer
                 this.selectedDates.splice(index, 1);
-                console.log('Jour retiré de la sélection');
+                console.log('Jour retiré de la sélection, total:', this.selectedDates.length);
             } else {
                 // Pas sélectionné, l'ajouter
                 this.selectedDates.push(date);
@@ -281,9 +281,9 @@ function createYearDayElement(date) {
         }
     };
     
-    dayElement.addEventListener('click', handleDayClick);
+    dayElement.addEventListener('mousedown', handleDayClick);
     // Également sur le contenu pour s'assurer que ça fonctionne partout
-    dayContent.addEventListener('click', handleDayClick);
+    dayContent.addEventListener('mousedown', handleDayClick);
 
     return dayElement;
 }
@@ -356,6 +356,7 @@ function createDayElement(container, date, isOtherMonth) {
     // Ajouter l'événement de clic
     const handleDayClick = (e) => {
         e.stopPropagation();
+        e.preventDefault();
         
         // Détecter si on est sur mobile (pas de sélection multiple sur mobile)
         const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -378,14 +379,13 @@ function createDayElement(container, date, isOtherMonth) {
         
         if (isMultiSelect) {
             // Sélection multiple : ajouter/retirer ce jour de la sélection
-            e.preventDefault();
             const dateKey = getDateKey(date);
             const index = this.selectedDates.findIndex(d => getDateKey(d) === dateKey);
             
             if (index > -1) {
                 // Déjà sélectionné, le retirer
                 this.selectedDates.splice(index, 1);
-                console.log('Jour retiré de la sélection');
+                console.log('Jour retiré de la sélection, total:', this.selectedDates.length);
             } else {
                 // Pas sélectionné, l'ajouter
                 this.selectedDates.push(date);
@@ -409,7 +409,7 @@ function createDayElement(container, date, isOtherMonth) {
         }
     };
     
-    day.addEventListener('click', handleDayClick);
+    day.addEventListener('mousedown', handleDayClick);
 
     container.appendChild(day);
 }
