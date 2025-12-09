@@ -16,21 +16,30 @@ async function updateAdminButtonVisibility() {
 
 // Ouvrir la modale d'administration
 async function openAdminModal() {
+    console.log('[AdminUI] openAdminModal appelée');
     const adminModal = document.getElementById('adminModal');
-    if (!adminModal) return;
+    if (!adminModal) {
+        console.error('[AdminUI] Modale adminModal introuvable dans le DOM');
+        alert('Erreur: La modale d\'administration est introuvable');
+        return;
+    }
 
+    console.log('[AdminUI] Modale trouvée, vérification des droits admin...');
     // Vérifier que l'utilisateur est admin
     const isAdmin = await this.checkIsAdmin();
+    console.log('[AdminUI] isAdmin:', isAdmin);
     if (!isAdmin) {
         alert('Vous n\'avez pas les droits d\'administrateur');
         return;
     }
 
+    console.log('[AdminUI] Affichage de la modale...');
     adminModal.style.display = 'block';
     adminModal.classList.add('active');
+    console.log('[AdminUI] Modale affichée, display:', adminModal.style.display, 'classList:', adminModal.classList.toString());
 
     // Afficher l'onglet par défaut
-    this.switchAdminTab('users');
+    await this.switchAdminTab('users');
 }
 
 // Fermer la modale d'administration
