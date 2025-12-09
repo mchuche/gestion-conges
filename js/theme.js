@@ -54,12 +54,19 @@ function toggleTheme() {
 
 // Mettre à jour le bouton de bascule
 function updateThemeToggleButton(theme) {
-    const toggleButton = document.getElementById('themeToggle');
-    if (toggleButton) {
-        toggleButton.textContent = theme === 'dark' ? '☀️' : '🌙';
-        toggleButton.setAttribute('title', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
-        toggleButton.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
-    }
+    // Mettre à jour les deux boutons (dans le header et dans la modale d'auth)
+    const toggleButtons = [
+        document.getElementById('themeToggle'),
+        document.getElementById('themeToggleAuth')
+    ];
+    
+    toggleButtons.forEach(toggleButton => {
+        if (toggleButton) {
+            toggleButton.textContent = theme === 'dark' ? '☀️' : '🌙';
+            toggleButton.setAttribute('title', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
+            toggleButton.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
+        }
+    });
 }
 
 // Obtenir le thème actuel

@@ -18,7 +18,10 @@
     <!-- Modal de connexion/inscription -->
     <div id="authModal" class="modal active" style="display: block;">
         <div class="modal-content auth-modal-content">
-            <h3>🔐 Connexion</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">🔐 Connexion</h3>
+                <button id="themeToggleAuth" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème" style="position: relative; top: 0; right: 0;">🌙</button>
+            </div>
             <div id="authError" class="error-message" style="display: none;"></div>
             
             <div class="auth-help-section" style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-size: 0.9em;">

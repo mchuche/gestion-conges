@@ -253,6 +253,17 @@ function setupAuthListeners() {
             }
         });
     }
+
+    // Bouton de bascule de thème dans la modale d'authentification
+    const themeToggleAuth = document.getElementById('themeToggleAuth');
+    if (themeToggleAuth && !themeToggleAuth.hasAttribute('data-listener-added')) {
+        themeToggleAuth.setAttribute('data-listener-added', 'true');
+        themeToggleAuth.addEventListener('click', () => {
+            if (typeof this.toggleTheme === 'function') {
+                this.toggleTheme();
+            }
+        });
+    }
 }
 
 async function login(email, password) {
