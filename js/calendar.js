@@ -34,16 +34,18 @@ function renderCalendar() {
     console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
     
     if (this.viewMode === 'year') {
-        // Utiliser le format sélectionné pour la vue annuelle
-        if (this.yearViewFormat === 'heatmap') {
-            this.renderYearViewHeatmap();
-        } else if (this.yearViewFormat === 'presence') {
+        // Utiliser la vue présence (seule vue annuelle disponible)
+        if (this.yearViewFormat === 'presence') {
             // La vue présence est async car elle charge les données de l'équipe
             this.renderYearViewPresence().catch(error => {
                 console.error('Erreur lors du rendu de la vue présence:', error);
             });
         } else {
-            this.renderYearViewTimeline();
+            // Par défaut, utiliser la vue présence
+            this.yearViewFormat = 'presence';
+            this.renderYearViewPresence().catch(error => {
+                console.error('Erreur lors du rendu de la vue présence:', error);
+            });
         }
     } else {
         // S'assurer que la classe est correcte pour la vue semestrielle

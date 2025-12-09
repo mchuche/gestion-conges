@@ -15,7 +15,7 @@ class LeaveManager {
         this.multiSelectMode = false; // Mode sélection multiple activé par long press
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
         this.viewMode = 'semester'; // Vue semestrielle uniquement
-        this.yearViewFormat = 'timeline'; // Format de la vue annuelle : 'timeline' ou 'heatmap'
+        this.yearViewFormat = 'presence'; // Format de la vue annuelle : 'presence' (matrice de présence)
         this.ctrlKeyPressed = false; // État de la touche Ctrl/Cmd
         this.userTeams = []; // Liste des équipes de l'utilisateur
         this.currentTeamId = null; // ID de l'équipe actuellement sélectionnée
@@ -134,7 +134,6 @@ if (typeof getLeaveForDate !== 'undefined') {
         renderSemesterView,
         renderYearView,
         renderYearViewPresence,
-        createYearViewHeatmapSquare,
         createPresenceDayCell,
         createYearDayElement,
         createYearViewDayElement,

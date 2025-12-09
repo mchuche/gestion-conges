@@ -155,7 +155,7 @@ function setupEventListeners() {
                 const formatSelect = document.getElementById('yearViewFormat');
                 if (formatSelect) {
                     formatSelect.style.display = 'inline-block';
-                    formatSelect.value = manager.yearViewFormat || 'timeline';
+                    formatSelect.value = manager.yearViewFormat || 'presence';
                 }
             } else {
                 console.log('[ViewToggle] Passage en vue semestrielle');
