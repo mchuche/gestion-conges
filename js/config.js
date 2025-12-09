@@ -36,8 +36,23 @@ async function init() {
 
 // Configuration des événements
 function setupEventListeners() {
+    // Vérifier que les éléments existent avant d'ajouter les listeners
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    
+    if (!prevMonthBtn || !nextMonthBtn) {
+        console.error('[Config] Boutons de navigation non trouvés dans le DOM');
+        return;
+    }
+    
+    // Retirer les anciens listeners pour éviter les doublons
+    const newPrevBtn = prevMonthBtn.cloneNode(true);
+    const newNextBtn = nextMonthBtn.cloneNode(true);
+    prevMonthBtn.parentNode.replaceChild(newPrevBtn, prevMonthBtn);
+    nextMonthBtn.parentNode.replaceChild(newNextBtn, nextMonthBtn);
+    
     // Navigation (semestrielle ou annuelle selon la vue)
-    document.getElementById('prevMonth').addEventListener('click', () => {
+    newPrevBtn.addEventListener('click', () => {
         if (this.viewMode === 'year') {
             // Vue annuelle : passer à l'année précédente
             const prevYear = getYear(this.currentDate) - 1;

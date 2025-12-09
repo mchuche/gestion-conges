@@ -2,14 +2,50 @@
 // Ces fonctions encapsulent date-fns pour une utilisation plus simple
 
 // Vérifier que date-fns est disponible
-if (typeof dateFns === 'undefined') {
+// Note: date-fns peut être disponible sous différents noms selon le CDN
+let dateFnsAvailable = false;
+if (typeof dateFns !== 'undefined') {
+    dateFnsAvailable = true;
+} else if (typeof window.dateFns !== 'undefined') {
+    window.dateFns = window.dateFns;
+    dateFnsAvailable = true;
+} else if (typeof date_fns !== 'undefined') {
+    window.dateFns = date_fns;
+    dateFnsAvailable = true;
+}
+
+if (!dateFnsAvailable) {
     console.warn('[DateUtils] date-fns non disponible, utilisation des fonctions natives');
+    console.log('[DateUtils] Tentative de chargement depuis CDN...');
+    // Essayer de charger date-fns depuis un autre CDN si le premier a échoué
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/date-fns@2.30.0/index.js';
+    script.onerror = () => {
+        console.warn('[DateUtils] Échec du chargement de date-fns depuis unpkg, utilisation des fonctions natives');
+    };
+    script.onload = () => {
+        console.log('[DateUtils] date-fns chargé depuis unpkg');
+        if (typeof date_fns !== 'undefined') {
+            window.dateFns = date_fns;
+        }
+    };
+    document.head.appendChild(script);
 }
 
 // Obtenir l'année d'une date
 function getYear(date) {
+    // Vérifier que date est valide
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        console.error('[DateUtils] Date invalide dans getYear:', date);
+        return new Date().getFullYear();
+    }
     if (typeof dateFns !== 'undefined' && dateFns.getYear) {
-        return dateFns.getYear(date);
+        try {
+            return dateFns.getYear(date);
+        } catch (e) {
+            console.warn('[DateUtils] Erreur avec dateFns.getYear, utilisation native:', e);
+            return date.getFullYear();
+        }
     }
     return date.getFullYear();
 }
@@ -40,14 +76,15 @@ function getDay(date) {
 
 // Créer une nouvelle date avec année, mois, jour
 function createDate(year, month, day) {
-    if (typeof dateFns !== 'undefined' && dateFns.setDate && dateFns.setMonth && dateFns.setYear) {
-        const baseDate = new Date();
-        let result = dateFns.setYear(baseDate, year);
-        result = dateFns.setMonth(result, month);
-        result = dateFns.setDate(result, day);
-        return result;
+    // Toujours utiliser la méthode native pour créer une date, plus fiable
+    // date-fns est utilisé pour les manipulations, pas pour la création
+    const date = new Date(year, month, day);
+    // Vérifier que la date est valide
+    if (isNaN(date.getTime())) {
+        console.error('[DateUtils] Date invalide créée:', year, month, day);
+        return new Date(); // Retourner la date actuelle en cas d'erreur
     }
-    return new Date(year, month, day);
+    return date;
 }
 
 // Obtenir le premier jour du mois
