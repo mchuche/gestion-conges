@@ -243,10 +243,11 @@ function createYearViewDayElement(date) {
     }
 
     // Vérifier si c'est un jour férié
-    const publicHolidays = this.getPublicHolidays(date.getFullYear());
+    const publicHolidays = this.getPublicHolidays('FR', date.getFullYear());
     const dateKeyForHoliday = getDateKey(date);
-    if (publicHolidays.some(h => getDateKey(new Date(h.date)) === dateKeyForHoliday)) {
+    if (publicHolidays[dateKeyForHoliday]) {
         dayElement.classList.add('public-holiday');
+        dayElement.title = publicHolidays[dateKeyForHoliday];
     }
 
     // Vérifier s'il y a un congé

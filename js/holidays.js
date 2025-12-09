@@ -161,14 +161,34 @@ function getPublicHolidays(country, year) {
     countryList.forEach(holiday => {
         let date;
         if (holiday.date) {
-            date = holiday.date;
-        } else {
+            // Si holiday.date est déjà une Date, l'utiliser directement
+            // Sinon, créer une nouvelle Date
+            date = holiday.date instanceof Date ? holiday.date : new Date(holiday.date);
+        } else if (holiday.month !== undefined && holiday.day !== undefined) {
+            // Créer une date à partir du mois et du jour
             date = new Date(year, holiday.month, holiday.day);
+        } else {
+            // Ignorer les jours fériés sans date valide
+            console.warn('[Holidays] Jour férié sans date valide:', holiday);
+            return;
         }
-        const dateKey = getDateKey(date);
-        holidays[dateKey] = holiday.name;
+        
+        // Vérifier que la date est valide avant de créer la clé
+        if (isNaN(date.getTime())) {
+            console.warn('[Holidays] Date invalide pour le jour férié:', holiday, 'Date:', date);
+            return;
+        }
+        
+        try {
+            const dateKey = getDateKey(date);
+            holidays[dateKey] = holiday.name;
+        } catch (error) {
+            console.warn('[Holidays] Erreur lors de la création de la clé de date:', error, 'Holiday:', holiday, 'Date:', date);
+        }
     });
 
     return holidays;
 }
+
+
 

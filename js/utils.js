@@ -10,6 +10,11 @@ function formatNumber(num) {
 
 // Obtenir la clé de date au format YYYY-MM-DD
 function getDateKey(date) {
+    // Vérifier que la date est valide
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        console.error('[Utils] Date invalide dans getDateKey:', date);
+        throw new Error('Invalid date');
+    }
     return date.toISOString().split('T')[0];
 }
 
@@ -44,4 +49,6 @@ function getDefaultLeaveTypes() {
         { id: 'grève', name: 'Grève', label: 'Grève', color: '#c0392b' }
     ];
 }
+
+
 
