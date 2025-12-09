@@ -143,6 +143,14 @@ function setupEventListeners() {
         }
     });
 
+    // Bouton de bascule de thème
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            this.toggleTheme();
+        });
+    }
+
     // Aide
     const helpBtn = document.getElementById('helpBtn');
     if (helpBtn) {

@@ -20,6 +20,11 @@ class LeaveManager {
         // Suivre l'état de la touche Ctrl/Cmd
         this.setupCtrlTracking();
         
+        // Initialiser le thème (doit être fait avant initAuth pour l'appliquer immédiatement)
+        if (typeof this.initTheme === 'function') {
+            this.initTheme();
+        }
+        
         // Initialiser l'authentification
         this.initAuth();
     }
@@ -102,6 +107,18 @@ if (typeof initAuth !== 'undefined') {
         loadUserData,
         validateSession,
         clearInvalidSession
+    });
+}
+
+// Theme
+if (typeof initTheme !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        initTheme,
+        setTheme,
+        toggleTheme,
+        updateThemeToggleButton,
+        getCurrentTheme,
+        isDarkMode
     });
 }
 
