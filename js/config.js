@@ -169,20 +169,6 @@ function setupEventListeners() {
     } else if (!viewToggle) {
         console.warn('[ViewToggle] Bouton viewToggle non trouvé dans le DOM');
     }
-    
-    // Sélecteur de format pour la vue annuelle
-    const yearViewFormat = document.getElementById('yearViewFormat');
-    if (yearViewFormat && !yearViewFormat.hasAttribute('data-listener-added')) {
-        yearViewFormat.setAttribute('data-listener-added', 'true');
-        const manager = this;
-        yearViewFormat.addEventListener('change', function() {
-            manager.yearViewFormat = this.value;
-            console.log('[YearViewFormat] Format changé:', manager.yearViewFormat);
-            if (manager.viewMode === 'year') {
-                manager.renderCalendar();
-            }
-        });
-    }
 
     // Boutons de période (matin/après-midi/journée complète)
     document.querySelectorAll('.period-btn').forEach(btn => {
