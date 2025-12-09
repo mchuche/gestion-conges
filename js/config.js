@@ -46,13 +46,16 @@ function setupEventListeners() {
         } else {
             // Vue semestrielle : passer au semestre précédent
             const currentMonth = this.currentDate.getMonth();
+            const currentYear = this.currentDate.getFullYear();
+            
             if (currentMonth < 6) {
                 // On est au 1er semestre (janvier-juin), aller au 2ème semestre de l'année précédente
-                this.currentDate.setFullYear(this.currentDate.getFullYear() - 1);
-                this.currentDate.setMonth(6); // Juillet
+                const prevYear = currentYear - 1;
+                this.currentDate = new Date(prevYear, 6, 1); // 1er juillet de l'année précédente
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de la même année
                 this.currentDate.setMonth(0); // Janvier
+                this.currentDate.setDate(1); // 1er du mois pour éviter les problèmes
             }
             // Synchroniser currentYear avec currentDate
             this.currentYear = this.currentDate.getFullYear();
@@ -71,7 +74,8 @@ function setupEventListeners() {
         } else {
             // Vue semestrielle : passer au semestre suivant
             const currentMonth = this.currentDate.getMonth();
-            console.log('[Navigation] Avant changement - Mois actuel:', currentMonth, 'Année:', this.currentDate.getFullYear());
+            const currentYear = this.currentDate.getFullYear();
+            console.log('[Navigation] Avant changement - Mois actuel:', currentMonth, 'Année:', currentYear);
             
             if (currentMonth < 6) {
                 // On est au 1er semestre (janvier-juin), aller au 2ème semestre de la même année
@@ -79,9 +83,9 @@ function setupEventListeners() {
                 console.log('[Navigation] Passage au 2ème semestre de', this.currentDate.getFullYear());
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de l'année suivante
-                const nextYear = this.currentDate.getFullYear() + 1;
-                this.currentDate.setFullYear(nextYear);
-                this.currentDate.setMonth(0); // Janvier
+                // Créer une nouvelle date pour éviter les problèmes d'ordre des opérations
+                const nextYear = currentYear + 1;
+                this.currentDate = new Date(nextYear, 0, 1); // 1er janvier de l'année suivante
                 console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', this.currentDate.getMonth());
             }
             // Synchroniser currentYear avec currentDate
