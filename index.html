@@ -230,7 +230,8 @@
                     <button class="admin-tab active" data-tab="users">👥 Utilisateurs</button>
                     <button class="admin-tab" data-tab="teams">🏢 Groupes</button>
                     <button class="admin-tab" data-tab="settings">⚙️ Paramètres</button>
-                    <button class="admin-tab" data-tab="logs">📊 Statistiques</button>
+                    <button class="admin-tab" data-tab="stats">📊 Statistiques</button>
+                    <button class="admin-tab" data-tab="audit">📋 Logs d'audit</button>
                 </div>
                 
                 <!-- Section Utilisateurs -->
@@ -276,9 +277,18 @@
                 </div>
                 
                 <!-- Section Statistiques -->
-                <div id="adminLogsTab" class="admin-tab-content">
+                <div id="adminStatsTab" class="admin-tab-content">
                     <h4>Statistiques globales</h4>
                     <div id="adminStats" class="admin-stats-grid"></div>
+                </div>
+                
+                <!-- Section Logs d'audit -->
+                <div id="adminAuditTab" class="admin-tab-content">
+                    <div class="admin-section-header">
+                        <h4>Logs d'audit - Événements importants</h4>
+                        <p class="admin-hint">Historique des actions administratives effectuées dans l'application</p>
+                    </div>
+                    <div id="adminAuditLogs" class="admin-audit-container"></div>
                 </div>
             </div>
         </div>

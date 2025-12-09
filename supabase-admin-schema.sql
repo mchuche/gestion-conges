@@ -85,3 +85,37 @@ INSERT INTO app_settings (key, value, description) VALUES
     ('default_country', '"FR"'::jsonb, 'Pays par défaut pour les nouveaux utilisateurs')
 ON CONFLICT (key) DO NOTHING;
 
+-- ===== TABLE AUDIT LOGS =====
+
+-- Table pour les logs d'audit des événements importants
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    action TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id UUID,
+    details JSONB,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Activer RLS pour audit_logs
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Politiques RLS pour audit_logs : seuls les admins peuvent voir les logs
+DROP POLICY IF EXISTS "Admins can view audit logs" ON audit_logs;
+CREATE POLICY "Admins can view audit logs" ON audit_logs
+    FOR SELECT USING (is_app_admin(auth.uid()));
+
+DROP POLICY IF EXISTS "System can insert audit logs" ON audit_logs;
+-- Permettre l'insertion pour tous (le système doit pouvoir logger)
+CREATE POLICY "System can insert audit logs" ON audit_logs
+    FOR INSERT WITH CHECK (true);
+
+-- Index pour améliorer les performances de recherche
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type);
+

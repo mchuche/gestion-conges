@@ -243,7 +243,9 @@ if (typeof checkIsAdmin !== 'undefined') {
         deleteTeamAsAdmin,
         loadDefaultSettings,
         saveDefaultSettings,
-        loadAdminStats
+        loadAdminStats,
+        logAuditEvent,
+        loadAuditLogs
     });
 }
 
@@ -261,6 +263,7 @@ if (typeof updateAdminButtonVisibility !== 'undefined') {
         renderAdminSettings,
         handleSaveDefaultSettings,
         renderAdminStats,
+        renderAuditLogs,
         setupAdminEventListeners
     });
 }

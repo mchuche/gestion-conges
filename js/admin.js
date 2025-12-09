@@ -299,3 +299,74 @@ async function loadAdminStats() {
     }
 }
 
+// Enregistrer un log d'audit
+async function logAuditEvent(action, entityType, entityId = null, details = {}) {
+    if (!supabase) {
+        console.warn('[logAuditEvent] Supabase non disponible');
+        return;
+    }
+
+    try {
+        const logData = {
+            user_id: this.user?.id || null,
+            action: action,
+            entity_type: entityType,
+            entity_id: entityId,
+            details: details,
+            ip_address: null, // Peut être récupéré côté serveur si nécessaire
+            user_agent: navigator.userAgent || null
+        };
+
+        const { error } = await supabase
+            .from('audit_logs')
+            .insert(logData);
+
+        if (error) {
+            console.error('[logAuditEvent] Erreur:', error);
+        }
+    } catch (e) {
+        console.error('[logAuditEvent] Erreur:', e);
+    }
+}
+
+// Charger les logs d'audit
+async function loadAuditLogs(limit = 100) {
+    if (!this.user || !supabase) {
+        return [];
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('audit_logs')
+            .select(`
+                id,
+                user_id,
+                action,
+                entity_type,
+                entity_id,
+                details,
+                created_at,
+                user_emails!audit_logs_user_id_fkey(email)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+
+        // Formater les logs avec les emails des utilisateurs
+        return (data || []).map(log => ({
+            id: log.id,
+            userId: log.user_id,
+            userEmail: log.user_emails?.email || 'Système',
+            action: log.action,
+            entityType: log.entity_type,
+            entityId: log.entity_id,
+            details: log.details,
+            createdAt: log.created_at
+        }));
+    } catch (e) {
+        console.error('[loadAuditLogs] Erreur:', e);
+        return [];
+    }
+}
+

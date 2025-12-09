@@ -85,8 +85,11 @@ async function switchAdminTab(tabName) {
         case 'settings':
             await this.renderAdminSettings();
             break;
-        case 'logs':
+        case 'stats':
             await this.renderAdminStats();
+            break;
+        case 'audit':
+            await this.renderAuditLogs();
             break;
     }
 }
@@ -147,6 +150,13 @@ async function handleDeleteUser(userId, userEmail) {
 
     try {
         await this.deleteUser(userId);
+        
+        // Enregistrer le log d'audit
+        await this.logAuditEvent('user_deleted', 'user', userId, {
+            email: userEmail,
+            deleted_by: this.user?.email
+        });
+        
         alert('✅ Les données de l\'utilisateur ont été supprimées.\n\nNote: Pour supprimer complètement le compte, allez dans le dashboard Supabase > Authentication > Users.');
         await this.renderAdminUsersList();
     } catch (error) {
@@ -210,6 +220,13 @@ async function handleDeleteTeamAsAdmin(teamId, teamName) {
 
     try {
         await this.deleteTeamAsAdmin(teamId);
+        
+        // Enregistrer le log d'audit
+        await this.logAuditEvent('team_deleted', 'team', teamId, {
+            team_name: teamName,
+            deleted_by: this.user?.email
+        });
+        
         alert('✅ Groupe supprimé avec succès');
         await this.renderAdminTeamsList();
     } catch (error) {
@@ -266,6 +283,13 @@ async function handleSaveDefaultSettings() {
         };
 
         await this.saveDefaultSettings(settings);
+        
+        // Enregistrer le log d'audit
+        await this.logAuditEvent('settings_updated', 'settings', null, {
+            updated_by: this.user?.email,
+            settings_keys: Object.keys(settings)
+        });
+        
         alert('✅ Paramètres sauvegardés avec succès');
     } catch (error) {
         console.error('[handleSaveDefaultSettings] Erreur:', error);
@@ -313,6 +337,94 @@ async function renderAdminStats() {
     } catch (error) {
         console.error('[renderAdminStats] Erreur:', error);
         statsContainer.innerHTML = '<p class="error">Erreur lors du chargement des statistiques</p>';
+    }
+}
+
+// Rendre les logs d'audit
+async function renderAuditLogs() {
+    const logsContainer = document.getElementById('adminAuditLogs');
+    if (!logsContainer) return;
+
+    logsContainer.innerHTML = '<p>Chargement...</p>';
+
+    try {
+        const logs = await this.loadAuditLogs(200);
+
+        logsContainer.innerHTML = '';
+
+        if (logs.length === 0) {
+            logsContainer.innerHTML = '<p class="no-data">Aucun log disponible</p>';
+            return;
+        }
+
+        // Créer un conteneur scrollable pour les logs
+        const logsList = document.createElement('div');
+        logsList.className = 'admin-logs-list';
+
+        logs.forEach(log => {
+            const logCard = document.createElement('div');
+            logCard.className = 'admin-log-card';
+
+            // Formater la date
+            const date = new Date(log.createdAt);
+            const dateStr = date.toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Déterminer l'icône selon l'action
+            let icon = '📝';
+            let actionLabel = log.action;
+            const actionColors = {
+                'user_deleted': { icon: '🗑️', color: '#e74c3c', label: 'Utilisateur supprimé' },
+                'team_deleted': { icon: '🗑️', color: '#e74c3c', label: 'Groupe supprimé' },
+                'settings_updated': { icon: '⚙️', color: '#3498db', label: 'Paramètres modifiés' },
+                'team_created': { icon: '➕', color: '#2ecc71', label: 'Groupe créé' },
+                'user_created': { icon: '➕', color: '#2ecc71', label: 'Utilisateur créé' },
+                'admin_action': { icon: '🔐', color: '#9b59b6', label: 'Action admin' }
+            };
+
+            if (actionColors[log.action]) {
+                icon = actionColors[log.action].icon;
+                actionLabel = actionColors[log.action].label;
+            }
+
+            // Formater les détails
+            let detailsHtml = '';
+            if (log.details && Object.keys(log.details).length > 0) {
+                detailsHtml = '<div class="admin-log-details">';
+                for (const [key, value] of Object.entries(log.details)) {
+                    detailsHtml += `<span class="admin-log-detail-item"><strong>${key}:</strong> ${value}</span>`;
+                }
+                detailsHtml += '</div>';
+            }
+
+            logCard.innerHTML = `
+                <div class="admin-log-header">
+                    <span class="admin-log-icon" style="color: ${actionColors[log.action]?.color || '#666'}">${icon}</span>
+                    <div class="admin-log-info">
+                        <div class="admin-log-action">${actionLabel}</div>
+                        <div class="admin-log-meta">
+                            <span>Par: ${log.userEmail}</span>
+                            <span>•</span>
+                            <span>${dateStr}</span>
+                            ${log.entityType ? `<span>•</span><span>Type: ${log.entityType}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                ${detailsHtml}
+            `;
+
+            logsList.appendChild(logCard);
+        });
+
+        logsContainer.appendChild(logsList);
+    } catch (error) {
+        console.error('[renderAuditLogs] Erreur:', error);
+        logsContainer.innerHTML = '<p class="error">Erreur lors du chargement des logs</p>';
     }
 }
 

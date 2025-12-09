@@ -2552,6 +2552,95 @@ header h1 {
     color: var(--danger-color, #e74c3c);
 }
 
+/* Styles pour les logs d'audit */
+.admin-audit-container {
+    max-height: 600px;
+    overflow-y: auto;
+    margin-top: 20px;
+}
+
+.admin-logs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-log-card {
+    padding: 15px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    transition: all 0.2s;
+}
+
+.admin-log-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(2px);
+}
+
+.admin-log-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.admin-log-icon {
+    font-size: 1.5em;
+    flex-shrink: 0;
+}
+
+.admin-log-info {
+    flex: 1;
+}
+
+.admin-log-action {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 5px;
+    font-size: 1em;
+}
+
+.admin-log-meta {
+    font-size: 0.85em;
+    color: var(--text-secondary, #666);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-log-details {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.admin-log-detail-item {
+    font-size: 0.85em;
+    color: var(--text-secondary, #666);
+    padding: 4px 8px;
+    background: var(--bg-color);
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 8px;
+    margin-bottom: 4px;
+}
+
+.admin-log-detail-item strong {
+    color: var(--text-color);
+    margin-right: 5px;
+}
+
+.admin-hint {
+    font-size: 0.9em;
+    color: var(--text-secondary, #666);
+    margin-top: 5px;
+    font-style: italic;
+}
+
 /* Responsive pour l'admin */
 @media (max-width: 768px) {
     .admin-modal-content {
@@ -2583,6 +2672,11 @@ header h1 {
     
     .admin-stats-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .admin-log-meta {
+        flex-direction: column;
+        gap: 4px;
     }
 }
 
