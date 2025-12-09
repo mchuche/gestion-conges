@@ -219,6 +219,70 @@
             </div>
         </div>
 
+        <!-- Modal d'administration -->
+        <div id="adminModal" class="modal">
+            <div class="modal-content admin-modal-content">
+                <span class="close admin-close">&times;</span>
+                <h3>⚙️ Administration</h3>
+                
+                <!-- Onglets -->
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="users">👥 Utilisateurs</button>
+                    <button class="admin-tab" data-tab="teams">🏢 Groupes</button>
+                    <button class="admin-tab" data-tab="settings">⚙️ Paramètres</button>
+                    <button class="admin-tab" data-tab="logs">📊 Statistiques</button>
+                </div>
+                
+                <!-- Section Utilisateurs -->
+                <div id="adminUsersTab" class="admin-tab-content active">
+                    <div class="admin-section-header">
+                        <h4>Gestion des utilisateurs</h4>
+                        <input type="text" id="adminUserSearch" placeholder="Rechercher un utilisateur..." class="admin-search">
+                    </div>
+                    <div id="adminUsersList" class="admin-list"></div>
+                </div>
+                
+                <!-- Section Groupes -->
+                <div id="adminTeamsTab" class="admin-tab-content">
+                    <div class="admin-section-header">
+                        <h4>Gestion des groupes</h4>
+                    </div>
+                    <div id="adminTeamsList" class="admin-list"></div>
+                </div>
+                
+                <!-- Section Paramètres -->
+                <div id="adminSettingsTab" class="admin-tab-content">
+                    <h4>Paramètres par défaut</h4>
+                    <div class="admin-settings-form">
+                        <div class="admin-setting-item">
+                            <label>Types de congés par défaut (JSON) :</label>
+                            <textarea id="defaultLeaveTypes" rows="10" placeholder='[{"id": "congé-payé", "name": "Congé Payé", "label": "CP", "color": "#4a90e2"}, ...]'></textarea>
+                        </div>
+                        <div class="admin-setting-item">
+                            <label>Quotas par défaut (JSON) :</label>
+                            <textarea id="defaultQuotas" rows="5" placeholder='{"congé-payé": 25, "rtt": 22, ...}'></textarea>
+                        </div>
+                        <div class="admin-setting-item">
+                            <label>Pays par défaut :</label>
+                            <select id="defaultCountry">
+                                <option value="FR">France</option>
+                                <option value="BE">Belgique</option>
+                                <option value="CH">Suisse</option>
+                                <option value="CA">Canada</option>
+                            </select>
+                        </div>
+                        <button id="saveDefaultSettingsBtn" class="save-btn">Enregistrer</button>
+                    </div>
+                </div>
+                
+                <!-- Section Statistiques -->
+                <div id="adminLogsTab" class="admin-tab-content">
+                    <h4>Statistiques globales</h4>
+                    <div id="adminStats" class="admin-stats-grid"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal d'aide -->
         <div id="helpModal" class="modal">
             <div class="modal-content help-modal-content">
