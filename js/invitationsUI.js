@@ -142,7 +142,14 @@ async function handleAcceptInvitation(invitationId) {
 
 // Refuser une invitation
 async function handleDeclineInvitation(invitationId) {
-    if (!confirm('Êtes-vous sûr de vouloir refuser cette invitation ?')) {
+    const confirmed = await swalConfirm(
+        'Refuser l\'invitation ?',
+        'Êtes-vous sûr de vouloir refuser cette invitation ?',
+        'Oui, refuser',
+        'Annuler'
+    );
+    
+    if (!confirmed) {
         return;
     }
     
@@ -161,10 +168,10 @@ async function handleDeclineInvitation(invitationId) {
             this.closeInvitationsModal();
         }
         
-        alert('Invitation refusée.');
+        await swalSuccess('✅ Invitation refusée', 'L\'invitation a été refusée.', 2000);
     } catch (error) {
         console.error('Erreur lors du refus de l\'invitation:', error);
-        alert('Erreur lors du refus de l\'invitation: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors du refus de l\'invitation: ' + (error.message || error));
     }
 }
 

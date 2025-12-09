@@ -381,33 +381,47 @@ async function showAddMemberDialog(teamId) {
 
 // Retirer un membre
 async function handleRemoveMember(teamId, userId) {
-    if (!confirm('Êtes-vous sûr de vouloir retirer ce membre de l\'équipe ?')) {
+    const confirmed = await swalConfirm(
+        'Retirer le membre ?',
+        'Êtes-vous sûr de vouloir retirer ce membre de l\'équipe ?',
+        'Oui, retirer',
+        'Annuler'
+    );
+    
+    if (!confirmed) {
         return;
     }
     
     try {
         await this.removeMemberFromTeam(teamId, userId);
         await this.showTeamDetails(teamId);
-        alert('Membre retiré avec succès');
+        await swalSuccess('✅ Membre retiré', 'Le membre a été retiré de l\'équipe avec succès.', 2000);
     } catch (error) {
         console.error('Erreur lors du retrait du membre:', error);
-        alert('Erreur lors du retrait du membre: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors du retrait du membre: ' + (error.message || error));
     }
 }
 
 // Supprimer une invitation
 async function handleDeleteInvitation(invitationId, teamId) {
-    if (!confirm('Êtes-vous sûr de vouloir annuler cette invitation ?')) {
+    const confirmed = await swalConfirm(
+        'Annuler l\'invitation ?',
+        'Êtes-vous sûr de vouloir annuler cette invitation ?',
+        'Oui, annuler',
+        'Non'
+    );
+    
+    if (!confirmed) {
         return;
     }
     
     try {
         await this.deleteTeamInvitation(invitationId);
         await this.showTeamDetails(teamId);
-        alert('Invitation annulée avec succès');
+        await swalSuccess('✅ Invitation annulée', 'L\'invitation a été annulée avec succès.', 2000);
     } catch (error) {
         console.error('Erreur lors de la suppression de l\'invitation:', error);
-        alert('Erreur lors de la suppression de l\'invitation: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors de la suppression de l\'invitation: ' + (error.message || error));
     }
 }
 
