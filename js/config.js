@@ -69,8 +69,7 @@ function setupEventListeners() {
         if (this.viewMode === 'year') {
             // Vue annuelle : passer à l'année suivante
             this.currentYear++;
-            this.currentDate.setFullYear(this.currentYear);
-            this.currentDate.setMonth(0); // Janvier pour éviter les problèmes
+            this.currentDate = new Date(this.currentYear, 0, 1);
         } else {
             // Vue semestrielle : passer au semestre suivant
             const currentMonth = this.currentDate.getMonth();
@@ -79,19 +78,19 @@ function setupEventListeners() {
             
             if (currentMonth < 6) {
                 // On est au 1er semestre (janvier-juin), aller au 2ème semestre de la même année
-                this.currentDate.setMonth(6); // Juillet
-                console.log('[Navigation] Passage au 2ème semestre de', this.currentDate.getFullYear());
+                this.currentDate = new Date(currentYear, 6, 1); // 1er juillet de la même année
+                console.log('[Navigation] Passage au 2ème semestre de', currentYear, '- Mois:', this.currentDate.getMonth());
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de l'année suivante
-                // Créer une nouvelle date pour éviter les problèmes d'ordre des opérations
                 const nextYear = currentYear + 1;
                 this.currentDate = new Date(nextYear, 0, 1); // 1er janvier de l'année suivante
-                console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', this.currentDate.getMonth());
+                console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', this.currentDate.getMonth(), 'Année:', this.currentDate.getFullYear());
             }
             // Synchroniser currentYear avec currentDate
             this.currentYear = this.currentDate.getFullYear();
-            console.log('[Navigation] Après changement - Mois:', this.currentDate.getMonth(), 'Année:', this.currentYear);
+            console.log('[Navigation] Après changement - Mois:', this.currentDate.getMonth(), 'Année:', this.currentYear, 'Date complète:', this.currentDate.toISOString());
         }
+        // Forcer le rendu immédiatement après la mise à jour
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
