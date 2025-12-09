@@ -99,6 +99,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Ne pas intercepter les requêtes avec des schémas non supportés (chrome-extension, etc.)
+  if (request.url.startsWith('chrome-extension://') || 
+      request.url.startsWith('moz-extension://') ||
+      request.url.startsWith('safari-extension://')) {
+    return;
+  }
+  
+  // Ne mettre en cache que les requêtes HTTP/HTTPS
+  if (!request.url.startsWith('http://') && !request.url.startsWith('https://')) {
+    return;
+  }
+
   // Pour les autres requêtes, stratégie Cache First avec fallback réseau
   event.respondWith(
     caches.match(request)
@@ -119,10 +131,15 @@ self.addEventListener('fetch', (event) => {
             // Cloner la réponse pour la mettre en cache
             const responseToCache = response.clone();
 
-            // Mettre en cache dans le cache runtime
+            // Mettre en cache dans le cache runtime (avec gestion d'erreur)
             caches.open(RUNTIME_CACHE)
               .then((cache) => {
-                cache.put(request, responseToCache);
+                try {
+                  cache.put(request, responseToCache);
+                } catch (error) {
+                  // Ignorer les erreurs de cache (ex: schéma non supporté)
+                  console.warn('[Service Worker] Impossible de mettre en cache:', request.url, error);
+                }
               });
 
             return response;
