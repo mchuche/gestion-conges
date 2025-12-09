@@ -151,6 +151,14 @@ async function showTeamDetails(teamId) {
     if (members.length === 0 && pendingInvitations.length === 0) {
         teamMembersList.innerHTML = '<p class="no-members">Aucun membre dans cette équipe.</p>';
     } else {
+        // En-tête pour les membres
+        if (members.length > 0) {
+            const membersHeader = document.createElement('div');
+            membersHeader.className = 'members-header';
+            membersHeader.innerHTML = '<h5 style="margin: 0 0 10px 0; color: var(--text-color);">Membres de l\'équipe</h5>';
+            teamMembersList.appendChild(membersHeader);
+        }
+        
         members.forEach(member => {
             const memberCard = document.createElement('div');
             memberCard.className = 'member-card';
@@ -303,18 +311,19 @@ async function showAddMemberDialog(teamId) {
     try {
         const result = await this.inviteUserToTeam(teamId, email.trim());
         
-        // Afficher un message approprié selon le type de résultat
-        if (result && result.type === 'direct_add') {
-            alert(result.message || `L'utilisateur ${email.trim()} a été ajouté directement à l'équipe !`);
-        } else {
-            alert(result?.message || `Invitation envoyée à ${email.trim()} !\n\nL'utilisateur recevra une notification lorsqu'il se connectera à l'application.`);
-        }
-        
         // Rafraîchir les détails de l'équipe pour afficher les changements
         await this.showTeamDetails(teamId);
+        
+        // Afficher un message approprié selon le type de résultat
+        if (result && result.type === 'direct_add') {
+            // Message de succès avec indication visuelle
+            alert(`✅ ${result.message || `L'utilisateur ${email.trim()} a été ajouté directement à l'équipe !`}\n\nVous pouvez maintenant le voir dans la liste des membres.`);
+        } else {
+            alert(result?.message || `📨 Invitation envoyée à ${email.trim()} !\n\nL'utilisateur recevra une notification lorsqu'il se connectera à l'application.`);
+        }
     } catch (error) {
         console.error('Erreur lors de l\'invitation:', error);
-        alert('Erreur lors de l\'invitation: ' + (error.message || error));
+        alert('❌ Erreur lors de l\'invitation: ' + (error.message || error));
     }
 }
 

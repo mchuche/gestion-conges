@@ -112,7 +112,7 @@ async function loadTeamMembers(teamId) {
                 )
             `)
             .eq('team_id', teamId)
-            .order('joined_at');
+            .order('joined_at', { ascending: false });
 
         if (error) throw error;
 
@@ -156,33 +156,41 @@ async function inviteUserToTeam(teamId, email) {
         }
 
         // Vérifier si l'utilisateur existe déjà dans la base de données
+        // On utilise la table user_emails pour rechercher l'email
         const { data: userEmailData, error: userEmailError } = await supabase
-            .rpc('get_user_id_by_email', { user_email: trimmedEmail });
+            .from('user_emails')
+            .select('user_id')
+            .eq('email', trimmedEmail)
+            .single();
 
-        if (userEmailError) {
+        if (userEmailError && userEmailError.code !== 'PGRST116') {
+            // PGRST116 = no rows found, ce qui est normal si l'utilisateur n'existe pas
             console.warn('Erreur lors de la recherche de l\'utilisateur:', userEmailError);
-            // Si la fonction RPC n'existe pas encore, continuer avec l'invitation
         }
 
         // Si l'utilisateur existe déjà, l'ajouter directement à l'équipe
-        if (userEmailData && userEmailData !== null) {
-            const existingUserId = userEmailData;
+        if (userEmailData && userEmailData.user_id) {
+            const existingUserId = userEmailData.user_id;
             
             // Vérifier qu'il n'est pas déjà membre (double vérification)
             if (!existingMembers.some(m => m.userId === existingUserId)) {
                 try {
                     // Ajouter directement l'utilisateur à l'équipe
                     await this.addMemberToTeam(teamId, existingUserId);
-                    console.log('Utilisateur ajouté directement à l\'équipe:', trimmedEmail);
+                    console.log('Utilisateur ajouté directement à l\'équipe:', trimmedEmail, 'ID:', existingUserId);
                     return { 
                         type: 'direct_add',
-                        message: `L'utilisateur ${trimmedEmail} a été ajouté directement à l'équipe.`,
-                        userId: existingUserId
+                        message: `✅ L'utilisateur ${trimmedEmail} a été ajouté directement à l'équipe !`,
+                        userId: existingUserId,
+                        email: trimmedEmail
                     };
                 } catch (addError) {
                     console.error('Erreur lors de l\'ajout direct:', addError);
                     // Si l'ajout direct échoue, continuer avec l'invitation
                 }
+            } else {
+                // L'utilisateur est déjà membre
+                throw new Error('Cet utilisateur est déjà membre de l\'équipe');
             }
         }
 
