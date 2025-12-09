@@ -78,18 +78,22 @@ function renderSemesterView() {
     // Synchroniser currentYear avec currentDate pour éviter les désynchronisations
     this.currentYear = year;
     
+    console.log('[RenderSemesterView] Année:', year, 'Mois:', currentMonth, 'currentYear:', this.currentYear);
+    
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
     ];
 
     // Déterminer le semestre (1er semestre: 0-5, 2ème semestre: 6-11)
+    // IMPORTANT: Utiliser le mois de currentDate, pas de currentYear
     const semesterStart = currentMonth < 6 ? 0 : 6;
     const semesterEnd = currentMonth < 6 ? 6 : 12;
 
     // Mettre à jour le titre
     const semesterName = currentMonth < 6 ? '1er Semestre' : '2ème Semestre';
     document.getElementById('currentMonth').textContent = `${semesterName} ${year}`;
+    console.log('[RenderSemesterView] Semestre affiché:', semesterName, year, 'Mois de début:', semesterStart, 'Mois de fin:', semesterEnd);
 
     // Créer une colonne pour chaque mois du semestre
     for (let month = semesterStart; month < semesterEnd; month++) {

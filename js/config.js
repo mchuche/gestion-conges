@@ -71,16 +71,22 @@ function setupEventListeners() {
         } else {
             // Vue semestrielle : passer au semestre suivant
             const currentMonth = this.currentDate.getMonth();
+            console.log('[Navigation] Avant changement - Mois actuel:', currentMonth, 'Année:', this.currentDate.getFullYear());
+            
             if (currentMonth < 6) {
                 // On est au 1er semestre (janvier-juin), aller au 2ème semestre de la même année
                 this.currentDate.setMonth(6); // Juillet
+                console.log('[Navigation] Passage au 2ème semestre de', this.currentDate.getFullYear());
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de l'année suivante
-                this.currentDate.setFullYear(this.currentDate.getFullYear() + 1);
+                const nextYear = this.currentDate.getFullYear() + 1;
+                this.currentDate.setFullYear(nextYear);
                 this.currentDate.setMonth(0); // Janvier
+                console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', this.currentDate.getMonth());
             }
             // Synchroniser currentYear avec currentDate
             this.currentYear = this.currentDate.getFullYear();
+            console.log('[Navigation] Après changement - Mois:', this.currentDate.getMonth(), 'Année:', this.currentYear);
         }
         this.renderCalendar();
         this.updateStats();
