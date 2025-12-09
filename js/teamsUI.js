@@ -357,15 +357,23 @@ function setupTeamsEventListeners() {
     
     // Bouton de création d'équipe
     const createTeamBtn = document.getElementById('createTeamBtn');
-    if (createTeamBtn) {
+    if (createTeamBtn && !createTeamBtn.hasAttribute('data-listener-added')) {
+        createTeamBtn.setAttribute('data-listener-added', 'true');
         createTeamBtn.addEventListener('click', () => this.showCreateTeamForm());
     }
     
     // Bouton d'annulation de création
     const cancelCreateTeamBtn = document.getElementById('cancelCreateTeamBtn');
-    if (cancelCreateTeamBtn) {
+    if (cancelCreateTeamBtn && !cancelCreateTeamBtn.hasAttribute('data-listener-added')) {
+        cancelCreateTeamBtn.setAttribute('data-listener-added', 'true');
         cancelCreateTeamBtn.addEventListener('click', () => {
             document.getElementById('createTeamSection').style.display = 'none';
+            // Réactiver le bouton de sauvegarde au cas où
+            const saveBtn = document.getElementById('saveTeamBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Créer';
+            }
         });
     }
     
