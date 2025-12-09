@@ -366,7 +366,7 @@ function createYearDayElement(date) {
     // Case pour le numéro du jour
     const dayNumber = document.createElement('span');
     dayNumber.className = 'year-day-number';
-    dayNumber.textContent = date.getDate();
+    dayNumber.textContent = getDate(date);
     dayContent.appendChild(dayNumber);
     
     // Case pour la lettre du jour
