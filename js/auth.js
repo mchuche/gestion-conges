@@ -28,9 +28,9 @@ async function initAuth() {
                 this.showMainApp();
             } catch (error) {
                 console.error('Erreur lors du chargement des données utilisateur:', error);
-                // Si le chargement échoue, la session est probablement invalide
-                await this.clearInvalidSession();
-                this.showAuthModal();
+                // Ne pas bloquer la connexion si le chargement échoue
+                // L'utilisateur peut toujours utiliser l'app, les données seront rechargées plus tard
+                this.showMainApp();
             }
         } else {
             // Session invalide, nettoyer et afficher la modale de connexion
@@ -50,8 +50,9 @@ async function initAuth() {
                 this.showMainApp();
             } catch (error) {
                 console.error('Erreur lors du chargement des données utilisateur:', error);
-                await this.clearInvalidSession();
-                this.showAuthModal();
+                // Ne pas bloquer la connexion si le chargement échoue
+                // L'utilisateur peut toujours utiliser l'app
+                this.showMainApp();
             }
         } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
             if (event === 'SIGNED_OUT') {
@@ -89,15 +90,27 @@ async function validateSession(session) {
         if (error) {
             const errorCode = error.code || '';
             const errorMessage = error.message || '';
-            if (errorCode === 'PGRST301' || errorMessage.includes('JWT') || errorMessage.includes('token') || errorMessage.includes('session')) {
+            // Seulement considérer comme invalide si c'est vraiment une erreur d'auth
+            if (errorCode === 'PGRST301' || 
+                errorCode === '42501' || // Permission denied
+                errorMessage.includes('JWT') || 
+                errorMessage.includes('token') || 
+                errorMessage.includes('session') ||
+                errorMessage.includes('authentication')) {
                 console.warn('Session invalide détectée:', error);
                 return false;
             }
+            // Pour les autres erreurs (réseau, table inexistante, etc.), 
+            // considérer la session comme valide car l'erreur n'est pas liée à l'auth
+            console.warn('Erreur lors de la validation de session (non bloquante):', error);
+            return true;
         }
         return true;
     } catch (error) {
-        console.error('Erreur lors de la validation de session:', error);
-        return false;
+        // En cas d'exception, ne pas bloquer la connexion
+        // La session pourrait être valide malgré l'erreur
+        console.warn('Exception lors de la validation de session (non bloquante):', error);
+        return true; // Donner le bénéfice du doute
     }
 }
 
@@ -245,12 +258,34 @@ function setupAuthListeners() {
 async function login(email, password) {
     const errorEl = document.getElementById('authError');
     try {
+        // Afficher un indicateur de chargement
+        if (errorEl) {
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+        }
+        
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password
         });
         
         if (error) throw error;
+        
+        // Vérifier que la connexion a réussi
+        if (data && data.session) {
+            // La connexion a réussi, onAuthStateChange devrait être déclenché
+            // Mais on peut aussi vérifier explicitement pour être sûr
+            this.user = data.user;
+            try {
+                await this.loadUserData();
+                this.showMainApp();
+            } catch (loadError) {
+                console.error('Erreur lors du chargement des données utilisateur:', loadError);
+                // Ne pas bloquer la connexion si le chargement échoue
+                // L'utilisateur peut toujours utiliser l'app
+                this.showMainApp();
+            }
+        }
         
         if (errorEl) {
             errorEl.style.display = 'none';
