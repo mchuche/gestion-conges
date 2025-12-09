@@ -515,7 +515,8 @@ header h1 {
     aspect-ratio: 16/10;
     max-width: 100%;
     padding: 10px;
-    background: transparent;
+    background: var(--bg-color) !important;
+    min-height: 600px;
 }
 
 /* Mode plein écran pour la vue annuelle */
