@@ -157,8 +157,8 @@ function createYearDayElement(date) {
         dayElement.classList.add('weekend');
     }
 
-    // Vérifier si c'est un jour férié
-    const publicHolidays = getPublicHolidays(this.selectedCountry, date.getFullYear());
+    // Vérifier si c'est un jour férié (toujours français)
+    const publicHolidays = getPublicHolidays('FR', date.getFullYear());
     if (publicHolidays[dateKey]) {
         dayElement.classList.add('public-holiday');
         dayElement.title = publicHolidays[dateKey];

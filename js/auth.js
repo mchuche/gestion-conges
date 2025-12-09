@@ -406,8 +406,7 @@ async function loadUserData() {
         await Promise.all([
             this.loadLeaves(),
             this.loadLeaveTypesConfig(),
-            this.loadLeaveQuotasByYear(),
-            this.loadSelectedCountry()
+            this.loadLeaveQuotasByYear()
         ]);
     } catch (error) {
         console.error('Erreur lors du chargement des données utilisateur:', error);

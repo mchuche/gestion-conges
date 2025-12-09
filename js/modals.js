@@ -36,12 +36,6 @@ function closeConfigModal() {
 
 // Rendre la modale de configuration
 function renderConfigModal() {
-    // Mettre à jour le sélecteur de pays
-    const countrySelect = document.getElementById('countrySelect');
-    if (countrySelect) {
-        countrySelect.value = this.selectedCountry;
-    }
-
     // Mettre à jour le sélecteur d'année
     const yearSelect = document.getElementById('configYearSelect');
     if (yearSelect) {
@@ -240,13 +234,6 @@ function addLeaveType() {
 
 // Sauvegarder la configuration
 async function saveConfig() {
-    // Sauvegarder le pays sélectionné
-    const countrySelect = document.getElementById('countrySelect');
-    if (countrySelect) {
-        this.selectedCountry = countrySelect.value;
-        await this.saveSelectedCountry();
-    }
-
     const inputs = document.querySelectorAll('#leaveTypesConfig .leave-type-item');
     const newConfig = [];
     const selectedYear = this.configYear;
@@ -307,4 +294,5 @@ async function saveConfig() {
         alert('Veuillez remplir au moins un type de congé avec un nom et un label.');
     }
 }
+
 
