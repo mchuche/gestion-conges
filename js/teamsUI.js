@@ -58,7 +58,13 @@ function populateTeamSelector() {
 // Ouvrir la modale de gestion des équipes
 async function openTeamsModal() {
     const teamsModal = document.getElementById('teamsModal');
-    if (!teamsModal) return;
+    if (!teamsModal) {
+        console.error('[openTeamsModal] Modale non trouvée');
+        return;
+    }
+    
+    console.log('[openTeamsModal] Ouverture de la modale...');
+    console.log('[openTeamsModal] Équipes actuelles:', this.userTeams?.length || 0);
     
     teamsModal.style.display = 'block';
     teamsModal.classList.add('active');
@@ -66,6 +72,8 @@ async function openTeamsModal() {
     // Recharger les équipes pour s'assurer qu'elles sont à jour
     console.log('[openTeamsModal] Rechargement des équipes...');
     await this.loadUserTeams();
+    
+    console.log('[openTeamsModal] Équipes après rechargement:', this.userTeams?.length || 0);
     
     // Afficher la liste des équipes
     this.renderTeamsList();
