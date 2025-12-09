@@ -4,12 +4,15 @@
 // Charger les équipes de l'utilisateur
 async function loadUserTeams() {
     if (!this.user || !supabase) {
+        console.warn('[loadUserTeams] Utilisateur ou Supabase non disponible');
         this.userTeams = [];
         this.currentTeamId = null;
         return;
     }
 
     try {
+        console.log('[loadUserTeams] Chargement des équipes pour l\'utilisateur:', this.user.id);
+        
         // Charger les équipes où l'utilisateur est membre
         const { data, error } = await supabase
             .from('team_members')
@@ -26,26 +29,43 @@ async function loadUserTeams() {
             `)
             .eq('user_id', this.user.id);
 
-        if (error) throw error;
+        if (error) {
+            console.error('[loadUserTeams] Erreur Supabase:', error);
+            throw error;
+        }
 
-        this.userTeams = (data || []).map(member => ({
-            id: member.teams.id,
-            name: member.teams.name,
-            description: member.teams.description,
-            role: member.role,
-            createdBy: member.teams.created_by,
-            createdAt: member.teams.created_at
-        }));
+        console.log('[loadUserTeams] Données brutes reçues:', data);
+
+        // Vérifier que les données sont valides
+        if (!data || !Array.isArray(data)) {
+            console.warn('[loadUserTeams] Données invalides, initialisation d\'un tableau vide');
+            this.userTeams = [];
+            this.currentTeamId = null;
+            return;
+        }
+
+        // Mapper les équipes
+        this.userTeams = data
+            .filter(member => member.teams && member.teams.id) // Filtrer les membres sans équipe valide
+            .map(member => ({
+                id: member.teams.id,
+                name: member.teams.name,
+                description: member.teams.description,
+                role: member.role,
+                createdBy: member.teams.created_by,
+                createdAt: member.teams.created_at
+            }));
 
         // Si aucune équipe n'est sélectionnée et qu'il y a des équipes, sélectionner la première
         if (!this.currentTeamId && this.userTeams.length > 0) {
             this.currentTeamId = this.userTeams[0].id;
         }
 
-        console.log('Équipes chargées:', this.userTeams.length);
+        console.log('[loadUserTeams] Équipes chargées:', this.userTeams.length, this.userTeams);
     } catch (e) {
-        console.error('Erreur lors du chargement des équipes:', e);
+        console.error('[loadUserTeams] Erreur lors du chargement des équipes:', e);
         this.userTeams = [];
+        this.currentTeamId = null;
     }
 }
 
