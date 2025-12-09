@@ -2320,3 +2320,269 @@ header h1 {
     font-style: italic;
 }
 
+/* Styles pour l'administration */
+.admin-btn {
+    padding: 8px 16px;
+    background: var(--danger-color, #e74c3c);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 10px;
+    transition: background 0.2s;
+}
+
+.admin-btn:hover {
+    background: var(--danger-hover, #c0392b);
+}
+
+.admin-modal-content {
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.admin-tab {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 0.95em;
+    transition: all 0.2s;
+}
+
+.admin-tab:hover {
+    color: var(--primary-color);
+    background: var(--hover-color);
+}
+
+.admin-tab.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.admin-tab-content {
+    display: none;
+}
+
+.admin-tab-content.active {
+    display: block;
+}
+
+.admin-section-header {
+    margin-bottom: 20px;
+}
+
+.admin-section-header h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-color);
+}
+
+.admin-search {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+
+.admin-search:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-user-card,
+.admin-team-card {
+    padding: 15px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.admin-user-card:hover,
+.admin-team-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.admin-user-info,
+.admin-team-info {
+    flex: 1;
+}
+
+.admin-user-email,
+.admin-team-name {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 5px;
+    font-size: 1em;
+}
+
+.admin-user-meta,
+.admin-team-meta {
+    font-size: 0.85em;
+    color: var(--text-secondary, #666);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-user-actions,
+.admin-team-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-delete-btn {
+    padding: 6px 12px;
+    background: var(--danger-color, #e74c3c);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.admin-delete-btn:hover {
+    background: var(--danger-hover, #c0392b);
+}
+
+.admin-settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-setting-item label {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.admin-setting-item textarea,
+.admin-setting-item select {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.admin-setting-item textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.admin-setting-item textarea:focus,
+.admin-setting-item select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.admin-stat-card {
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.admin-stat-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.admin-stat-label {
+    font-size: 0.9em;
+    color: var(--text-secondary, #666);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.no-data,
+.error {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary, #666);
+    font-style: italic;
+}
+
+.error {
+    color: var(--danger-color, #e74c3c);
+}
+
+/* Responsive pour l'admin */
+@media (max-width: 768px) {
+    .admin-modal-content {
+        max-width: 95vw;
+        padding: 15px;
+    }
+    
+    .admin-tabs {
+        flex-direction: column;
+        border-bottom: none;
+    }
+    
+    .admin-tab {
+        border-bottom: 1px solid var(--border-color);
+        border-left: 3px solid transparent;
+    }
+    
+    .admin-tab.active {
+        border-left-color: var(--primary-color);
+        border-bottom-color: var(--border-color);
+    }
+    
+    .admin-user-card,
+    .admin-team-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
