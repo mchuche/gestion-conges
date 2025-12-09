@@ -406,6 +406,17 @@ header h1 {
     opacity: 0.85;
 }
 
+.day.past-day.public-holiday {
+    border-color: #ffc107 !important;
+    border-width: 2px !important;
+    opacity: 0.7;
+}
+
+.day.past-day.public-holiday:hover {
+    border-color: #ff9800 !important;
+    opacity: 0.85;
+}
+
 .day.future-day {
     background: #ffffff;
 }
@@ -625,6 +636,17 @@ header h1 {
 
 .year-day.past-day.weekend:hover {
     border-color: #aaa !important;
+    opacity: 0.85;
+}
+
+.year-day.past-day.public-holiday {
+    border-color: #ffc107 !important;
+    border-width: 2px !important;
+    opacity: 0.7;
+}
+
+.year-day.past-day.public-holiday:hover {
+    border-color: #ff9800 !important;
     opacity: 0.85;
 }
 
