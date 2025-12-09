@@ -68,15 +68,22 @@ function renderSemesterView() {
         return;
     }
     semesterCalendar.innerHTML = '';
+    semesterCalendar.className = 'semester-calendar';
 
-    const year = this.currentYear;
+    // Utiliser currentDate pour obtenir l'année et le mois actuels
+    // Cela garantit la cohérence avec la navigation
+    const year = this.currentDate.getFullYear();
+    const currentMonth = this.currentDate.getMonth();
+    
+    // Synchroniser currentYear avec currentDate pour éviter les désynchronisations
+    this.currentYear = year;
+    
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
     ];
 
     // Déterminer le semestre (1er semestre: 0-5, 2ème semestre: 6-11)
-    const currentMonth = this.currentDate.getMonth();
     const semesterStart = currentMonth < 6 ? 0 : 6;
     const semesterEnd = currentMonth < 6 ? 6 : 12;
 

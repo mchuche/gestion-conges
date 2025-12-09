@@ -42,21 +42,21 @@ function setupEventListeners() {
             // Vue annuelle : passer à l'année précédente
             this.currentYear--;
             this.currentDate.setFullYear(this.currentYear);
+            this.currentDate.setMonth(0); // Janvier pour éviter les problèmes
         } else {
             // Vue semestrielle : passer au semestre précédent
             const currentMonth = this.currentDate.getMonth();
             if (currentMonth < 6) {
-                // On est au 1er semestre, aller au 2ème semestre de l'année précédente
-                this.currentYear--;
-                this.currentDate.setFullYear(this.currentYear);
-                this.currentDate.setMonth(6);
+                // On est au 1er semestre (janvier-juin), aller au 2ème semestre de l'année précédente
+                this.currentDate.setFullYear(this.currentDate.getFullYear() - 1);
+                this.currentDate.setMonth(6); // Juillet
             } else {
-                // On est au 2ème semestre, aller au 1er semestre
-                this.currentDate.setMonth(0);
+                // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de la même année
+                this.currentDate.setMonth(0); // Janvier
             }
+            // Synchroniser currentYear avec currentDate
+            this.currentYear = this.currentDate.getFullYear();
         }
-        // Synchroniser currentYear avec currentDate
-        this.currentYear = this.currentDate.getFullYear();
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
@@ -67,21 +67,21 @@ function setupEventListeners() {
             // Vue annuelle : passer à l'année suivante
             this.currentYear++;
             this.currentDate.setFullYear(this.currentYear);
+            this.currentDate.setMonth(0); // Janvier pour éviter les problèmes
         } else {
             // Vue semestrielle : passer au semestre suivant
             const currentMonth = this.currentDate.getMonth();
             if (currentMonth < 6) {
-                // On est au 1er semestre, aller au 2ème semestre
-                this.currentDate.setMonth(6);
+                // On est au 1er semestre (janvier-juin), aller au 2ème semestre de la même année
+                this.currentDate.setMonth(6); // Juillet
             } else {
-                // On est au 2ème semestre, aller au 1er semestre de l'année suivante
-                this.currentYear++;
-                this.currentDate.setFullYear(this.currentYear);
-                this.currentDate.setMonth(0);
+                // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de l'année suivante
+                this.currentDate.setFullYear(this.currentDate.getFullYear() + 1);
+                this.currentDate.setMonth(0); // Janvier
             }
+            // Synchroniser currentYear avec currentDate
+            this.currentYear = this.currentDate.getFullYear();
         }
-        // Synchroniser currentYear avec currentDate
-        this.currentYear = this.currentDate.getFullYear();
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
