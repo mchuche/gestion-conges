@@ -95,36 +95,68 @@ async function createTeam(name, description = '') {
 // Charger les membres d'une équipe
 async function loadTeamMembers(teamId) {
     if (!this.user || !supabase || !teamId) {
+        console.warn('[loadTeamMembers] Paramètres manquants');
         return [];
     }
 
     try {
-        const { data, error } = await supabase
+        console.log('[loadTeamMembers] Chargement des membres pour l\'équipe:', teamId);
+        
+        // D'abord, charger les membres de l'équipe
+        const { data: membersData, error: membersError } = await supabase
             .from('team_members')
             .select(`
                 id,
                 role,
                 joined_at,
-                user_id,
-                users:user_id (
-                    id,
-                    email
-                )
+                user_id
             `)
             .eq('team_id', teamId)
             .order('joined_at', { ascending: false });
 
-        if (error) throw error;
+        if (membersError) {
+            console.error('[loadTeamMembers] Erreur lors du chargement des membres:', membersError);
+            throw membersError;
+        }
 
-        return (data || []).map(member => ({
+        console.log('[loadTeamMembers] Membres trouvés:', membersData?.length || 0);
+
+        if (!membersData || membersData.length === 0) {
+            return [];
+        }
+
+        // Récupérer les emails depuis user_emails pour chaque membre
+        const userIds = membersData.map(m => m.user_id);
+        const { data: emailsData, error: emailsError } = await supabase
+            .from('user_emails')
+            .select('user_id, email')
+            .in('user_id', userIds);
+
+        if (emailsError) {
+            console.warn('[loadTeamMembers] Erreur lors du chargement des emails:', emailsError);
+        }
+
+        // Créer un map pour accéder rapidement aux emails
+        const emailMap = {};
+        if (emailsData) {
+            emailsData.forEach(item => {
+                emailMap[item.user_id] = item.email;
+            });
+        }
+
+        // Mapper les membres avec leurs emails
+        const members = membersData.map(member => ({
             id: member.id,
             userId: member.user_id,
-            email: member.users?.email || 'Utilisateur inconnu',
+            email: emailMap[member.user_id] || 'Utilisateur inconnu',
             role: member.role,
             joinedAt: member.joined_at
         }));
+
+        console.log('[loadTeamMembers] Membres mappés:', members);
+        return members;
     } catch (e) {
-        console.error('Erreur lors du chargement des membres:', e);
+        console.error('[loadTeamMembers] Erreur lors du chargement des membres:', e);
         return [];
     }
 }

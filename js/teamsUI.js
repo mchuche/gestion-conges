@@ -138,11 +138,14 @@ async function showTeamDetails(teamId) {
     }
     
     // Charger les membres
+    console.log('[showTeamDetails] Chargement des membres pour l\'équipe:', teamId);
     const members = await this.loadTeamMembers(teamId);
+    console.log('[showTeamDetails] Membres chargés:', members.length, members);
     
     // Charger les invitations en attente
     const invitations = await this.loadTeamInvitations(teamId);
     const pendingInvitations = invitations.filter(inv => inv.status === 'pending');
+    console.log('[showTeamDetails] Invitations en attente:', pendingInvitations.length);
     
     // Rendre la liste des membres
     teamMembersList.innerHTML = '';
