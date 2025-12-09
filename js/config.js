@@ -14,6 +14,12 @@ async function init() {
     
     // Configurer les événements
     this.setupEventListeners();
+    
+    // S'assurer que le bouton de thème est bien initialisé
+    if (typeof this.updateThemeToggleButton === 'function') {
+        const currentTheme = this.getCurrentTheme ? this.getCurrentTheme() : 'light';
+        this.updateThemeToggleButton(currentTheme);
+    }
 }
 
 // Configuration des événements
@@ -146,9 +152,20 @@ function setupEventListeners() {
     // Bouton de bascule de thème
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            this.toggleTheme();
+        // Retirer les anciens listeners pour éviter les doublons
+        const newThemeToggle = themeToggle.cloneNode(true);
+        themeToggle.parentNode.replaceChild(newThemeToggle, themeToggle);
+        
+        newThemeToggle.addEventListener('click', () => {
+            console.log('[Theme] Bouton de thème cliqué');
+            if (typeof this.toggleTheme === 'function') {
+                this.toggleTheme();
+            } else {
+                console.error('[Theme] toggleTheme n\'est pas une fonction');
+            }
         });
+    } else {
+        console.warn('[Theme] Bouton themeToggle non trouvé dans le DOM');
     }
 
     // Aide
