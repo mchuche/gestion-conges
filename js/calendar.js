@@ -36,10 +36,6 @@ function renderCalendar() {
     if (this.viewMode === 'year') {
         this.renderYearView();
     } else {
-        // S'assurer qu'on n'est pas en mode plein écran
-        if (typeof this.exitYearViewFullscreen === 'function') {
-            this.exitYearViewFullscreen();
-        }
         // S'assurer que la classe est correcte pour la vue semestrielle
         semesterCalendar.className = 'semester-calendar';
         const semesterView = document.getElementById('semesterView');

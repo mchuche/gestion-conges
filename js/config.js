@@ -112,19 +112,11 @@ function setupEventListeners() {
                 manager.viewMode = 'year';
                 viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue semestrielle';
-                // Activer le mode plein écran pour la vue annuelle
-                if (typeof manager.enterYearViewFullscreen === 'function') {
-                    manager.enterYearViewFullscreen();
-                }
             } else {
                 console.log('[ViewToggle] Passage en vue semestrielle');
                 manager.viewMode = 'semester';
                 viewToggle.textContent = '📅';
                 viewToggle.title = 'Vue annuelle';
-                // Désactiver le mode plein écran
-                if (typeof manager.exitYearViewFullscreen === 'function') {
-                    manager.exitYearViewFullscreen();
-                }
             }
             // Re-rendre le calendrier avec la nouvelle vue
             console.log('[ViewToggle] Nouvelle vue:', manager.viewMode);

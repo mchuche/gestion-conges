@@ -444,33 +444,7 @@ header h1 {
 /* Conteneur du calendrier */
 .calendar-container {
     position: relative;
-}
-
-/* Mode plein écran pour la vue annuelle */
-.calendar-container.year-view-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-    background: var(--bg-color) !important;
-    padding: 20px;
-    overflow: auto;
-}
-
-.semester-view.year-view-fullscreen {
-    height: calc(100vh - 40px);
-    padding: 10px;
-    overflow-y: auto;
-}
-
-.year-view-fullscreen .year-calendar-view {
-    max-width: 100%;
-    min-height: calc(100vh - 100px);
-    aspect-ratio: auto;
-    padding: 20px;
-    background: transparent;
+    width: 100%;
 }
 
 /* Vue Semestrielle */
