@@ -1670,6 +1670,8 @@ header h1 {
     background: var(--primary-color) !important;
     color: white !important;
     border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(91, 163, 245, 0.3), 0 4px 12px rgba(91, 163, 245, 0.4) !important;
+    font-weight: 600 !important;
 }
 
 [data-theme="dark"] .leave-btn {
