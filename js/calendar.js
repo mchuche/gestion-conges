@@ -25,10 +25,38 @@ function getLeaveForDate(date) {
 
 // Rendre le calendrier (semestriel ou annuel selon la vue)
 function renderCalendar() {
+    const semesterCalendar = document.getElementById('semesterCalendar');
+    if (!semesterCalendar) {
+        console.error('semesterCalendar element not found');
+        return;
+    }
+    
     if (this.viewMode === 'year') {
         this.renderYearView();
     } else {
+        // S'assurer qu'on n'est pas en mode plein écran
+        this.exitYearViewFullscreen();
         this.renderSemesterView();
+    }
+}
+
+// Entrer en mode plein écran pour la vue annuelle
+function enterYearViewFullscreen() {
+    const calendarContainer = document.querySelector('.calendar-container');
+    const semesterView = document.getElementById('semesterView');
+    if (calendarContainer && semesterView) {
+        calendarContainer.classList.add('year-view-fullscreen');
+        semesterView.classList.add('year-view-fullscreen');
+    }
+}
+
+// Sortir du mode plein écran
+function exitYearViewFullscreen() {
+    const calendarContainer = document.querySelector('.calendar-container');
+    const semesterView = document.getElementById('semesterView');
+    if (calendarContainer && semesterView) {
+        calendarContainer.classList.remove('year-view-fullscreen');
+        semesterView.classList.remove('year-view-fullscreen');
     }
 }
 

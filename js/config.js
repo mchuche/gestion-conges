@@ -96,10 +96,14 @@ function setupEventListeners() {
                 this.viewMode = 'year';
                 viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue semestrielle';
+                // Activer le mode plein écran pour la vue annuelle
+                this.enterYearViewFullscreen();
             } else {
                 this.viewMode = 'semester';
                 viewToggle.textContent = '📅';
                 viewToggle.title = 'Vue annuelle';
+                // Désactiver le mode plein écran
+                this.exitYearViewFullscreen();
             }
             // Re-rendre le calendrier avec la nouvelle vue
             this.renderCalendar();

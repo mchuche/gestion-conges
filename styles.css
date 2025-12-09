@@ -483,16 +483,37 @@ header h1 {
     aspect-ratio: 16/10;
     max-width: 100%;
     padding: 10px;
+    background: transparent;
+}
+
+/* Mode plein écran pour la vue annuelle */
+.year-view-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: var(--bg-color);
+    padding: 20px;
+    overflow: auto;
+}
+
+.year-view-fullscreen .year-calendar-view {
+    max-width: 100%;
+    height: calc(100vh - 40px);
+    aspect-ratio: auto;
 }
 
 .year-month-card {
-    background: var(--card-bg);
+    background: var(--card-bg) !important;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     padding: 8px;
     display: flex;
     flex-direction: column;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    min-height: 0;
 }
 
 .year-month-card:hover {
@@ -536,6 +557,7 @@ header h1 {
 
 .year-day-empty {
     /* Cellules vides pour aligner le premier jour */
+    background: transparent;
 }
 
 .year-view-day {
@@ -548,8 +570,8 @@ header h1 {
     cursor: pointer;
     font-size: 0.75em;
     transition: all 0.2s ease;
-    background: var(--card-bg);
-    color: var(--text-color);
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
     position: relative;
     min-height: 24px;
 }

@@ -129,6 +129,8 @@ if (typeof getLeaveForDate !== 'undefined') {
         renderCalendar,
         renderSemesterView,
         renderYearView,
+        enterYearViewFullscreen,
+        exitYearViewFullscreen,
         createYearDayElement,
         createYearViewDayElement,
         getLeaveTypeLabel,
