@@ -3,6 +3,18 @@
 
 // Initialiser l'application
 async function init() {
+    // Initialiser le bouton de bascule de vue
+    const viewToggle = document.getElementById('viewToggle');
+    if (viewToggle) {
+        if (this.viewMode === 'year') {
+            viewToggle.textContent = '📆';
+            viewToggle.title = 'Vue semestrielle';
+        } else {
+            viewToggle.textContent = '📅';
+            viewToggle.title = 'Vue annuelle';
+        }
+    }
+    
     // Rendre le calendrier
     this.renderCalendar();
     
@@ -24,18 +36,24 @@ async function init() {
 
 // Configuration des événements
 function setupEventListeners() {
-    // Navigation semestrielle
+    // Navigation (semestrielle ou annuelle selon la vue)
     document.getElementById('prevMonth').addEventListener('click', () => {
-        // Passer au semestre précédent
-        const currentMonth = this.currentDate.getMonth();
-        if (currentMonth < 6) {
-            // On est au 1er semestre, aller au 2ème semestre de l'année précédente
+        if (this.viewMode === 'year') {
+            // Vue annuelle : passer à l'année précédente
             this.currentYear--;
             this.currentDate.setFullYear(this.currentYear);
-            this.currentDate.setMonth(6);
         } else {
-            // On est au 2ème semestre, aller au 1er semestre
-            this.currentDate.setMonth(0);
+            // Vue semestrielle : passer au semestre précédent
+            const currentMonth = this.currentDate.getMonth();
+            if (currentMonth < 6) {
+                // On est au 1er semestre, aller au 2ème semestre de l'année précédente
+                this.currentYear--;
+                this.currentDate.setFullYear(this.currentYear);
+                this.currentDate.setMonth(6);
+            } else {
+                // On est au 2ème semestre, aller au 1er semestre
+                this.currentDate.setMonth(0);
+            }
         }
         // Synchroniser currentYear avec currentDate
         this.currentYear = this.currentDate.getFullYear();
@@ -45,16 +63,22 @@ function setupEventListeners() {
     });
 
     document.getElementById('nextMonth').addEventListener('click', () => {
-        // Passer au semestre suivant
-        const currentMonth = this.currentDate.getMonth();
-        if (currentMonth < 6) {
-            // On est au 1er semestre, aller au 2ème semestre
-            this.currentDate.setMonth(6);
-        } else {
-            // On est au 2ème semestre, aller au 1er semestre de l'année suivante
+        if (this.viewMode === 'year') {
+            // Vue annuelle : passer à l'année suivante
             this.currentYear++;
             this.currentDate.setFullYear(this.currentYear);
-            this.currentDate.setMonth(0);
+        } else {
+            // Vue semestrielle : passer au semestre suivant
+            const currentMonth = this.currentDate.getMonth();
+            if (currentMonth < 6) {
+                // On est au 1er semestre, aller au 2ème semestre
+                this.currentDate.setMonth(6);
+            } else {
+                // On est au 2ème semestre, aller au 1er semestre de l'année suivante
+                this.currentYear++;
+                this.currentDate.setFullYear(this.currentYear);
+                this.currentDate.setMonth(0);
+            }
         }
         // Synchroniser currentYear avec currentDate
         this.currentYear = this.currentDate.getFullYear();
@@ -62,6 +86,25 @@ function setupEventListeners() {
         this.updateStats();
         this.updateLeaveQuotas();
     });
+
+    // Bouton de bascule entre vue semestrielle et annuelle
+    const viewToggle = document.getElementById('viewToggle');
+    if (viewToggle) {
+        viewToggle.addEventListener('click', () => {
+            // Basculer entre les vues
+            if (this.viewMode === 'semester') {
+                this.viewMode = 'year';
+                viewToggle.textContent = '📆';
+                viewToggle.title = 'Vue semestrielle';
+            } else {
+                this.viewMode = 'semester';
+                viewToggle.textContent = '📅';
+                viewToggle.title = 'Vue annuelle';
+            }
+            // Re-rendre le calendrier avec la nouvelle vue
+            this.renderCalendar();
+        });
+    }
 
     // Boutons de période (matin/après-midi/journée complète)
     document.querySelectorAll('.period-btn').forEach(btn => {

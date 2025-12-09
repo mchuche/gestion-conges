@@ -23,9 +23,13 @@ function getLeaveForDate(date) {
     return result;
 }
 
-// Rendre le calendrier (semestriel)
+// Rendre le calendrier (semestriel ou annuel selon la vue)
 function renderCalendar() {
-    this.renderSemesterView();
+    if (this.viewMode === 'year') {
+        this.renderYearView();
+    } else {
+        this.renderSemesterView();
+    }
 }
 
 // Rendre la vue semestrielle
@@ -75,6 +79,151 @@ function renderSemesterView() {
 
         semesterCalendar.appendChild(monthColumn);
     }
+}
+
+// Rendre la vue annuelle (mini-calendriers)
+function renderYearView() {
+    const semesterCalendar = document.getElementById('semesterCalendar');
+    if (!semesterCalendar) {
+        console.error('semesterCalendar element not found');
+        return;
+    }
+    semesterCalendar.innerHTML = '';
+    semesterCalendar.className = 'year-calendar-view';
+
+    const year = this.currentYear;
+    const monthNames = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    const dayNames = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+    // Mettre à jour le titre
+    document.getElementById('currentMonth').textContent = `Année ${year}`;
+
+    // Créer une grille pour tous les mois (format 16/9 ou 16/10)
+    // 4 lignes x 3 colonnes = 12 mois
+    for (let month = 0; month < 12; month++) {
+        const monthCard = document.createElement('div');
+        monthCard.className = 'year-month-card';
+
+        // En-tête du mois
+        const monthHeader = document.createElement('div');
+        monthHeader.className = 'year-month-card-header';
+        monthHeader.textContent = monthNames[month];
+        monthCard.appendChild(monthHeader);
+
+        // En-tête des jours de la semaine
+        const weekHeader = document.createElement('div');
+        weekHeader.className = 'year-week-header';
+        dayNames.forEach(dayName => {
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'year-week-day';
+            dayHeader.textContent = dayName;
+            weekHeader.appendChild(dayHeader);
+        });
+        monthCard.appendChild(weekHeader);
+
+        // Grille des jours
+        const daysGrid = document.createElement('div');
+        daysGrid.className = 'year-days-grid';
+
+        // Calculer le premier jour du mois et le nombre de jours
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
+
+        // Ajouter des cellules vides pour aligner le premier jour
+        for (let i = 0; i < startingDayOfWeek; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'year-day-empty';
+            daysGrid.appendChild(emptyCell);
+        }
+
+        // Ajouter les jours du mois
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dayElement = this.createYearViewDayElement(date);
+            daysGrid.appendChild(dayElement);
+        }
+
+        monthCard.appendChild(daysGrid);
+        semesterCalendar.appendChild(monthCard);
+    }
+}
+
+// Créer un élément de jour pour la vue annuelle (mini-calendrier)
+function createYearViewDayElement(date) {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'year-view-day';
+    const dateKey = getDateKey(date);
+    dayElement.setAttribute('data-date-key', dateKey);
+
+    const dayOfMonth = date.getDate();
+
+    // Vérifier si c'est aujourd'hui, passé ou futur
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    if (compareDate.toDateString() === today.toDateString()) {
+        dayElement.classList.add('today');
+    } else if (compareDate < today) {
+        dayElement.classList.add('past-day');
+    } else {
+        dayElement.classList.add('future-day');
+    }
+
+    // Vérifier si c'est un weekend
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+        dayElement.classList.add('weekend');
+    }
+
+    // Vérifier si c'est un jour férié
+    const publicHolidays = this.getPublicHolidays(date.getFullYear());
+    const dateKeyForHoliday = getDateKey(date);
+    if (publicHolidays.some(h => getDateKey(new Date(h.date)) === dateKeyForHoliday)) {
+        dayElement.classList.add('public-holiday');
+    }
+
+    // Vérifier s'il y a un congé
+    const leaveInfo = this.getLeaveForDate(date);
+    if (leaveInfo.full || leaveInfo.morning || leaveInfo.afternoon) {
+        const leaveType = leaveInfo.full || leaveInfo.morning || leaveInfo.afternoon;
+        const leaveConfig = this.getLeaveTypeConfig(leaveType);
+        if (leaveConfig) {
+            dayElement.style.backgroundColor = leaveConfig.color;
+            dayElement.style.color = 'white';
+            dayElement.style.fontWeight = 'bold';
+            
+            // Indicateur pour demi-journée
+            if (!leaveInfo.full) {
+                if (leaveInfo.morning) {
+                    dayElement.style.borderTop = '2px solid white';
+                }
+                if (leaveInfo.afternoon) {
+                    dayElement.style.borderBottom = '2px solid white';
+                }
+            }
+        }
+    }
+
+    // Numéro du jour
+    const dayNumber = document.createElement('span');
+    dayNumber.className = 'year-view-day-number';
+    dayNumber.textContent = dayOfMonth;
+    dayElement.appendChild(dayNumber);
+
+    // Event listeners pour le clic
+    dayElement.addEventListener('mousedown', (e) => {
+        const isMultiSelect = e.ctrlKey || e.metaKey || this.ctrlKeyPressed;
+        this.handleDayClick(date, isMultiSelect, e);
+    });
+
+    return dayElement;
 }
 
 // Créer un élément de jour pour la vue semestrielle
