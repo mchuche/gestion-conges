@@ -7,6 +7,53 @@ async function initAuth() {
         return;
     }
 
+    // Gérer le cas où l'utilisateur arrive avec un token de confirmation dans l'URL
+    // Format: #access_token=...&type=signup
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    const type = hashParams.get('type');
+    
+    if (accessToken && type === 'signup') {
+        // L'utilisateur a cliqué sur le lien de confirmation d'email
+        try {
+            // Échanger le token contre une session
+            const { data: { session }, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || ''
+            });
+            
+            if (error) throw error;
+            
+            if (session) {
+                // Nettoyer l'URL (retirer le hash)
+                window.history.replaceState(null, '', window.location.pathname);
+                
+                // Charger les données utilisateur
+                this.user = session.user;
+                await this.loadUserData();
+                
+                // Afficher un message de succès
+                await swalSuccess(
+                    '✅ Email confirmé !',
+                    'Votre compte a été activé avec succès. Vous êtes maintenant connecté.',
+                    3000
+                );
+                
+                this.showMainApp();
+                return;
+            }
+        } catch (error) {
+            console.error('Erreur lors de la confirmation de l\'email:', error);
+            // Nettoyer l'URL même en cas d'erreur
+            window.history.replaceState(null, '', window.location.pathname);
+            await swalError(
+                '❌ Erreur de confirmation',
+                'Une erreur est survenue lors de la confirmation de votre email. Veuillez réessayer de vous connecter.'
+            );
+        }
+    }
+
     // Vérifier si l'utilisateur est déjà connecté
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
@@ -324,10 +371,15 @@ async function login(email, password) {
 async function signup(email, password, name) {
     const errorEl = document.getElementById('authError');
     try {
+        // Déterminer l'URL de redirection pour l'email de confirmation
+        // Utiliser l'URL actuelle (production ou localhost)
+        const redirectUrl = window.location.origin + window.location.pathname;
+        
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
+                emailRedirectTo: redirectUrl,
                 data: {
                     name: name
                 }
