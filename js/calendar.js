@@ -266,18 +266,27 @@ function createYearDayElement(date) {
             
             this.updateDateSelectionVisual();
             
-            // Si plusieurs jours sont sélectionnés, ouvrir la modale avec le premier
-            // Sinon, si on a désélectionné tous les jours, fermer la modale
-            if (this.selectedDates.length > 0) {
-                this.openModal(this.selectedDates[0]);
-            } else {
+            // Ne pas ouvrir la modale automatiquement en mode sélection multiple
+            // L'utilisateur peut continuer à sélectionner, puis cliquer sur un jour sélectionné pour ouvrir la modale
+            // Si on a désélectionné tous les jours, fermer la modale si elle est ouverte
+            if (this.selectedDates.length === 0) {
                 this.closeModal();
             }
         } else {
             // Sélection unique : sélectionner ce jour et ouvrir la modale
-            this.selectedDates = [date];
-            this.updateDateSelectionVisual();
-            this.openModal(date);
+            // Mais d'abord vérifier si on clique sur un jour déjà sélectionné en mode multi
+            const dateKey = getDateKey(date);
+            const isDateSelected = this.selectedDates.some(d => getDateKey(d) === dateKey);
+            
+            if (this.selectedDates.length > 1 && isDateSelected) {
+                // On clique sur un jour déjà sélectionné, ouvrir la modale
+                this.openModal(date);
+            } else {
+                // Nouvelle sélection unique
+                this.selectedDates = [date];
+                this.updateDateSelectionVisual();
+                this.openModal(date);
+            }
         }
     };
     
@@ -394,18 +403,27 @@ function createDayElement(container, date, isOtherMonth) {
             
             this.updateDateSelectionVisual();
             
-            // Si plusieurs jours sont sélectionnés, ouvrir la modale avec le premier
-            // Sinon, si on a désélectionné tous les jours, fermer la modale
-            if (this.selectedDates.length > 0) {
-                this.openModal(this.selectedDates[0]);
-            } else {
+            // Ne pas ouvrir la modale automatiquement en mode sélection multiple
+            // L'utilisateur peut continuer à sélectionner, puis cliquer sur un jour sélectionné pour ouvrir la modale
+            // Si on a désélectionné tous les jours, fermer la modale si elle est ouverte
+            if (this.selectedDates.length === 0) {
                 this.closeModal();
             }
         } else {
             // Sélection unique : sélectionner ce jour et ouvrir la modale
-            this.selectedDates = [date];
-            this.updateDateSelectionVisual();
-            this.openModal(date);
+            // Mais d'abord vérifier si on clique sur un jour déjà sélectionné en mode multi
+            const dateKey = getDateKey(date);
+            const isDateSelected = this.selectedDates.some(d => getDateKey(d) === dateKey);
+            
+            if (this.selectedDates.length > 1 && isDateSelected) {
+                // On clique sur un jour déjà sélectionné, ouvrir la modale
+                this.openModal(date);
+            } else {
+                // Nouvelle sélection unique
+                this.selectedDates = [date];
+                this.updateDateSelectionVisual();
+                this.openModal(date);
+            }
         }
     };
     
@@ -462,6 +480,11 @@ function updateDateSelectionVisual() {
 
 // Ouvrir la modal
 function openModal(date) {
+    // Si plusieurs dates sont sélectionnées, utiliser la première
+    if (this.selectedDates.length > 0 && !this.selectedDates.some(d => getDateKey(d) === getDateKey(date))) {
+        date = this.selectedDates[0];
+    }
+    
     this.selectedDate = date;
     this.selectedPeriod = 'full';
     const modal = document.getElementById('modal');
