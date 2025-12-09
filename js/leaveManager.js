@@ -93,7 +93,9 @@ if (typeof loadLeaves !== 'undefined') {
         loadLeaveTypesConfig,
         saveLeaveTypesConfig,
         loadLeaveQuotasByYear,
-        saveLeaveQuotasByYear
+        saveLeaveQuotasByYear,
+        loadSelectedCountry,
+        saveSelectedCountry
     });
 }
 
