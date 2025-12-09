@@ -44,6 +44,64 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Table publique pour stocker les emails des utilisateurs (pour permettre la recherche)
+-- Cette table est mise à jour automatiquement lors de l'inscription
+CREATE TABLE IF NOT EXISTS user_emails (
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Activer RLS pour user_emails
+ALTER TABLE user_emails ENABLE ROW LEVEL SECURITY;
+
+-- Politique RLS : tout le monde peut lire les emails (pour permettre la recherche)
+CREATE POLICY "Anyone can read user emails" ON user_emails
+    FOR SELECT USING (true);
+
+-- Politique RLS : les utilisateurs peuvent insérer leur propre email
+CREATE POLICY "Users can insert own email" ON user_emails
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Fonction pour obtenir l'ID utilisateur par email
+CREATE OR REPLACE FUNCTION get_user_id_by_email(user_email TEXT)
+RETURNS UUID AS $$
+DECLARE
+    found_user_id UUID;
+BEGIN
+    SELECT user_id INTO found_user_id
+    FROM user_emails
+    WHERE email = LOWER(TRIM(user_email));
+    
+    RETURN found_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger pour insérer automatiquement l'email dans user_emails lors de l'inscription
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.user_emails (user_id, email)
+    VALUES (NEW.id, LOWER(NEW.email))
+    ON CONFLICT (user_id) DO UPDATE SET email = LOWER(NEW.email);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Créer le trigger si il n'existe pas déjà
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT OR UPDATE ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_new_user();
+
+-- Mettre à jour user_emails pour les utilisateurs existants
+INSERT INTO user_emails (user_id, email)
+SELECT id, LOWER(email)
+FROM auth.users
+WHERE email IS NOT NULL
+ON CONFLICT (user_id) DO NOTHING;
+
 -- Activer Row Level Security (RLS)
 ALTER TABLE leaves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leave_types ENABLE ROW LEVEL SECURITY;

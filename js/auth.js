@@ -336,6 +336,24 @@ async function signup(email, password, name) {
         
         if (error) throw error;
         
+        // L'email sera automatiquement ajouté à user_emails via le trigger
+        // Mais on peut aussi l'ajouter manuellement pour être sûr
+        if (data && data.user) {
+            try {
+                await supabase
+                    .from('user_emails')
+                    .upsert({
+                        user_id: data.user.id,
+                        email: email.toLowerCase().trim()
+                    }, {
+                        onConflict: 'user_id'
+                    });
+            } catch (emailError) {
+                // Ignorer l'erreur si l'email existe déjà (le trigger l'a peut-être déjà ajouté)
+                console.warn('Erreur lors de l\'ajout de l\'email (peut être ignorée):', emailError);
+            }
+        }
+        
         if (errorEl) {
             errorEl.textContent = 'Inscription réussie ! Vous pouvez maintenant vous connecter.';
             errorEl.style.display = 'block';

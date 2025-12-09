@@ -301,10 +301,16 @@ async function showAddMemberDialog(teamId) {
     if (!email || !email.trim()) return;
     
     try {
-        await this.inviteUserToTeam(teamId, email.trim());
-        alert(`Invitation envoyée à ${email.trim()} !\n\nL'utilisateur recevra une notification lorsqu'il se connectera à l'application.`);
+        const result = await this.inviteUserToTeam(teamId, email.trim());
         
-        // Rafraîchir les détails de l'équipe pour afficher les invitations
+        // Afficher un message approprié selon le type de résultat
+        if (result && result.type === 'direct_add') {
+            alert(result.message || `L'utilisateur ${email.trim()} a été ajouté directement à l'équipe !`);
+        } else {
+            alert(result?.message || `Invitation envoyée à ${email.trim()} !\n\nL'utilisateur recevra une notification lorsqu'il se connectera à l'application.`);
+        }
+        
+        // Rafraîchir les détails de l'équipe pour afficher les changements
         await this.showTeamDetails(teamId);
     } catch (error) {
         console.error('Erreur lors de l\'invitation:', error);

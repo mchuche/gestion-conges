@@ -144,22 +144,55 @@ async function inviteUserToTeam(teamId, email) {
 
         // Vérifier que l'email est valide
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.trim())) {
+        const trimmedEmail = email.trim().toLowerCase();
+        if (!emailRegex.test(trimmedEmail)) {
             throw new Error('Email invalide');
         }
 
         // Vérifier que l'utilisateur n'est pas déjà membre
         const existingMembers = await this.loadTeamMembers(teamId);
-        if (existingMembers.some(m => m.email.toLowerCase() === email.toLowerCase())) {
+        if (existingMembers.some(m => m.email.toLowerCase() === trimmedEmail)) {
             throw new Error('Cet utilisateur est déjà membre de l\'équipe');
         }
 
+        // Vérifier si l'utilisateur existe déjà dans la base de données
+        const { data: userEmailData, error: userEmailError } = await supabase
+            .rpc('get_user_id_by_email', { user_email: trimmedEmail });
+
+        if (userEmailError) {
+            console.warn('Erreur lors de la recherche de l\'utilisateur:', userEmailError);
+            // Si la fonction RPC n'existe pas encore, continuer avec l'invitation
+        }
+
+        // Si l'utilisateur existe déjà, l'ajouter directement à l'équipe
+        if (userEmailData && userEmailData !== null) {
+            const existingUserId = userEmailData;
+            
+            // Vérifier qu'il n'est pas déjà membre (double vérification)
+            if (!existingMembers.some(m => m.userId === existingUserId)) {
+                try {
+                    // Ajouter directement l'utilisateur à l'équipe
+                    await this.addMemberToTeam(teamId, existingUserId);
+                    console.log('Utilisateur ajouté directement à l\'équipe:', trimmedEmail);
+                    return { 
+                        type: 'direct_add',
+                        message: `L'utilisateur ${trimmedEmail} a été ajouté directement à l'équipe.`,
+                        userId: existingUserId
+                    };
+                } catch (addError) {
+                    console.error('Erreur lors de l\'ajout direct:', addError);
+                    // Si l'ajout direct échoue, continuer avec l'invitation
+                }
+            }
+        }
+
+        // Si l'utilisateur n'existe pas ou si l'ajout direct a échoué, créer une invitation
         // Vérifier qu'il n'y a pas déjà une invitation en attente pour cet email
         const { data: existingInvitations, error: checkError } = await supabase
             .from('team_invitations')
             .select('id, status')
             .eq('team_id', teamId)
-            .eq('email', email.toLowerCase().trim())
+            .eq('email', trimmedEmail)
             .eq('status', 'pending');
 
         if (checkError) throw checkError;
@@ -173,7 +206,7 @@ async function inviteUserToTeam(teamId, email) {
             .from('team_invitations')
             .insert({
                 team_id: teamId,
-                email: email.toLowerCase().trim(),
+                email: trimmedEmail,
                 invited_by: this.user.id,
                 status: 'pending'
             })
@@ -183,7 +216,11 @@ async function inviteUserToTeam(teamId, email) {
         if (error) throw error;
 
         console.log('Invitation créée avec succès:', data);
-        return data;
+        return { 
+            type: 'invitation',
+            message: `Invitation envoyée à ${trimmedEmail}. L'utilisateur recevra une notification lorsqu'il se connectera.`,
+            invitation: data
+        };
     } catch (e) {
         console.error('Erreur lors de l\'invitation:', e);
         throw e;
