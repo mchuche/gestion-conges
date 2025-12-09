@@ -133,8 +133,6 @@ if (typeof getLeaveForDate !== 'undefined') {
         renderCalendar,
         renderSemesterView,
         renderYearView,
-        renderYearViewTimeline,
-        renderYearViewHeatmap,
         renderYearViewPresence,
         createYearViewHeatmapSquare,
         createPresenceDayCell,
