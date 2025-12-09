@@ -1,21 +1,5 @@
 /* Styles pour la vue annuelle - Matrice de Présence */
 
-/* Sélecteur de format */
-.year-format-select {
-    padding: 6px 12px;
-    background: var(--card-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 0.9em;
-    margin-left: 10px;
-    cursor: pointer;
-}
-
-.year-format-select:hover {
-    background: var(--hover-color);
-}
-
 /* ===== VUE MATRICE DE PRÉSENCE ===== */
 .year-presence-view {
     overflow-x: auto;

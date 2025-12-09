@@ -35,18 +35,11 @@ function renderCalendar() {
     
     if (this.viewMode === 'year') {
         // Utiliser la vue présence (seule vue annuelle disponible)
-        if (this.yearViewFormat === 'presence') {
-            // La vue présence est async car elle charge les données de l'équipe
-            this.renderYearViewPresence().catch(error => {
-                console.error('Erreur lors du rendu de la vue présence:', error);
-            });
-        } else {
-            // Par défaut, utiliser la vue présence
-            this.yearViewFormat = 'presence';
-            this.renderYearViewPresence().catch(error => {
-                console.error('Erreur lors du rendu de la vue présence:', error);
-            });
-        }
+        this.yearViewFormat = 'presence'; // Format fixe
+        // La vue présence est async car elle charge les données de l'équipe
+        this.renderYearViewPresence().catch(error => {
+            console.error('Erreur lors du rendu de la vue présence:', error);
+        });
     } else {
         // S'assurer que la classe est correcte pour la vue semestrielle
         semesterCalendar.className = 'semester-calendar';

@@ -149,24 +149,14 @@ function setupEventListeners() {
             if (manager.viewMode === 'semester') {
                 console.log('[ViewToggle] Passage en vue annuelle');
                 manager.viewMode = 'year';
+                manager.yearViewFormat = 'presence'; // Format fixe : présence
                 viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue semestrielle';
-                // Afficher le sélecteur de format
-                const formatSelect = document.getElementById('yearViewFormat');
-                if (formatSelect) {
-                    formatSelect.style.display = 'inline-block';
-                    formatSelect.value = manager.yearViewFormat || 'presence';
-                }
             } else {
                 console.log('[ViewToggle] Passage en vue semestrielle');
                 manager.viewMode = 'semester';
                 viewToggle.textContent = '📅';
                 viewToggle.title = 'Vue annuelle';
-                // Masquer le sélecteur de format
-                const formatSelect = document.getElementById('yearViewFormat');
-                if (formatSelect) {
-                    formatSelect.style.display = 'none';
-                }
             }
             // Re-rendre le calendrier avec la nouvelle vue
             console.log('[ViewToggle] Nouvelle vue:', manager.viewMode);
