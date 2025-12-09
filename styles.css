@@ -1481,6 +1481,157 @@ header h1 {
         font-size: 0.7em;
         padding: 3px 4px;
     }
+
+    /* Vue annuelle responsive tablette */
+    .year-calendar-view {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+        aspect-ratio: auto;
+    }
+
+    .year-view-day {
+        font-size: 0.65em;
+        min-height: 20px;
+    }
+
+    .year-month-card-header {
+        font-size: 0.75em;
+        padding: 4px;
+    }
+
+    .year-week-day {
+        font-size: 0.6em;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 15px;
+        border-radius: 15px;
+    }
+
+    header h1 {
+        font-size: 1.8em;
+    }
+
+    #currentMonth {
+        font-size: 1.3em;
+        min-width: 180px;
+    }
+
+    .nav-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2em;
+    }
+
+    .stats {
+        flex-direction: column;
+    }
+
+    .stat-card {
+        width: 100%;
+    }
+
+
+    .day-number {
+        font-size: 0.9em;
+    }
+
+    .leave-badge {
+        font-size: 0.6em;
+        padding: 2px 5px;
+    }
+
+    .modal-content {
+        margin: 20% auto;
+        padding: 20px;
+        width: 95%;
+    }
+
+    .leave-types {
+        grid-template-columns: 1fr;
+    }
+
+    .year-calendar {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .semester-calendar {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .leave-quotas {
+        grid-template-columns: 1fr;
+    }
+
+    .leave-type-inputs {
+        grid-template-columns: 1fr 1fr 60px 100px 45px;
+        gap: 8px;
+        overflow-x: visible;
+    }
+
+    .delete-type-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 1em;
+        flex-shrink: 0;
+    }
+
+    .header-right {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .config-btn {
+        margin-bottom: 0;
+    }
+
+    .header-top {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .year-month-header {
+        font-size: 0.8em;
+        padding: 8px;
+    }
+
+    .year-day {
+        font-size: 0.7em;
+        padding: 3px 4px;
+    }
+
+    /* Vue annuelle mobile */
+    .year-calendar-view {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 10px;
+    }
+
+    .year-view-day {
+        font-size: 0.6em;
+        min-height: 18px;
+    }
+
+    .year-month-card-header {
+        font-size: 0.7em;
+        padding: 4px;
+    }
+
+    .view-toggle-btn {
+        padding: 6px 12px;
+        font-size: 0.9em;
+        margin-left: 5px;
+    }
 }
 
 /* Styles spécifiques pour le mode sombre */
