@@ -118,7 +118,6 @@ function renderSemesterView() {
 
 // Rendre la vue annuelle (mini-calendriers)
 function renderYearView() {
-    console.log('[YearView] Rendu de la vue annuelle pour l\'année', this.currentYear);
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
         console.error('[YearView] semesterCalendar element not found');
@@ -133,7 +132,10 @@ function renderYearView() {
         semesterView.className = 'semester-view';
     }
 
-    const year = this.currentYear;
+    // Utiliser currentDate pour obtenir l'année actuelle et synchroniser
+    const year = this.currentDate.getFullYear();
+    this.currentYear = year;
+    console.log('[YearView] Rendu de la vue annuelle pour l\'année', year);
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
