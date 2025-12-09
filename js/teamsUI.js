@@ -184,6 +184,7 @@ async function showTeamDetails(teamId) {
 function showCreateTeamForm() {
     const createTeamSection = document.getElementById('createTeamSection');
     const teamDetailsSection = document.getElementById('teamDetailsSection');
+    const saveTeamBtn = document.getElementById('saveTeamBtn');
     
     if (!createTeamSection) return;
     
@@ -191,12 +192,33 @@ function showCreateTeamForm() {
     createTeamSection.style.display = 'block';
     
     // Réinitialiser les champs
-    document.getElementById('teamNameInput').value = '';
-    document.getElementById('teamDescriptionInput').value = '';
+    const nameInput = document.getElementById('teamNameInput');
+    const descriptionInput = document.getElementById('teamDescriptionInput');
+    if (nameInput) nameInput.value = '';
+    if (descriptionInput) descriptionInput.value = '';
+    
+    // Réactiver le bouton au cas où il serait désactivé
+    if (saveTeamBtn) {
+        saveTeamBtn.disabled = false;
+        saveTeamBtn.textContent = 'Créer';
+    }
+    
+    // Focus sur le champ nom
+    if (nameInput) {
+        setTimeout(() => nameInput.focus(), 100);
+    }
 }
 
 // Créer une équipe
 async function handleCreateTeam() {
+    const saveTeamBtn = document.getElementById('saveTeamBtn');
+    
+    // Protection contre les soumissions multiples
+    if (saveTeamBtn && saveTeamBtn.disabled) {
+        console.log('[TeamsUI] Création d\'équipe déjà en cours, ignore le clic');
+        return;
+    }
+    
     const nameInput = document.getElementById('teamNameInput');
     const descriptionInput = document.getElementById('teamDescriptionInput');
     
@@ -205,11 +227,22 @@ async function handleCreateTeam() {
         return;
     }
     
+    // Désactiver le bouton pour éviter les doubles clics
+    if (saveTeamBtn) {
+        saveTeamBtn.disabled = true;
+        saveTeamBtn.textContent = 'Création...';
+    }
+    
     try {
         await this.createTeam(nameInput.value.trim(), descriptionInput.value.trim());
         
         // Fermer le formulaire et rafraîchir la liste
         document.getElementById('createTeamSection').style.display = 'none';
+        
+        // Réinitialiser le formulaire
+        if (nameInput) nameInput.value = '';
+        if (descriptionInput) descriptionInput.value = '';
+        
         this.renderTeamsList();
         this.populateTeamSelector();
         this.updateTeamSelectorVisibility();
@@ -218,6 +251,12 @@ async function handleCreateTeam() {
     } catch (error) {
         console.error('Erreur lors de la création de l\'équipe:', error);
         alert('Erreur lors de la création de l\'équipe: ' + (error.message || error));
+    } finally {
+        // Réactiver le bouton dans tous les cas
+        if (saveTeamBtn) {
+            saveTeamBtn.disabled = false;
+            saveTeamBtn.textContent = 'Créer';
+        }
     }
 }
 
