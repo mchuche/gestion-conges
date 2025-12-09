@@ -624,14 +624,19 @@ function updateLeaveButtonsHighlight(leaveInfo) {
     const leaveButtons = document.querySelectorAll('#leaveTypes .leave-btn');
     const currentType = leaveInfo[this.selectedPeriod || 'full'];
     
+    // Obtenir la couleur de fond par défaut selon le thème
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const defaultBackground = isDark ? 'var(--card-bg)' : 'white';
+    const defaultTextColor = isDark ? 'var(--text-color)' : '';
+    
     leaveButtons.forEach(btn => {
         const typeColor = this.getLeaveColor(btn.dataset.type);
         if (currentType === btn.dataset.type) {
             btn.style.background = typeColor;
             btn.style.color = 'white';
         } else {
-            btn.style.background = 'white';
-            btn.style.color = '';
+            btn.style.background = defaultBackground;
+            btn.style.color = defaultTextColor;
             btn.style.borderColor = typeColor;
         }
     });
@@ -666,6 +671,10 @@ function renderLeaveTypeButtons() {
         }
     }
 
+    // Obtenir la couleur de fond par défaut selon le thème
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const defaultBackground = isDark ? 'var(--card-bg)' : 'white';
+
     console.log('Rendu de', this.leaveTypesConfig.length, 'types de congé');
     this.leaveTypesConfig.forEach(typeConfig => {
         const btn = document.createElement('button');
@@ -676,6 +685,7 @@ function renderLeaveTypeButtons() {
             btn.textContent += ` (${typeConfig.label})`;
         }
         btn.style.borderColor = typeConfig.color;
+        btn.style.background = defaultBackground; // Utiliser la couleur selon le thème
         container.appendChild(btn);
     });
     
