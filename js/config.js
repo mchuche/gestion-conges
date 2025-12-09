@@ -79,7 +79,7 @@ function setupEventListeners() {
         this.updateLeaveQuotas();
     });
 
-    document.getElementById('nextMonth').addEventListener('click', () => {
+    newNextBtn.addEventListener('click', () => {
         if (this.viewMode === 'year') {
             // Vue annuelle : passer à l'année suivante
             const nextYear = getYear(this.currentDate) + 1;
@@ -95,7 +95,7 @@ function setupEventListeners() {
                 // On est au 1er semestre (janvier-juin), aller au 2ème semestre de la même année
                 this.currentDate = createDate(currentYear, 6, 1); // 1er juillet de la même année
                 this.currentYear = currentYear;
-                console.log('[Navigation] Passage au 2ème semestre de', currentYear, '- Mois:', getMonth(this.currentDate));
+                console.log('[Navigation] Passage au 2ème semestre de', currentYear, '- Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
             } else {
                 // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de l'année suivante
                 const nextYear = currentYear + 1;
@@ -103,7 +103,14 @@ function setupEventListeners() {
                 this.currentYear = nextYear;
                 console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
             }
-            console.log('[Navigation] Après changement - Mois:', getMonth(this.currentDate), 'Année:', this.currentYear, 'Date complète:', this.currentDate.toISOString());
+            // Vérification finale de synchronisation
+            const finalYear = getYear(this.currentDate);
+            const finalMonth = getMonth(this.currentDate);
+            if (this.currentYear !== finalYear) {
+                console.warn('[Navigation] Désynchronisation détectée - Correction:', this.currentYear, '->', finalYear);
+                this.currentYear = finalYear;
+            }
+            console.log('[Navigation] Après changement - Mois:', finalMonth, 'Année:', this.currentYear, 'Date complète:', this.currentDate.toISOString());
         }
         // Forcer le rendu immédiatement après la mise à jour
         this.renderCalendar();
