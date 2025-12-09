@@ -27,15 +27,27 @@ function getLeaveForDate(date) {
 function renderCalendar() {
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
-        console.error('semesterCalendar element not found');
+        console.error('[RenderCalendar] semesterCalendar element not found');
         return;
     }
+    
+    console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', this.currentDate.getMonth(), 'Année:', this.currentDate.getFullYear());
     
     if (this.viewMode === 'year') {
         this.renderYearView();
     } else {
         // S'assurer qu'on n'est pas en mode plein écran
-        this.exitYearViewFullscreen();
+        if (typeof this.exitYearViewFullscreen === 'function') {
+            this.exitYearViewFullscreen();
+        }
+        // S'assurer que la classe est correcte pour la vue semestrielle
+        semesterCalendar.className = 'semester-calendar';
+        const semesterView = document.getElementById('semesterView');
+        if (semesterView) {
+            semesterView.className = 'semester-view';
+        }
+        // Vérifier que currentDate est bien à jour avant le rendu
+        console.log('[RenderCalendar] Avant renderSemesterView - currentDate:', this.currentDate.toISOString(), 'Mois:', this.currentDate.getMonth());
         this.renderSemesterView();
     }
 }
