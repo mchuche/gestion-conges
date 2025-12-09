@@ -153,11 +153,10 @@ DROP POLICY IF EXISTS "Team owners/admins can remove members" ON team_members;
 
 CREATE POLICY "Team members can view their teams" ON teams
     FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM team_members 
-            WHERE team_members.team_id = teams.id 
-            AND team_members.user_id = auth.uid()
-        )
+        -- Soit l'utilisateur est le créateur
+        created_by = auth.uid()
+        -- Soit l'utilisateur est membre de l'équipe (via fonction pour éviter récursion)
+        OR user_is_team_member(teams.id, auth.uid())
     );
 
 CREATE POLICY "Users can create teams" ON teams
@@ -166,55 +165,85 @@ CREATE POLICY "Users can create teams" ON teams
 CREATE POLICY "Team owners can update their teams" ON teams
     FOR UPDATE USING (
         auth.uid() = created_by OR
-        EXISTS (
-            SELECT 1 FROM team_members 
-            WHERE team_members.team_id = teams.id 
-            AND team_members.user_id = auth.uid()
-            AND team_members.role IN ('owner', 'admin')
-        )
+        is_team_owner_or_admin(teams.id, auth.uid())
     );
 
 CREATE POLICY "Team owners can delete their teams" ON teams
     FOR DELETE USING (auth.uid() = created_by);
 
+-- Créer des fonctions SECURITY DEFINER pour éviter la récursion infinie dans les politiques RLS
+CREATE OR REPLACE FUNCTION is_team_member(team_uuid UUID, user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM team_members
+        WHERE team_id = team_uuid
+        AND user_id = user_uuid
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION is_team_owner_or_admin(team_uuid UUID, user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM team_members
+        WHERE team_id = team_uuid
+        AND user_id = user_uuid
+        AND role IN ('owner', 'admin')
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION user_is_team_member(team_uuid UUID, user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM team_members
+        WHERE team_id = team_uuid
+        AND user_id = user_uuid
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Politiques RLS pour les membres d'équipe
+-- Utiliser les fonctions SECURITY DEFINER pour éviter la récursion
 CREATE POLICY "Team members can view team members" ON team_members
     FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM team_members tm
-            WHERE tm.team_id = team_members.team_id
-            AND tm.user_id = auth.uid()
-        )
+        is_team_member(team_id, auth.uid())
     );
 
+-- Pour INSERT : permettre si l'utilisateur est le créateur de l'équipe (via teams) ou owner/admin
 CREATE POLICY "Team owners/admins can add members" ON team_members
     FOR INSERT WITH CHECK (
+        -- Soit l'utilisateur est le créateur de l'équipe (première insertion lors de la création)
         EXISTS (
-            SELECT 1 FROM team_members tm
-            WHERE tm.team_id = team_members.team_id
-            AND tm.user_id = auth.uid()
-            AND tm.role IN ('owner', 'admin')
+            SELECT 1 FROM teams
+            WHERE teams.id = team_members.team_id
+            AND teams.created_by = auth.uid()
         )
+        -- Soit l'utilisateur est déjà owner/admin (pour les ajouts ultérieurs)
+        OR is_team_owner_or_admin(team_members.team_id, auth.uid())
     );
 
 CREATE POLICY "Team owners/admins can update members" ON team_members
     FOR UPDATE USING (
         EXISTS (
-            SELECT 1 FROM team_members tm
-            WHERE tm.team_id = team_members.team_id
-            AND tm.user_id = auth.uid()
-            AND tm.role IN ('owner', 'admin')
+            SELECT 1 FROM teams
+            WHERE teams.id = team_members.team_id
+            AND teams.created_by = auth.uid()
         )
+        OR is_team_owner_or_admin(team_members.team_id, auth.uid())
     );
 
 CREATE POLICY "Team owners/admins can remove members" ON team_members
     FOR DELETE USING (
         EXISTS (
-            SELECT 1 FROM team_members tm
-            WHERE tm.team_id = team_members.team_id
-            AND tm.user_id = auth.uid()
-            AND tm.role IN ('owner', 'admin')
+            SELECT 1 FROM teams
+            WHERE teams.id = team_members.team_id
+            AND teams.created_by = auth.uid()
         )
+        OR is_team_owner_or_admin(team_members.team_id, auth.uid())
     );
 
 -- Modifier les politiques RLS pour permettre aux membres d'équipe de voir les congés des autres membres
