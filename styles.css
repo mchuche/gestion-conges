@@ -330,106 +330,7 @@ header h1 {
     margin-bottom: 20px;
 }
 
-.month-view {
-    display: none; /* Vue mensuelle cachée par défaut, seule la vue semestrielle est utilisée */
-}
 
-.calendar-header {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.day-name {
-    text-align: center;
-    font-weight: 600;
-    color: var(--text-color);
-    padding: 10px;
-    font-size: 0.9em;
-}
-
-.calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
-}
-
-.day {
-    aspect-ratio: 1;
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 5px;
-    position: relative;
-    min-height: 60px;
-}
-
-.day:hover {
-    background: var(--hover-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.day.other-month {
-    opacity: 0.3;
-    background: #f9f9f9;
-}
-
-.day.today {
-    border: 3px solid var(--primary-color);
-    font-weight: bold;
-    background: #e3f2fd;
-}
-
-.day.past-day {
-    opacity: 0.6;
-    background: #f5f5f5;
-    color: #999;
-}
-
-.day.past-day:hover {
-    opacity: 0.8;
-    background: #e8e8e8;
-}
-
-.day.past-day.weekend {
-    border-color: #ccc !important;
-    border-width: 2px !important;
-    opacity: 0.7;
-}
-
-.day.past-day.weekend:hover {
-    border-color: #aaa !important;
-    opacity: 0.85;
-}
-
-.day.past-day.public-holiday {
-    border-color: #ffc107 !important;
-    border-width: 2px !important;
-    opacity: 0.7;
-}
-
-.day.past-day.public-holiday:hover {
-    border-color: #ff9800 !important;
-    opacity: 0.85;
-}
-
-.day.future-day {
-    background: #ffffff;
-}
-
-.day.selected {
-    background: #e3f2fd;
-    border: 3px solid #2196f3;
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
-}
 
 .year-day.selected {
     background: #e3f2fd;
@@ -437,14 +338,6 @@ header h1 {
     box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
 }
 
-.day.public-holiday {
-    background: #fff3cd;
-    border-color: #ffc107;
-}
-
-.day.public-holiday:hover {
-    background: #ffe69c;
-}
 
 .year-day.public-holiday {
     background: #fff3cd;
@@ -1346,15 +1239,6 @@ header h1 {
         width: 100%;
     }
 
-    .calendar-header,
-    .calendar {
-        gap: 5px;
-    }
-
-    .day {
-        min-height: 50px;
-        padding: 3px;
-    }
 
     .day-number {
         font-size: 0.9em;

@@ -14,7 +14,7 @@ class LeaveManager {
         this.selectedDates = []; // Pour la sélection multiple
         this.multiSelectMode = false; // Mode sélection multiple activé par long press
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
-        this.viewMode = 'semester'; // 'semester' (vue mensuelle temporairement désactivée)
+        this.viewMode = 'semester'; // Vue semestrielle uniquement
         this.ctrlKeyPressed = false; // État de la touche Ctrl/Cmd
         
         // Suivre l'état de la touche Ctrl/Cmd
@@ -110,10 +110,8 @@ if (typeof getLeaveForDate !== 'undefined') {
     safeAssign(LeaveManager.prototype, {
         getLeaveForDate,
         renderCalendar,
-        renderMonthView,
         renderSemesterView,
         createYearDayElement,
-        createDayElement,
         getLeaveTypeLabel,
         getLeaveTypeConfig,
         updateDateSelectionVisual,
@@ -123,8 +121,7 @@ if (typeof getLeaveForDate !== 'undefined') {
         renderLeaveTypeButtons,
         closeModal,
         setLeave,
-        removeLeave,
-        switchView
+        removeLeave
     });
 }
 
