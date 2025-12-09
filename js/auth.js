@@ -11,12 +11,32 @@ async function initAuth() {
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
         console.error('Erreur lors de la vérification de session:', error);
+        // Nettoyer la session en cas d'erreur
+        await this.clearInvalidSession();
+        this.showAuthModal();
+        this.setupAuthListeners();
+        return;
     }
     
     if (session) {
-        this.user = session.user;
-        await this.loadUserData();
-        this.showMainApp();
+        // Vérifier que la session est vraiment valide en testant une requête
+        const isValid = await this.validateSession(session);
+        if (isValid) {
+            this.user = session.user;
+            try {
+                await this.loadUserData();
+                this.showMainApp();
+            } catch (error) {
+                console.error('Erreur lors du chargement des données utilisateur:', error);
+                // Si le chargement échoue, la session est probablement invalide
+                await this.clearInvalidSession();
+                this.showAuthModal();
+            }
+        } else {
+            // Session invalide, nettoyer et afficher la modale de connexion
+            await this.clearInvalidSession();
+            this.showAuthModal();
+        }
     } else {
         this.showAuthModal();
     }
@@ -25,20 +45,86 @@ async function initAuth() {
     supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
             this.user = session.user;
-            await this.loadUserData();
-            this.showMainApp();
-        } else if (event === 'SIGNED_OUT') {
-            this.user = null;
-            this.leaves = {};
-            this.leaveTypesConfig = [];
-            this.leaveQuotasByYear = {};
-            this.selectedCountry = 'FR';
-            this.showAuthModal();
+            try {
+                await this.loadUserData();
+                this.showMainApp();
+            } catch (error) {
+                console.error('Erreur lors du chargement des données utilisateur:', error);
+                await this.clearInvalidSession();
+                this.showAuthModal();
+            }
+        } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+            if (event === 'SIGNED_OUT') {
+                this.user = null;
+                this.leaves = {};
+                this.leaveTypesConfig = [];
+                this.leaveQuotasByYear = {};
+                this.selectedCountry = 'FR';
+                this.showAuthModal();
+            } else if (event === 'TOKEN_REFRESHED' && !session) {
+                // Token refresh a échoué, nettoyer
+                await this.clearInvalidSession();
+                this.showAuthModal();
+            }
         }
     });
 
     // Event listeners pour l'authentification
     this.setupAuthListeners();
+}
+
+// Valider que la session fonctionne vraiment
+async function validateSession(session) {
+    if (!session || !session.user) return false;
+    
+    try {
+        // Tester une requête simple pour vérifier que la session est valide
+        const { error } = await supabase
+            .from('leaves')
+            .select('id')
+            .limit(1)
+            .maybeSingle();
+        
+        // Si l'erreur est une erreur d'authentification, la session est invalide
+        if (error) {
+            const errorCode = error.code || '';
+            const errorMessage = error.message || '';
+            if (errorCode === 'PGRST301' || errorMessage.includes('JWT') || errorMessage.includes('token') || errorMessage.includes('session')) {
+                console.warn('Session invalide détectée:', error);
+                return false;
+            }
+        }
+        return true;
+    } catch (error) {
+        console.error('Erreur lors de la validation de session:', error);
+        return false;
+    }
+}
+
+// Nettoyer une session invalide
+async function clearInvalidSession() {
+    try {
+        // Déconnecter proprement
+        await supabase.auth.signOut();
+    } catch (error) {
+        // Ignorer les erreurs de déconnexion
+        console.warn('Erreur lors du nettoyage de session:', error);
+    }
+    
+    // Nettoyer l'état local
+    this.user = null;
+    this.leaves = {};
+    this.leaveTypesConfig = [];
+    this.leaveQuotasByYear = {};
+    this.selectedCountry = 'FR';
+    
+    // Nettoyer le localStorage de Supabase (optionnel, mais peut aider)
+    try {
+        const supabaseKeys = Object.keys(localStorage).filter(key => key.startsWith('sb-'));
+        supabaseKeys.forEach(key => localStorage.removeItem(key));
+    } catch (e) {
+        console.warn('Impossible de nettoyer le localStorage:', e);
+    }
 }
 
 function showAuthModal() {
@@ -138,6 +224,20 @@ function setupAuthListeners() {
                     await this.login(loginEmail.value, loginPassword.value);
                 }
             });
+        });
+    }
+
+    // Bouton de nettoyage des données
+    const clearAuthDataBtn = document.getElementById('clearAuthDataBtn');
+    if (clearAuthDataBtn && !clearAuthDataBtn.hasAttribute('data-listener-added')) {
+        clearAuthDataBtn.setAttribute('data-listener-added', 'true');
+        clearAuthDataBtn.addEventListener('click', async () => {
+            if (confirm('Voulez-vous vraiment nettoyer toutes les données locales ? Cela vous déconnectera et supprimera les données en cache. Vous pourrez ensuite vous reconnecter normalement.')) {
+                await this.clearInvalidSession();
+                alert('✅ Données nettoyées ! Vous pouvez maintenant vous reconnecter.');
+                // Recharger la page pour s'assurer que tout est propre
+                window.location.reload();
+            }
         });
     }
 }

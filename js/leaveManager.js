@@ -101,7 +101,9 @@ if (typeof initAuth !== 'undefined') {
         signup,
         logout,
         deleteAccount,
-        loadUserData
+        loadUserData,
+        validateSession,
+        clearInvalidSession
     });
 }
 
