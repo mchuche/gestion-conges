@@ -111,13 +111,20 @@ function renderSemesterView() {
 
 // Rendre la vue annuelle (mini-calendriers)
 function renderYearView() {
+    console.log('[YearView] Rendu de la vue annuelle pour l\'année', this.currentYear);
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
-        console.error('semesterCalendar element not found');
+        console.error('[YearView] semesterCalendar element not found');
         return;
     }
     semesterCalendar.innerHTML = '';
     semesterCalendar.className = 'year-calendar-view';
+    
+    // S'assurer que le conteneur parent a la bonne classe
+    const semesterView = document.getElementById('semesterView');
+    if (semesterView) {
+        semesterView.className = 'semester-view';
+    }
 
     const year = this.currentYear;
     const monthNames = [
@@ -246,10 +253,54 @@ function createYearViewDayElement(date) {
     dayElement.appendChild(dayNumber);
 
     // Event listeners pour le clic
-    dayElement.addEventListener('mousedown', (e) => {
-        const isMultiSelect = e.ctrlKey || e.metaKey || this.ctrlKeyPressed;
-        this.handleDayClick(date, isMultiSelect, e);
-    });
+    const handleDayClick = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Détecter si on est sur mobile (pas de sélection multiple sur mobile)
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Vérifier si Ctrl/Cmd est pressé pour la sélection multiple (uniquement sur desktop)
+        const hasCtrl = this.ctrlKeyPressed || e.ctrlKey || e.metaKey;
+        const isMultiSelect = !isMobile && hasCtrl;
+        
+        if (isMultiSelect) {
+            // Sélection multiple : ajouter/retirer ce jour de la sélection
+            const dateKey = getDateKey(date);
+            const index = this.selectedDates.findIndex(d => getDateKey(d) === dateKey);
+            
+            if (index > -1) {
+                // Déjà sélectionné, le retirer
+                this.selectedDates.splice(index, 1);
+            } else {
+                // Pas sélectionné, l'ajouter
+                this.selectedDates.push(date);
+            }
+            
+            this.updateDateSelectionVisual();
+            
+            // Si on a désélectionné tous les jours, fermer la modale si elle est ouverte
+            if (this.selectedDates.length === 0) {
+                this.closeModal();
+            }
+        } else {
+            // Sélection unique : sélectionner ce jour et ouvrir la modale
+            const dateKey = getDateKey(date);
+            const isDateSelected = this.selectedDates.some(d => getDateKey(d) === dateKey);
+            
+            if (this.selectedDates.length > 1 && isDateSelected) {
+                // On clique sur un jour déjà sélectionné, ouvrir la modale
+                this.openModal(date);
+            } else {
+                // Nouvelle sélection unique
+                this.selectedDates = [date];
+                this.updateDateSelectionVisual();
+                this.openModal(date);
+            }
+        }
+    };
+    
+    dayElement.addEventListener('mousedown', handleDayClick);
 
     return dayElement;
 }

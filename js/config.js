@@ -89,25 +89,40 @@ function setupEventListeners() {
 
     // Bouton de bascule entre vue semestrielle et annuelle
     const viewToggle = document.getElementById('viewToggle');
-    if (viewToggle) {
-        viewToggle.addEventListener('click', () => {
+    if (viewToggle && !viewToggle.hasAttribute('data-listener-added')) {
+        viewToggle.setAttribute('data-listener-added', 'true');
+        
+        // Utiliser bind pour s'assurer que 'this' est correctement lié
+        const manager = this;
+        viewToggle.addEventListener('click', function() {
+            console.log('[ViewToggle] Bouton cliqué, vue actuelle:', manager.viewMode);
+            
             // Basculer entre les vues
-            if (this.viewMode === 'semester') {
-                this.viewMode = 'year';
+            if (manager.viewMode === 'semester') {
+                console.log('[ViewToggle] Passage en vue annuelle');
+                manager.viewMode = 'year';
                 viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue semestrielle';
                 // Activer le mode plein écran pour la vue annuelle
-                this.enterYearViewFullscreen();
+                if (typeof manager.enterYearViewFullscreen === 'function') {
+                    manager.enterYearViewFullscreen();
+                }
             } else {
-                this.viewMode = 'semester';
+                console.log('[ViewToggle] Passage en vue semestrielle');
+                manager.viewMode = 'semester';
                 viewToggle.textContent = '📅';
                 viewToggle.title = 'Vue annuelle';
                 // Désactiver le mode plein écran
-                this.exitYearViewFullscreen();
+                if (typeof manager.exitYearViewFullscreen === 'function') {
+                    manager.exitYearViewFullscreen();
+                }
             }
             // Re-rendre le calendrier avec la nouvelle vue
-            this.renderCalendar();
+            console.log('[ViewToggle] Nouvelle vue:', manager.viewMode);
+            manager.renderCalendar();
         });
+    } else if (!viewToggle) {
+        console.warn('[ViewToggle] Bouton viewToggle non trouvé dans le DOM');
     }
 
     // Boutons de période (matin/après-midi/journée complète)
