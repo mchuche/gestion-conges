@@ -383,17 +383,31 @@ CREATE POLICY "Team owners/admins can create invitations" ON team_invitations
         OR is_team_owner_or_admin(team_invitations.team_id, auth.uid())
     );
 
+-- Fonction pour obtenir l'email de l'utilisateur actuel
+CREATE OR REPLACE FUNCTION get_current_user_email()
+RETURNS TEXT AS $$
+DECLARE
+    user_email TEXT;
+BEGIN
+    SELECT email INTO user_email
+    FROM user_emails
+    WHERE user_id = auth.uid();
+    
+    RETURN user_email;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Les utilisateurs peuvent voir leurs propres invitations (par email)
 CREATE POLICY "Users can view their invitations" ON team_invitations
     FOR SELECT USING (
         -- L'utilisateur peut voir les invitations à son email
-        email = (SELECT email FROM auth.users WHERE id = auth.uid())
+        email = get_current_user_email()
     );
 
 -- Les utilisateurs peuvent accepter/refuser leurs invitations
 CREATE POLICY "Users can accept invitations" ON team_invitations
     FOR UPDATE USING (
-        email = (SELECT email FROM auth.users WHERE id = auth.uid())
+        email = get_current_user_email()
     );
 
 -- Les owners/admins peuvent supprimer les invitations de leur équipe

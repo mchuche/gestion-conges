@@ -282,12 +282,28 @@ async function loadUserPendingInvitations() {
     }
 
     try {
-        // Récupérer l'email de l'utilisateur actuel
-        const userEmail = this.user.email?.toLowerCase();
+        // Récupérer l'email de l'utilisateur actuel depuis user_emails
+        // (plus fiable que this.user.email qui peut ne pas être à jour)
+        const { data: userEmailData, error: emailError } = await supabase
+            .from('user_emails')
+            .select('email')
+            .eq('user_id', this.user.id)
+            .single();
+
+        let userEmail = null;
+        if (userEmailData && userEmailData.email) {
+            userEmail = userEmailData.email.toLowerCase();
+        } else if (this.user.email) {
+            // Fallback sur this.user.email si user_emails n'a pas encore l'email
+            userEmail = this.user.email.toLowerCase();
+        }
 
         if (!userEmail) {
+            console.warn('[loadUserPendingInvitations] Email utilisateur non trouvé');
             return [];
         }
+
+        console.log('[loadUserPendingInvitations] Recherche d\'invitations pour:', userEmail);
 
         const { data, error } = await supabase
             .from('team_invitations')
@@ -310,7 +326,12 @@ async function loadUserPendingInvitations() {
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('[loadUserPendingInvitations] Erreur Supabase:', error);
+            throw error;
+        }
+
+        console.log('[loadUserPendingInvitations] Invitations trouvées:', data?.length || 0);
 
         return (data || []).map(invitation => ({
             id: invitation.id,

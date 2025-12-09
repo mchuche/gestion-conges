@@ -4,7 +4,10 @@
 // Afficher le badge d'invitations si nécessaire
 async function updateInvitationsBadge() {
     const badge = document.getElementById('invitationsBadge');
-    if (!badge) return;
+    if (!badge) {
+        console.warn('[updateInvitationsBadge] Badge non trouvé dans le DOM');
+        return;
+    }
     
     if (!this.user) {
         badge.style.display = 'none';
@@ -12,13 +15,18 @@ async function updateInvitationsBadge() {
     }
     
     try {
+        console.log('[updateInvitationsBadge] Vérification des invitations pour:', this.user.email);
         const pendingInvitations = await this.loadUserPendingInvitations();
+        console.log('[updateInvitationsBadge] Invitations trouvées:', pendingInvitations.length);
+        
         if (pendingInvitations.length > 0) {
             badge.style.display = 'inline-block';
             badge.textContent = `📨 ${pendingInvitations.length}`;
-            badge.title = `Vous avez ${pendingInvitations.length} invitation(s) en attente`;
+            badge.title = `Vous avez ${pendingInvitations.length} invitation(s) en attente - Cliquez pour voir`;
+            console.log('[updateInvitationsBadge] Badge affiché avec', pendingInvitations.length, 'invitation(s)');
         } else {
             badge.style.display = 'none';
+            console.log('[updateInvitationsBadge] Aucune invitation, badge masqué');
         }
     } catch (error) {
         console.error('Erreur lors de la mise à jour du badge d\'invitations:', error);
