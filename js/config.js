@@ -134,11 +134,22 @@ function setupEventListeners() {
                 manager.viewMode = 'year';
                 viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue semestrielle';
+                // Afficher le sélecteur de format
+                const formatSelect = document.getElementById('yearViewFormat');
+                if (formatSelect) {
+                    formatSelect.style.display = 'inline-block';
+                    formatSelect.value = manager.yearViewFormat || 'timeline';
+                }
             } else {
                 console.log('[ViewToggle] Passage en vue semestrielle');
                 manager.viewMode = 'semester';
                 viewToggle.textContent = '📅';
                 viewToggle.title = 'Vue annuelle';
+                // Masquer le sélecteur de format
+                const formatSelect = document.getElementById('yearViewFormat');
+                if (formatSelect) {
+                    formatSelect.style.display = 'none';
+                }
             }
             // Re-rendre le calendrier avec la nouvelle vue
             console.log('[ViewToggle] Nouvelle vue:', manager.viewMode);
@@ -146,6 +157,20 @@ function setupEventListeners() {
         });
     } else if (!viewToggle) {
         console.warn('[ViewToggle] Bouton viewToggle non trouvé dans le DOM');
+    }
+    
+    // Sélecteur de format pour la vue annuelle
+    const yearViewFormat = document.getElementById('yearViewFormat');
+    if (yearViewFormat && !yearViewFormat.hasAttribute('data-listener-added')) {
+        yearViewFormat.setAttribute('data-listener-added', 'true');
+        const manager = this;
+        yearViewFormat.addEventListener('change', function() {
+            manager.yearViewFormat = this.value;
+            console.log('[YearViewFormat] Format changé:', manager.yearViewFormat);
+            if (manager.viewMode === 'year') {
+                manager.renderCalendar();
+            }
+        });
     }
 
     // Boutons de période (matin/après-midi/journée complète)

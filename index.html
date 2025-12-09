@@ -7,6 +7,7 @@
     <meta name="theme-color" content="#4a90e2">
     <title>Gestionnaire de Congés</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-year-view.css">
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <!-- Apple Touch Icon -->
@@ -81,6 +82,10 @@
                 <h2 id="currentMonth"></h2>
                 <button id="nextMonth" class="nav-btn">▶</button>
                 <button id="viewToggle" class="view-toggle-btn" title="Basculer entre vue semestrielle et annuelle">📅</button>
+                <select id="yearViewFormat" class="year-format-select" title="Format de la vue annuelle" style="display: none;">
+                    <option value="timeline">Timeline</option>
+                    <option value="heatmap">Heatmap</option>
+                </select>
             </div>
         </header>
 
@@ -265,6 +270,8 @@
     <script src="js/database.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/calendar.js"></script>
+    <script src="js/yearViewTimeline.js"></script>
+    <script src="js/yearViewHeatmap.js"></script>
     <script src="js/stats.js"></script>
     <script src="js/modals.js"></script>
     <script src="js/config.js"></script>

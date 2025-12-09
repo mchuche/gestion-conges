@@ -34,7 +34,12 @@ function renderCalendar() {
     console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
     
     if (this.viewMode === 'year') {
-        this.renderYearView();
+        // Utiliser le format sélectionné pour la vue annuelle
+        if (this.yearViewFormat === 'heatmap') {
+            this.renderYearViewHeatmap();
+        } else {
+            this.renderYearViewTimeline();
+        }
     } else {
         // S'assurer que la classe est correcte pour la vue semestrielle
         semesterCalendar.className = 'semester-calendar';

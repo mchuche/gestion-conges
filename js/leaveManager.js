@@ -15,6 +15,7 @@ class LeaveManager {
         this.multiSelectMode = false; // Mode sélection multiple activé par long press
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
         this.viewMode = 'semester'; // Vue semestrielle uniquement
+        this.yearViewFormat = 'timeline'; // Format de la vue annuelle : 'timeline' ou 'heatmap'
         this.ctrlKeyPressed = false; // État de la touche Ctrl/Cmd
         
         // Suivre l'état de la touche Ctrl/Cmd
