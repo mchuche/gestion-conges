@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur d'icônes PWA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            display: block;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        .sizes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .size-item {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Générateur d'icônes PWA</h1>
+        <p>Cet outil génère toutes les icônes nécessaires pour l'installation PWA.</p>
+        
+        <div>
+            <button onclick="generateAllIcons()">Générer toutes les icônes</button>
+            <button onclick="downloadAll()">Télécharger toutes les icônes</button>
+        </div>
+
+        <div class="sizes" id="iconsContainer"></div>
+    </div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const iconsContainer = document.getElementById('iconsContainer');
+
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Fond bleu
+            ctx.fillStyle = '#4a90e2';
+            const cornerRadius = size * 0.15625; // 80/512
+            ctx.beginPath();
+            ctx.moveTo(cornerRadius, 0);
+            ctx.lineTo(size - cornerRadius, 0);
+            ctx.quadraticCurveTo(size, 0, size, cornerRadius);
+            ctx.lineTo(size, size - cornerRadius);
+            ctx.quadraticCurveTo(size, size, size - cornerRadius, size);
+            ctx.lineTo(cornerRadius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - cornerRadius);
+            ctx.lineTo(0, cornerRadius);
+            ctx.quadraticCurveTo(0, 0, cornerRadius, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Calendrier blanc
+            const margin = size * 0.1953125; // 100/512
+            const calendarWidth = size * 0.609375; // 312/512
+            const calendarHeight = size * 0.53125; // 272/512
+            const calendarX = margin;
+            const calendarY = size * 0.234375; // 120/512
+
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            const calRadius = size * 0.0234375; // 12/512
+            ctx.moveTo(calendarX + calRadius, calendarY);
+            ctx.lineTo(calendarX + calendarWidth - calRadius, calendarY);
+            ctx.quadraticCurveTo(calendarX + calendarWidth, calendarY, calendarX + calendarWidth, calendarY + calRadius);
+            ctx.lineTo(calendarX + calendarWidth, calendarY + calendarHeight - calRadius);
+            ctx.quadraticCurveTo(calendarX + calendarWidth, calendarY + calendarHeight, calendarX + calendarWidth - calRadius, calendarY + calendarHeight);
+            ctx.lineTo(calendarX + calRadius, calendarY + calendarHeight);
+            ctx.quadraticCurveTo(calendarX, calendarY + calendarHeight, calendarX, calendarY + calendarHeight - calRadius);
+            ctx.lineTo(calendarX, calendarY + calRadius);
+            ctx.quadraticCurveTo(calendarX, calendarY, calendarX + calRadius, calendarY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Lignes du calendrier
+            ctx.strokeStyle = '#4a90e2';
+            ctx.lineWidth = size * 0.0078125; // 4/512
+            ctx.beginPath();
+            // Ligne horizontale
+            ctx.moveTo(calendarX, calendarY + size * 0.15625); // 200/512
+            ctx.lineTo(calendarX + calendarWidth, calendarY + size * 0.15625);
+            ctx.stroke();
+            // Lignes verticales
+            ctx.beginPath();
+            ctx.moveTo(calendarX + size * 0.20703125, calendarY); // 206/512
+            ctx.lineTo(calendarX + size * 0.20703125, calendarY + calendarHeight);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(calendarX + size * 0.4140625, calendarY); // 312/512
+            ctx.lineTo(calendarX + size * 0.4140625, calendarY + calendarHeight);
+            ctx.stroke();
+
+            // Jours marqués (cercles colorés)
+            const circleRadius = size * 0.0390625; // 20/512
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(calendarX + size * 0.103515625, calendarY + size * 0.2734375, circleRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#4ecdc4';
+            ctx.beginPath();
+            ctx.arc(calendarX + size * 0.310546875, calendarY + size * 0.3515625, circleRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#95e1d3';
+            ctx.beginPath();
+            ctx.arc(calendarX + size * 0.517578125, calendarY + size * 0.2734375, circleRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            return canvas;
+        }
+
+        function generateAllIcons() {
+            iconsContainer.innerHTML = '';
+            sizes.forEach(size => {
+                const canvas = createIcon(size);
+                const div = document.createElement('div');
+                div.className = 'size-item';
+                div.innerHTML = `
+                    <canvas id="icon-${size}" width="${size}" height="${size}"></canvas>
+                    <p>${size}x${size}px</p>
+                `;
+                const containerCanvas = div.querySelector('canvas');
+                const ctx = containerCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                iconsContainer.appendChild(div);
+            });
+        }
+
+        function downloadAll() {
+            sizes.forEach(size => {
+                const canvas = createIcon(size);
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `icons/icon-${size}x${size}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+            });
+            alert('Toutes les icônes ont été téléchargées ! Placez-les dans le dossier icons/');
+        }
+
+        // Générer automatiquement au chargement
+        window.addEventListener('load', generateAllIcons);
+    </script>
+</body>
+</html>
+

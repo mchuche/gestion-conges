@@ -15,6 +15,8 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 - 💾 **Sauvegarde cloud** : Toutes vos données sont sauvegardées dans Supabase (base de données PostgreSQL)
 - 📱 **Responsive** : Fonctionne parfaitement sur ordinateur, tablette et mobile
 - 🎯 **Interface moderne** : Design élégant et intuitif
+- 📲 **PWA (Progressive Web App)** : Installable comme une app native, fonctionne hors ligne
+- 📲 **PWA (Progressive Web App)** : Installable comme une app native, fonctionne hors ligne
 
 ## 🚀 Installation et Configuration
 
@@ -105,13 +107,32 @@ gestion-conges/
 └── README.md               # Ce fichier
 ```
 
-## 🔧 Installation comme PWA (optionnel)
+## 🔧 Installation comme PWA (Progressive Web App)
 
-Pour installer l'application sur votre téléphone ou tablette :
+L'application est maintenant une **PWA complète** et peut être installée sur votre appareil !
 
-1. Ouvrez l'application dans votre navigateur mobile
-2. Utilisez l'option "Ajouter à l'écran d'accueil" de votre navigateur
-3. L'application sera accessible comme une app native
+### Fonctionnalités PWA
+
+- ✅ **Installation native** : Installez l'app sur votre téléphone, tablette ou ordinateur
+- ✅ **Mode hors ligne** : Fonctionne même sans connexion internet (lecture seule)
+- ✅ **Icône sur l'écran d'accueil** : Accès rapide à l'application
+- ✅ **Mises à jour automatiques** : Notification quand une nouvelle version est disponible
+- ✅ **Expérience native** : S'ouvre en plein écran, sans barre d'adresse
+
+### Comment installer
+
+**Sur mobile (Android/iPhone) :**
+1. Ouvrez l'application dans votre navigateur
+2. Un bouton "📱 Installer l'app" apparaîtra automatiquement (ou utilisez le menu du navigateur)
+3. Suivez les instructions pour installer
+4. L'app apparaîtra sur votre écran d'accueil
+
+**Sur ordinateur (Chrome/Edge) :**
+1. Ouvrez l'application dans Chrome ou Edge
+2. Cliquez sur l'icône d'installation dans la barre d'adresse (ou menu > Installer l'application)
+3. L'app s'ouvrira dans une fenêtre dédiée
+
+**Note :** Pour générer les icônes nécessaires, ouvrez `generate-icons.html` dans votre navigateur et cliquez sur "Télécharger toutes les icônes", puis placez-les dans le dossier `icons/`.
 
 ## 🛠️ Outils et Technologies
 

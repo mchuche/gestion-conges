@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Gestionnaire de jours de congé - Calendrier interactif">
+    <meta name="theme-color" content="#4a90e2">
     <title>Gestionnaire de Congés</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -255,6 +260,8 @@
     <script src="js/modals.js"></script>
     <script src="js/config.js"></script>
     <script src="js/leaveManager.js"></script>
+    <!-- Service Worker Registration -->
+    <script src="js/pwa.js"></script>
 </body>
 </html>
 
