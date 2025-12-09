@@ -56,12 +56,16 @@ function populateTeamSelector() {
 }
 
 // Ouvrir la modale de gestion des équipes
-function openTeamsModal() {
+async function openTeamsModal() {
     const teamsModal = document.getElementById('teamsModal');
     if (!teamsModal) return;
     
     teamsModal.style.display = 'block';
     teamsModal.classList.add('active');
+    
+    // Recharger les équipes pour s'assurer qu'elles sont à jour
+    console.log('[openTeamsModal] Rechargement des équipes...');
+    await this.loadUserTeams();
     
     // Afficher la liste des équipes
     this.renderTeamsList();
@@ -83,9 +87,14 @@ function closeTeamsModal() {
 // Rendre la liste des équipes
 function renderTeamsList() {
     const teamsList = document.getElementById('teamsList');
-    if (!teamsList) return;
+    if (!teamsList) {
+        console.warn('[renderTeamsList] Élément teamsList non trouvé');
+        return;
+    }
     
     teamsList.innerHTML = '';
+    
+    console.log('[renderTeamsList] Équipes disponibles:', this.userTeams?.length || 0);
     
     if (!this.userTeams || this.userTeams.length === 0) {
         teamsList.innerHTML = '<p class="no-teams">Aucune équipe. Créez-en une pour commencer !</p>';
@@ -110,6 +119,8 @@ function renderTeamsList() {
         
         teamsList.appendChild(teamCard);
     });
+    
+    console.log('[renderTeamsList] Liste des équipes rendue avec', this.userTeams.length, 'équipe(s)');
 }
 
 // Afficher les détails d'une équipe
@@ -294,6 +305,15 @@ async function handleCreateTeam() {
         this.updateTeamSelectorVisibility();
         
         alert('Équipe créée avec succès !');
+        
+        // Recharger les équipes pour afficher la nouvelle équipe
+        await this.loadUserTeams();
+        
+        // Rafraîchir la liste des équipes
+        this.renderTeamsList();
+        
+        // Masquer le formulaire de création et revenir à la liste
+        createTeamSection.style.display = 'none';
     } catch (error) {
         console.error('Erreur lors de la création de l\'équipe:', error);
         alert('Erreur lors de la création de l\'équipe: ' + (error.message || error));
