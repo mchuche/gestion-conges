@@ -59,15 +59,28 @@ function renderSemesterView() {
     semesterCalendar.innerHTML = '';
     semesterCalendar.className = 'semester-calendar';
 
-    // Utiliser currentDate pour obtenir l'année et le mois actuels
+    // Utiliser date-fns pour obtenir l'année et le mois actuels
     // Cela garantit la cohérence avec la navigation
-    const year = this.currentDate.getFullYear();
-    const currentMonth = this.currentDate.getMonth();
+    const year = getYear(this.currentDate);
+    const currentMonth = getMonth(this.currentDate);
     
-    // Synchroniser currentYear avec currentDate pour éviter les désynchronisations
-    this.currentYear = year;
+    // Vérifier et corriger la synchronisation pour éviter les problèmes de cache Chrome
+    if (this.currentYear !== year) {
+        console.warn('[RenderSemesterView] Désynchronisation détectée - currentYear:', this.currentYear, 'vs year:', year, '- Correction...');
+        this.currentYear = year;
+    }
     
-    console.log('[RenderSemesterView] Année:', year, 'Mois:', currentMonth, 'currentYear:', this.currentYear);
+    // S'assurer que currentDate est bien à jour et aligné sur le début du semestre
+    const expectedMonth = currentMonth < 6 ? 0 : 6; // Premier mois du semestre
+    if (getMonth(this.currentDate) !== expectedMonth || getDate(this.currentDate) !== 1) {
+        console.warn('[RenderSemesterView] Date non alignée sur le début du semestre - Correction...');
+        this.currentDate = createDate(year, expectedMonth, 1);
+    }
+    
+    const finalYear = getYear(this.currentDate);
+    const finalMonth = getMonth(this.currentDate);
+    
+    console.log('[RenderSemesterView] Année:', finalYear, 'Mois:', finalMonth, 'currentYear:', this.currentYear);
     
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -75,14 +88,13 @@ function renderSemesterView() {
     ];
 
     // Déterminer le semestre (1er semestre: 0-5, 2ème semestre: 6-11)
-    // IMPORTANT: Utiliser le mois de currentDate, pas de currentYear
-    const semesterStart = currentMonth < 6 ? 0 : 6;
-    const semesterEnd = currentMonth < 6 ? 6 : 12;
+    const semesterStart = finalMonth < 6 ? 0 : 6;
+    const semesterEnd = finalMonth < 6 ? 6 : 12;
 
     // Mettre à jour le titre
-    const semesterName = currentMonth < 6 ? '1er Semestre' : '2ème Semestre';
-    document.getElementById('currentMonth').textContent = `${semesterName} ${year}`;
-    console.log('[RenderSemesterView] Semestre affiché:', semesterName, year, 'Mois de début:', semesterStart, 'Mois de fin:', semesterEnd);
+    const semesterName = finalMonth < 6 ? '1er Semestre' : '2ème Semestre';
+    document.getElementById('currentMonth').textContent = `${semesterName} ${finalYear}`;
+    console.log('[RenderSemesterView] Semestre affiché:', semesterName, finalYear, 'Mois de début:', semesterStart, 'Mois de fin:', semesterEnd);
 
     // Créer une colonne pour chaque mois du semestre
     for (let month = semesterStart; month < semesterEnd; month++) {
@@ -95,12 +107,12 @@ function renderSemesterView() {
         monthHeader.textContent = monthNames[month];
         monthColumn.appendChild(monthHeader);
 
-        // Jours du mois - utiliser finalYear pour garantir la cohérence
-        const lastDay = new Date(finalYear, month + 1, 0);
-        const daysInMonth = lastDay.getDate();
+        // Jours du mois - utiliser date-fns pour garantir la cohérence
+        const monthDate = createDate(finalYear, month, 1);
+        const daysInMonth = getDaysInMonth(monthDate);
 
         for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(finalYear, month, day);
+            const date = createDate(finalYear, month, day);
             const dayElement = this.createYearDayElement(date);
             monthColumn.appendChild(dayElement);
         }
@@ -108,9 +120,9 @@ function renderSemesterView() {
         semesterCalendar.appendChild(monthColumn);
     }
     
-    // Finaliser la synchronisation
+    // Finaliser la synchronisation avec date-fns
     this.currentYear = finalYear;
-    this.currentDate = new Date(finalYear, finalMonth, 1);
+    this.currentDate = createDate(finalYear, finalMonth, 1);
 }
 
 // Rendre la vue annuelle (mini-calendriers)
@@ -200,30 +212,25 @@ function createYearViewDayElement(date) {
     const dateKey = getDateKey(date);
     dayElement.setAttribute('data-date-key', dateKey);
 
-    const dayOfMonth = date.getDate();
-
-    // Vérifier si c'est aujourd'hui, passé ou futur
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
+    // Vérifier si c'est aujourd'hui, passé ou futur avec date-fns
+    const todayDate = today();
     
-    if (compareDate.toDateString() === today.toDateString()) {
+    if (isSameDay(date, todayDate)) {
         dayElement.classList.add('today');
-    } else if (compareDate < today) {
+    } else if (isBefore(date, todayDate)) {
         dayElement.classList.add('past-day');
     } else {
         dayElement.classList.add('future-day');
     }
 
     // Vérifier si c'est un weekend
-    const dayOfWeek = date.getDay();
+    const dayOfWeek = getDay(date);
     if (dayOfWeek === 0 || dayOfWeek === 6) {
         dayElement.classList.add('weekend');
     }
 
     // Vérifier si c'est un jour férié
-    const publicHolidays = this.getPublicHolidays('FR', date.getFullYear());
+    const publicHolidays = this.getPublicHolidays('FR', getYear(date));
     const dateKeyForHoliday = getDateKey(date);
     if (publicHolidays[dateKeyForHoliday]) {
         dayElement.classList.add('public-holiday');
