@@ -427,7 +427,19 @@ async function handleDeleteInvitation(invitationId, teamId) {
 
 // Supprimer une équipe
 async function handleDeleteTeam(teamId) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette équipe ? Cette action est irréversible.')) {
+    // Récupérer le nom de l'équipe pour l'afficher dans la confirmation
+    const team = this.userTeams?.find(t => t.id === teamId);
+    const teamName = team?.name || 'cette équipe';
+    
+    const confirmed = await swalConfirmHTML(
+        '⚠️ Supprimer l\'équipe ?',
+        `L'équipe <strong>"${teamName}"</strong> sera définitivement supprimée.<br><br>
+         <span style="color: var(--danger-color);">⚠️ Cette action est irréversible</span>`,
+        'Oui, supprimer',
+        'Annuler'
+    );
+    
+    if (!confirmed) {
         return;
     }
     
@@ -446,10 +458,10 @@ async function handleDeleteTeam(teamId) {
             }
         }
         
-        alert('Équipe supprimée avec succès');
+        await swalSuccess('✅ Équipe supprimée', 'L\'équipe a été supprimée avec succès.', 3000);
     } catch (error) {
         console.error('Erreur lors de la suppression de l\'équipe:', error);
-        alert('Erreur lors de la suppression de l\'équipe: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors de la suppression de l\'équipe: ' + (error.message || error));
     }
 }
 
