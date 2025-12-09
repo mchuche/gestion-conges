@@ -396,13 +396,13 @@ header h1 {
 }
 
 .day.past-day.weekend {
-    border-color: #888 !important;
-    border-width: 3px !important;
+    border-color: #ccc !important;
+    border-width: 2px !important;
     opacity: 0.7;
 }
 
 .day.past-day.weekend:hover {
-    border-color: #666 !important;
+    border-color: #aaa !important;
     opacity: 0.85;
 }
 
@@ -618,13 +618,13 @@ header h1 {
 }
 
 .year-day.past-day.weekend {
-    border-color: #888 !important;
+    border-color: #ccc !important;
     border-width: 2px !important;
     opacity: 0.7;
 }
 
 .year-day.past-day.weekend:hover {
-    border-color: #666 !important;
+    border-color: #aaa !important;
     opacity: 0.85;
 }
 
