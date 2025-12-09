@@ -1666,6 +1666,12 @@ header h1 {
     box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
+[data-theme="dark"] .period-btn.active {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+}
+
 [data-theme="dark"] .leave-btn {
     background: var(--card-bg) !important;
     border-color: var(--border-color);
