@@ -3,16 +3,27 @@
 // Enregistrer le service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Désinscrire tous les service workers existants avant d'enregistrer le nouveau
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      for (let registration of registrations) {
-        registration.unregister();
-        console.log('[PWA] Service Worker désinscrit:', registration.scope);
-      }
-    }).then(() => {
-      // Attendre un peu avant de réenregistrer pour Chrome
-      return new Promise(resolve => setTimeout(resolve, 100));
-    }).then(() => {
+    // Vérifier si on doit forcer la mise à jour (paramètre URL ou localStorage)
+    const forceUpdate = new URLSearchParams(window.location.search).get('forceUpdate') === 'true' ||
+                         localStorage.getItem('forceSWUpdate') === 'true';
+    
+    if (forceUpdate) {
+      console.log('[PWA] Mise à jour forcée du Service Worker');
+      localStorage.removeItem('forceSWUpdate');
+    }
+    
+    // Désinscrire tous les service workers existants si mise à jour forcée
+    const unregisterPromise = forceUpdate 
+      ? navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (let registration of registrations) {
+            registration.unregister();
+            console.log('[PWA] Service Worker désinscrit:', registration.scope);
+          }
+          return new Promise(resolve => setTimeout(resolve, 200));
+        })
+      : Promise.resolve();
+    
+    unregisterPromise.then(() => {
       // Enregistrer le nouveau service worker avec un paramètre de cache busting
       const swUrl = './sw.js?v=' + Date.now();
       return navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });

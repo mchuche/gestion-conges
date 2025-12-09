@@ -1,7 +1,7 @@
 // Service Worker pour le Gestionnaire de Congés
 // Version du cache - incrémenter pour forcer la mise à jour
-const CACHE_NAME = 'gestion-conges-v3';
-const RUNTIME_CACHE = 'gestion-conges-runtime-v3';
+const CACHE_NAME = 'gestion-conges-v4';
+const RUNTIME_CACHE = 'gestion-conges-runtime-v4';
 
 // Fichiers à mettre en cache lors de l'installation
 // Utiliser des chemins relatifs pour compatibilité avec GitHub Pages
