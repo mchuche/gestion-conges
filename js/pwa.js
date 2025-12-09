@@ -3,9 +3,25 @@
 // Enregistrer le service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
+    // Désinscrire tous les service workers existants avant d'enregistrer le nouveau
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (let registration of registrations) {
+        registration.unregister();
+        console.log('[PWA] Service Worker désinscrit:', registration.scope);
+      }
+    }).then(() => {
+      // Attendre un peu avant de réenregistrer pour Chrome
+      return new Promise(resolve => setTimeout(resolve, 100));
+    }).then(() => {
+      // Enregistrer le nouveau service worker avec un paramètre de cache busting
+      const swUrl = './sw.js?v=' + Date.now();
+      return navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
+    })
       .then((registration) => {
         console.log('[PWA] Service Worker enregistré avec succès:', registration.scope);
+
+        // Forcer la mise à jour immédiatement
+        registration.update();
 
         // Vérifier les mises à jour périodiquement
         setInterval(() => {
@@ -18,9 +34,20 @@ if ('serviceWorker' in navigator) {
           console.log('[PWA] Nouvelle version du Service Worker détectée');
           
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // Nouvelle version disponible
-              showUpdateNotification();
+            if (newWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // Nouvelle version disponible, forcer le rechargement pour Chrome
+                console.log('[PWA] Nouvelle version installée, rechargement...');
+                // Envoyer un message pour activer le nouveau worker
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                // Recharger la page après un court délai
+                setTimeout(() => {
+                  window.location.reload();
+                }, 500);
+              } else {
+                // Première installation
+                console.log('[PWA] Service Worker installé pour la première fois');
+              }
             }
           });
         });
@@ -32,13 +59,16 @@ if ('serviceWorker' in navigator) {
     // Écouter les messages du service worker
     navigator.serviceWorker.addEventListener('message', (event) => {
       console.log('[PWA] Message reçu du Service Worker:', event.data);
+      if (event.data && event.data.type === 'RELOAD') {
+        window.location.reload();
+      }
     });
 
     // Écouter les changements de contrôle du service worker
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('[PWA] Nouveau Service Worker actif');
-      // Optionnel : recharger la page pour utiliser la nouvelle version
-      // window.location.reload();
+      console.log('[PWA] Nouveau Service Worker actif, rechargement...');
+      // Recharger la page pour utiliser la nouvelle version (important pour Chrome)
+      window.location.reload();
     });
   });
 }
