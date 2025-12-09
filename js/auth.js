@@ -456,7 +456,11 @@ async function deleteAccount() {
         const { error: signOutError } = await supabase.auth.signOut();
         if (signOutError) throw signOutError;
 
-        alert('✅ Votre compte et toutes vos données ont été supprimés avec succès.\n\nVous allez être redirigé vers la page de connexion.');
+        await swalSuccess(
+            '✅ Compte supprimé',
+            'Votre compte et toutes vos données ont été supprimés avec succès.<br><br>Vous allez être redirigé vers la page de connexion.',
+            3000
+        );
         
         // Réinitialiser l'état local
         this.user = null;
@@ -469,7 +473,7 @@ async function deleteAccount() {
         this.showAuthModal();
     } catch (e) {
         console.error('Erreur lors de la suppression du compte:', e);
-        alert('❌ Erreur lors de la suppression du compte. Vérifiez la console pour plus de détails.');
+        await swalError('❌ Erreur', 'Erreur lors de la suppression du compte. Vérifiez la console pour plus de détails.');
     }
 }
 

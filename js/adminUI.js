@@ -144,7 +144,16 @@ async function renderAdminUsersList() {
 
 // Gérer la suppression d'un utilisateur
 async function handleDeleteUser(userId, userEmail) {
-    if (!confirm(`⚠️ Êtes-vous sûr de vouloir supprimer l'utilisateur "${userEmail}" ?\n\nCette action est irréversible et supprimera toutes ses données (congés, équipes, etc.).\n\nNote: La suppression du compte dans auth.users doit être faite depuis le dashboard Supabase.`)) {
+    const confirmed = await swalConfirmHTML(
+        '⚠️ Supprimer l\'utilisateur ?',
+        `Êtes-vous sûr de vouloir supprimer <strong>${userEmail}</strong> ?<br><br>
+         Cette action est <strong style="color: var(--danger-color);">irréversible</strong> et supprimera toutes ses données (congés, équipes, etc.).<br><br>
+         <small>Note: La suppression du compte dans auth.users doit être faite depuis le dashboard Supabase.</small>`,
+        'Oui, supprimer',
+        'Annuler'
+    );
+    
+    if (!confirmed) {
         return;
     }
 
@@ -157,11 +166,15 @@ async function handleDeleteUser(userId, userEmail) {
             deleted_by: this.user?.email
         });
         
-        alert('✅ Les données de l\'utilisateur ont été supprimées.\n\nNote: Pour supprimer complètement le compte, allez dans le dashboard Supabase > Authentication > Users.');
+        await swalSuccess(
+            '✅ Suppression réussie',
+            'Les données de l\'utilisateur ont été supprimées.<br><br><small>Note: Pour supprimer complètement le compte, allez dans le dashboard Supabase > Authentication > Users.</small>',
+            4000
+        );
         await this.renderAdminUsersList();
     } catch (error) {
         console.error('[handleDeleteUser] Erreur:', error);
-        alert('❌ Erreur lors de la suppression: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors de la suppression: ' + (error.message || error));
     }
 }
 
@@ -214,7 +227,15 @@ async function renderAdminTeamsList() {
 
 // Gérer la suppression d'un groupe
 async function handleDeleteTeamAsAdmin(teamId, teamName) {
-    if (!confirm(`⚠️ Êtes-vous sûr de vouloir supprimer le groupe "${teamName}" ?\n\nCette action est irréversible.`)) {
+    const confirmed = await swalConfirmHTML(
+        '⚠️ Supprimer le groupe ?',
+        `Le groupe <strong>"${teamName}"</strong> sera définitivement supprimé.<br><br>
+         <span style="color: var(--danger-color);">⚠️ Cette action est irréversible</span>`,
+        'Oui, supprimer',
+        'Annuler'
+    );
+    
+    if (!confirmed) {
         return;
     }
 
@@ -227,11 +248,11 @@ async function handleDeleteTeamAsAdmin(teamId, teamName) {
             deleted_by: this.user?.email
         });
         
-        alert('✅ Groupe supprimé avec succès');
+        await swalSuccess('✅ Groupe supprimé', 'Le groupe a été supprimé avec succès.', 3000);
         await this.renderAdminTeamsList();
     } catch (error) {
         console.error('[handleDeleteTeamAsAdmin] Erreur:', error);
-        alert('❌ Erreur lors de la suppression: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors de la suppression: ' + (error.message || error));
     }
 }
 

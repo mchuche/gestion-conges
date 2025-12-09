@@ -361,13 +361,21 @@ async function showAddMemberDialog(teamId) {
         // Afficher un message approprié selon le type de résultat
         if (result && result.type === 'direct_add') {
             // Message de succès avec indication visuelle
-            alert(`✅ ${result.message || `L'utilisateur ${email.trim()} a été ajouté directement à l'équipe !`}\n\nVous pouvez maintenant le voir dans la liste des membres.`);
+            await swalSuccess(
+                '✅ Membre ajouté',
+                `${result.message || `L'utilisateur <strong>${email.trim()}</strong> a été ajouté directement à l'équipe !`}<br><br>Vous pouvez maintenant le voir dans la liste des membres.`,
+                3000
+            );
         } else {
-            alert(result?.message || `📨 Invitation envoyée à ${email.trim()} !\n\nL'utilisateur recevra une notification lorsqu'il se connectera à l'application.`);
+            await swalSuccess(
+                '📨 Invitation envoyée',
+                `Invitation envoyée à <strong>${email.trim()}</strong> !<br><br>L'utilisateur recevra une notification lorsqu'il se connectera à l'application.`,
+                3000
+            );
         }
     } catch (error) {
         console.error('Erreur lors de l\'invitation:', error);
-        alert('❌ Erreur lors de l\'invitation: ' + (error.message || error));
+        await swalError('❌ Erreur', 'Erreur lors de l\'invitation: ' + (error.message || error));
     }
 }
 
