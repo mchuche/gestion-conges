@@ -17,6 +17,9 @@ class LeaveManager {
         this.viewMode = 'semester'; // Vue semestrielle uniquement
         this.yearViewFormat = 'timeline'; // Format de la vue annuelle : 'timeline' ou 'heatmap'
         this.ctrlKeyPressed = false; // État de la touche Ctrl/Cmd
+        this.userTeams = []; // Liste des équipes de l'utilisateur
+        this.currentTeamId = null; // ID de l'équipe actuellement sélectionnée
+        this.presenceUsers = []; // Utilisateurs pour la vue présence
         
         // Suivre l'état de la touche Ctrl/Cmd
         this.setupCtrlTracking();
@@ -174,6 +177,40 @@ if (typeof openHelpModal !== 'undefined') {
         resetAllLeaves,
         addLeaveType,
         saveConfig
+    });
+}
+
+// Teams
+if (typeof loadUserTeams !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        loadUserTeams,
+        createTeam,
+        loadTeamMembers,
+        inviteUserToTeam,
+        addMemberToTeam,
+        removeMemberFromTeam,
+        loadTeamLeaves,
+        loadTeamLeaveTypes,
+        deleteTeam
+    });
+}
+
+// TeamsUI
+if (typeof updateTeamSelectorVisibility !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        updateTeamSelectorVisibility,
+        populateTeamSelector,
+        openTeamsModal,
+        closeTeamsModal,
+        renderTeamsList,
+        showTeamDetails,
+        showCreateTeamForm,
+        handleCreateTeam,
+        showAddMemberDialog,
+        handleRemoveMember,
+        handleDeleteTeam,
+        handleTeamSelectChange,
+        setupTeamsEventListeners
     });
 }
 

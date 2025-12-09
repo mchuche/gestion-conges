@@ -1,7 +1,7 @@
 // Vue annuelle Matrice de Présence - Pour comparer plusieurs calendriers
 // Cette vue permet de voir les présences/absences de plusieurs utilisateurs
 
-function renderYearViewPresence() {
+async function renderYearViewPresence() {
     const manager = this; // Capturer le contexte
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
@@ -27,9 +27,31 @@ function renderYearViewPresence() {
 
     document.getElementById('currentMonth').textContent = `Matrice de Présence ${year}`;
 
-    // Pour l'instant, on affiche seulement le calendrier de l'utilisateur actuel
-    // Plus tard, on pourra charger plusieurs utilisateurs depuis la base de données
-    const users = this.presenceUsers || [{ id: this.user?.id, name: this.user?.email || 'Moi', leaves: this.leaves }];
+    // Charger les utilisateurs de l'équipe sélectionnée ou utiliser l'utilisateur actuel
+    let users = this.presenceUsers || [];
+    
+    // Si une équipe est sélectionnée, charger les données de l'équipe
+    if (this.currentTeamId && typeof this.loadTeamLeaves === 'function' && typeof this.loadTeamMembers === 'function') {
+        try {
+            const members = await this.loadTeamMembers(this.currentTeamId);
+            const teamLeaves = await this.loadTeamLeaves(this.currentTeamId, year);
+            const teamLeaveTypes = await this.loadTeamLeaveTypes(this.currentTeamId);
+            
+            users = members.map(member => ({
+                id: member.userId,
+                name: member.email,
+                leaves: teamLeaves[member.userId] || {},
+                leaveTypes: teamLeaveTypes[member.userId] || []
+            }));
+        } catch (error) {
+            console.error('Erreur lors du chargement des données de l\'équipe:', error);
+            // Fallback sur l'utilisateur actuel
+            users = [{ id: this.user?.id, name: this.user?.email || 'Moi', leaves: this.leaves }];
+        }
+    } else {
+        // Pas d'équipe sélectionnée, utiliser seulement l'utilisateur actuel
+        users = [{ id: this.user?.id, name: this.user?.email || 'Moi', leaves: this.leaves }];
+    }
     
     // Créer le conteneur principal
     const presenceContainer = document.createElement('div');

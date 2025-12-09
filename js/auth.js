@@ -163,6 +163,16 @@ function showMainApp() {
         userNameEl.textContent = this.user.email || 'Utilisateur';
     }
     this.init();
+    
+    // Mettre à jour la visibilité du sélecteur d'équipe après l'affichage de l'app
+    setTimeout(() => {
+        if (typeof this.updateTeamSelectorVisibility === 'function') {
+            this.updateTeamSelectorVisibility();
+        }
+        if (typeof this.populateTeamSelector === 'function') {
+            this.populateTeamSelector();
+        }
+    }, 200);
 }
 
 function setupAuthListeners() {
@@ -452,8 +462,21 @@ async function loadUserData() {
         await Promise.all([
             this.loadLeaves(),
             this.loadLeaveTypesConfig(),
-            this.loadLeaveQuotasByYear()
+            this.loadLeaveQuotasByYear(),
+            this.loadSelectedCountry()
         ]);
+        // Charger les équipes de l'utilisateur
+        if (typeof this.loadUserTeams === 'function') {
+            await this.loadUserTeams();
+        }
+        
+        // Mettre à jour l'interface des équipes après le chargement
+        if (typeof this.updateTeamSelectorVisibility === 'function') {
+            this.updateTeamSelectorVisibility();
+        }
+        if (typeof this.populateTeamSelector === 'function') {
+            this.populateTeamSelector();
+        }
     } catch (error) {
         console.error('Erreur lors du chargement des données utilisateur:', error);
     }

@@ -38,7 +38,10 @@ function renderCalendar() {
         if (this.yearViewFormat === 'heatmap') {
             this.renderYearViewHeatmap();
         } else if (this.yearViewFormat === 'presence') {
-            this.renderYearViewPresence();
+            // La vue présence est async car elle charge les données de l'équipe
+            this.renderYearViewPresence().catch(error => {
+                console.error('Erreur lors du rendu de la vue présence:', error);
+            });
         } else {
             this.renderYearViewTimeline();
         }

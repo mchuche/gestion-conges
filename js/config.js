@@ -24,8 +24,20 @@ async function init() {
     // Mettre à jour les quotas
     this.updateLeaveQuotas();
     
+    // Mettre à jour le sélecteur d'équipe
+    if (typeof this.updateTeamSelectorVisibility === 'function') {
+        this.updateTeamSelectorVisibility();
+    }
+    if (typeof this.populateTeamSelector === 'function') {
+        this.populateTeamSelector();
+    }
+    
     // Configurer les événements
     this.setupEventListeners();
+    // Configurer les event listeners pour les équipes
+    if (typeof this.setupTeamsEventListeners === 'function') {
+        this.setupTeamsEventListeners();
+    }
     
     // S'assurer que le bouton de thème est bien initialisé
     if (typeof this.updateThemeToggleButton === 'function') {
@@ -154,6 +166,10 @@ function setupEventListeners() {
             // Re-rendre le calendrier avec la nouvelle vue
             console.log('[ViewToggle] Nouvelle vue:', manager.viewMode);
             manager.renderCalendar();
+            // Mettre à jour la visibilité du sélecteur d'équipe
+            if (typeof manager.updateTeamSelectorVisibility === 'function') {
+                manager.updateTeamSelectorVisibility();
+            }
         });
     } else if (!viewToggle) {
         console.warn('[ViewToggle] Bouton viewToggle non trouvé dans le DOM');

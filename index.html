@@ -87,6 +87,10 @@
                     <option value="heatmap">Heatmap</option>
                     <option value="presence">Matrice Présence</option>
                 </select>
+                <button id="teamsBtn" class="teams-btn" title="Gérer les équipes" style="display: none;">👥</button>
+                <select id="teamSelect" class="team-select" title="Sélectionner une équipe" style="display: none;">
+                    <option value="">Mon calendrier</option>
+                </select>
             </div>
         </header>
 
@@ -155,6 +159,49 @@
                 <div class="config-actions">
                     <button id="saveConfigBtn" class="save-btn">Enregistrer</button>
                     <button id="cancelConfigBtn" class="cancel-btn">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de gestion des équipes -->
+        <div id="teamsModal" class="modal">
+            <div class="modal-content teams-modal-content">
+                <span class="close teams-close">&times;</span>
+                <h3>👥 Gestion des Équipes</h3>
+                
+                <div class="teams-section">
+                    <h4>Mes équipes</h4>
+                    <div id="teamsList" class="teams-list"></div>
+                    <button id="createTeamBtn" class="add-btn">+ Créer une équipe</button>
+                </div>
+
+                <div id="teamDetailsSection" class="team-details-section" style="display: none;">
+                    <h4 id="teamDetailsTitle"></h4>
+                    <div id="teamMembersList" class="team-members-list"></div>
+                    <div class="team-actions">
+                        <button id="addMemberBtn" class="add-btn">+ Ajouter un membre</button>
+                        <button id="deleteTeamBtn" class="delete-btn" style="display: none;">🗑️ Supprimer l'équipe</button>
+                    </div>
+                </div>
+
+                <div id="createTeamSection" class="create-team-section" style="display: none;">
+                    <h4>Créer une nouvelle équipe</h4>
+                    <div class="form-group">
+                        <label for="teamNameInput">Nom de l'équipe :</label>
+                        <input type="text" id="teamNameInput" class="form-input" placeholder="Ex: Équipe Développement" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="teamDescriptionInput">Description (optionnel) :</label>
+                        <textarea id="teamDescriptionInput" class="form-textarea" placeholder="Description de l'équipe..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button id="saveTeamBtn" class="save-btn">Créer</button>
+                        <button id="cancelCreateTeamBtn" class="cancel-btn">Annuler</button>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="closeTeamsModalBtn" class="cancel-btn">Fermer</button>
                 </div>
             </div>
         </div>
@@ -270,6 +317,8 @@
     <script src="js/holidays.js"></script>
     <script src="js/database.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/teams.js"></script>
+    <script src="js/teamsUI.js"></script>
     <script src="js/calendar.js"></script>
     <script src="js/yearViewTimeline.js"></script>
     <script src="js/yearViewHeatmap.js"></script>
