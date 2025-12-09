@@ -309,12 +309,15 @@ async function renderAdminStats() {
 
 // Configurer les event listeners pour l'admin
 function setupAdminEventListeners() {
+    const manager = this; // Capturer le contexte
+    
     // Bouton admin dans le header
     const adminBtn = document.getElementById('adminBtn');
     if (adminBtn && !adminBtn.hasAttribute('data-listener-added')) {
         adminBtn.setAttribute('data-listener-added', 'true');
-        adminBtn.addEventListener('click', () => {
-            this.openAdminModal();
+        adminBtn.addEventListener('click', async () => {
+            console.log('[AdminUI] Bouton admin cliqué');
+            await manager.openAdminModal();
         });
     }
 
@@ -323,7 +326,7 @@ function setupAdminEventListeners() {
     if (adminClose && !adminClose.hasAttribute('data-listener-added')) {
         adminClose.setAttribute('data-listener-added', 'true');
         adminClose.addEventListener('click', () => {
-            this.closeAdminModal();
+            manager.closeAdminModal();
         });
     }
 
@@ -331,9 +334,9 @@ function setupAdminEventListeners() {
     document.querySelectorAll('.admin-tab').forEach(tab => {
         if (!tab.hasAttribute('data-listener-added')) {
             tab.setAttribute('data-listener-added', 'true');
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', async () => {
                 const tabName = tab.getAttribute('data-tab');
-                this.switchAdminTab(tabName);
+                await manager.switchAdminTab(tabName);
             });
         }
     });
@@ -345,8 +348,8 @@ function setupAdminEventListeners() {
         let searchTimeout;
         userSearch.addEventListener('input', () => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                this.renderAdminUsersList();
+            searchTimeout = setTimeout(async () => {
+                await manager.renderAdminUsersList();
             }, 300);
         });
     }
@@ -355,8 +358,8 @@ function setupAdminEventListeners() {
     const saveSettingsBtn = document.getElementById('saveDefaultSettingsBtn');
     if (saveSettingsBtn && !saveSettingsBtn.hasAttribute('data-listener-added')) {
         saveSettingsBtn.setAttribute('data-listener-added', 'true');
-        saveSettingsBtn.addEventListener('click', () => {
-            this.handleSaveDefaultSettings();
+        saveSettingsBtn.addEventListener('click', async () => {
+            await manager.handleSaveDefaultSettings();
         });
     }
 }
