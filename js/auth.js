@@ -500,6 +500,11 @@ async function loadUserData() {
         if (typeof this.updateInvitationsBadge === 'function') {
             await this.updateInvitationsBadge();
         }
+        
+        // Mettre à jour la visibilité du bouton admin
+        if (typeof this.updateAdminButtonVisibility === 'function') {
+            await this.updateAdminButtonVisibility();
+        }
     } catch (error) {
         console.error('Erreur lors du chargement des données utilisateur:', error);
     }

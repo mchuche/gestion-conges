@@ -44,6 +44,16 @@ async function init() {
         this.setupInvitationsEventListeners();
     }
     
+    // Configurer les event listeners pour l'admin
+    if (typeof this.setupAdminEventListeners === 'function') {
+        this.setupAdminEventListeners();
+    }
+    
+    // Mettre à jour la visibilité du bouton admin
+    if (typeof this.updateAdminButtonVisibility === 'function') {
+        this.updateAdminButtonVisibility();
+    }
+    
     // S'assurer que le bouton de thème est bien initialisé
     if (typeof this.updateThemeToggleButton === 'function') {
         const currentTheme = this.getCurrentTheme ? this.getCurrentTheme() : 'light';

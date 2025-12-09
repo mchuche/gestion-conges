@@ -232,6 +232,39 @@ if (typeof updateInvitationsBadge !== 'undefined') {
     });
 }
 
+// Admin
+if (typeof checkIsAdmin !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        checkIsAdmin,
+        checkIsSuperAdmin,
+        loadAllUsers,
+        deleteUser,
+        loadAllTeams,
+        deleteTeamAsAdmin,
+        loadDefaultSettings,
+        saveDefaultSettings,
+        loadAdminStats
+    });
+}
+
+// AdminUI
+if (typeof updateAdminButtonVisibility !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        updateAdminButtonVisibility,
+        openAdminModal,
+        closeAdminModal,
+        switchAdminTab,
+        renderAdminUsersList,
+        handleDeleteUser,
+        renderAdminTeamsList,
+        handleDeleteTeamAsAdmin,
+        renderAdminSettings,
+        handleSaveDefaultSettings,
+        renderAdminStats,
+        setupAdminEventListeners
+    });
+}
+
 // Config
 if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
     LeaveManager.prototype.init = init;
