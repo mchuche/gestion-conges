@@ -156,14 +156,23 @@ function setupEventListeners() {
         const newThemeToggle = themeToggle.cloneNode(true);
         themeToggle.parentNode.replaceChild(newThemeToggle, themeToggle);
         
-        newThemeToggle.addEventListener('click', () => {
+        // Utiliser bind pour s'assurer que 'this' est correctement lié
+        const manager = this;
+        newThemeToggle.addEventListener('click', function() {
             console.log('[Theme] Bouton de thème cliqué');
-            if (typeof this.toggleTheme === 'function') {
-                this.toggleTheme();
+            if (typeof manager.toggleTheme === 'function') {
+                manager.toggleTheme();
             } else {
-                console.error('[Theme] toggleTheme n\'est pas une fonction');
+                console.error('[Theme] toggleTheme n\'est pas une fonction', typeof manager.toggleTheme);
+                console.log('[Theme] Méthodes disponibles:', Object.getOwnPropertyNames(Object.getPrototypeOf(manager)));
             }
         });
+        
+        // Mettre à jour l'icône du bouton avec le thème actuel
+        if (typeof this.updateThemeToggleButton === 'function') {
+            const currentTheme = this.getCurrentTheme ? this.getCurrentTheme() : 'light';
+            this.updateThemeToggleButton(currentTheme);
+        }
     } else {
         console.warn('[Theme] Bouton themeToggle non trouvé dans le DOM');
     }
