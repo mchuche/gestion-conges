@@ -15,21 +15,9 @@ if (typeof dateFns !== 'undefined') {
 }
 
 if (!dateFnsAvailable) {
-    console.warn('[DateUtils] date-fns non disponible, utilisation des fonctions natives');
-    console.log('[DateUtils] Tentative de chargement depuis CDN...');
-    // Essayer de charger date-fns depuis un autre CDN si le premier a échoué
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/date-fns@2.30.0/index.js';
-    script.onerror = () => {
-        console.warn('[DateUtils] Échec du chargement de date-fns depuis unpkg, utilisation des fonctions natives');
-    };
-    script.onload = () => {
-        console.log('[DateUtils] date-fns chargé depuis unpkg');
-        if (typeof date_fns !== 'undefined') {
-            window.dateFns = date_fns;
-        }
-    };
-    document.head.appendChild(script);
+    console.log('[DateUtils] Utilisation des fonctions natives JavaScript (date-fns non nécessaire)');
+    // Ne pas charger date-fns depuis un CDN car les bundles disponibles utilisent require()
+    // Les fonctions natives JavaScript sont suffisantes pour nos besoins
 }
 
 // Obtenir l'année d'une date
