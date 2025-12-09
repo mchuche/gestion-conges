@@ -381,6 +381,22 @@ header h1 {
 .day.today {
     border: 3px solid var(--primary-color);
     font-weight: bold;
+    background: #e3f2fd;
+}
+
+.day.past-day {
+    opacity: 0.6;
+    background: #f5f5f5;
+    color: #999;
+}
+
+.day.past-day:hover {
+    opacity: 0.8;
+    background: #e8e8e8;
+}
+
+.day.future-day {
+    background: #ffffff;
 }
 
 .day.selected {
@@ -577,6 +593,21 @@ header h1 {
     border: 2px solid var(--primary-color);
     font-weight: bold;
     background: #e3f2fd;
+}
+
+.year-day.past-day {
+    opacity: 0.6;
+    background: #f5f5f5;
+    color: #999;
+}
+
+.year-day.past-day:hover {
+    opacity: 0.8;
+    background: #e8e8e8;
+}
+
+.year-day.future-day {
+    background: #ffffff;
 }
 
 .year-day-content {

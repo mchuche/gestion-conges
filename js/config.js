@@ -71,11 +71,34 @@ function setupEventListeners() {
     });
 
     // Boutons de type de congé (déléguation d'événement pour les boutons dynamiques)
-    document.getElementById('leaveTypes').addEventListener('click', async (e) => {
-        if (e.target.classList.contains('leave-btn') && this.selectedDate) {
-            await this.setLeave(this.selectedDate, e.target.dataset.type);
+    const leaveTypesContainer = document.getElementById('leaveTypes');
+    if (leaveTypesContainer) {
+        // Vérifier si l'event listener est déjà attaché pour éviter les doublons
+        if (!leaveTypesContainer.hasAttribute('data-listener-added')) {
+            leaveTypesContainer.setAttribute('data-listener-added', 'true');
+            leaveTypesContainer.addEventListener('click', async (e) => {
+                console.log('Clic détecté dans #leaveTypes, target:', e.target, 'closest:', e.target.closest('.leave-btn'));
+                // Utiliser closest pour trouver le bouton même si on clique sur un élément enfant
+                const leaveBtn = e.target.closest('.leave-btn');
+                if (leaveBtn) {
+                    const leaveType = leaveBtn.dataset.type;
+                    console.log('Bouton trouvé, type:', leaveType, 'selectedDate:', this.selectedDate);
+                    if (this.selectedDate) {
+                        console.log('Appel de setLeave avec date:', this.selectedDate, 'type:', leaveType);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await this.setLeave(this.selectedDate, leaveType);
+                    } else {
+                        console.warn('Clic sur bouton de congé mais selectedDate n\'est pas défini');
+                    }
+                } else {
+                    console.log('Clic en dehors d\'un bouton de congé');
+                }
+            });
         }
-    });
+    } else {
+        console.error('Conteneur #leaveTypes non trouvé lors de setupEventListeners');
+    }
 
     // Bouton supprimer
     document.getElementById('removeLeave').addEventListener('click', async () => {

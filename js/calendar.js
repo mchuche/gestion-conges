@@ -138,10 +138,18 @@ function createYearDayElement(date) {
     const dayNames = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
     const dayLetter = dayNames[dayOfWeek];
 
-    // Vérifier si c'est aujourd'hui
+    // Vérifier si c'est aujourd'hui, passé ou futur
     const today = new Date();
-    if (date.toDateString() === today.toDateString()) {
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    if (compareDate.toDateString() === today.toDateString()) {
         dayElement.classList.add('today');
+    } else if (compareDate < today) {
+        dayElement.classList.add('past-day');
+    } else {
+        dayElement.classList.add('future-day');
     }
 
     // Vérifier si c'est un week-end
@@ -308,10 +316,18 @@ function createDayElement(container, date, isOtherMonth) {
         day.classList.add('other-month');
     }
 
-    // Vérifier si c'est aujourd'hui
+    // Vérifier si c'est aujourd'hui, passé ou futur
     const today = new Date();
-    if (date.toDateString() === today.toDateString()) {
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    if (compareDate.toDateString() === today.toDateString()) {
         day.classList.add('today');
+    } else if (compareDate < today) {
+        day.classList.add('past-day');
+    } else {
+        day.classList.add('future-day');
     }
 
     // Vérifier si c'est un jour férié
