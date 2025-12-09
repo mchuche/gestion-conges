@@ -139,6 +139,46 @@ CREATE TABLE IF NOT EXISTS team_members (
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
 
+-- IMPORTANT : Créer les fonctions SECURITY DEFINER AVANT les politiques qui les utilisent
+-- pour éviter la récursion infinie dans les politiques RLS
+-- Ces fonctions s'exécutent avec les privilèges du créateur et contournent RLS
+CREATE OR REPLACE FUNCTION is_team_member(team_uuid UUID, user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Utiliser SECURITY DEFINER pour contourner RLS
+    RETURN EXISTS (
+        SELECT 1 FROM team_members
+        WHERE team_id = team_uuid
+        AND user_id = user_uuid
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE FUNCTION is_team_owner_or_admin(team_uuid UUID, user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Utiliser SECURITY DEFINER pour contourner RLS
+    RETURN EXISTS (
+        SELECT 1 FROM team_members
+        WHERE team_id = team_uuid
+        AND user_id = user_uuid
+        AND role IN ('owner', 'admin')
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE FUNCTION user_is_team_member(team_uuid UUID, user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Utiliser SECURITY DEFINER pour contourner RLS
+    RETURN EXISTS (
+        SELECT 1 FROM team_members
+        WHERE team_id = team_uuid
+        AND user_id = user_uuid
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
 -- Politiques RLS pour les équipes : les membres peuvent voir leur équipe
 -- Supprimer les politiques existantes si elles existent déjà
 DROP POLICY IF EXISTS "Team members can view their teams" ON teams;
@@ -151,6 +191,7 @@ DROP POLICY IF EXISTS "Team owners/admins can add members" ON team_members;
 DROP POLICY IF EXISTS "Team owners/admins can update members" ON team_members;
 DROP POLICY IF EXISTS "Team owners/admins can remove members" ON team_members;
 
+-- Maintenant créer les politiques qui utilisent les fonctions (déjà créées ci-dessus)
 CREATE POLICY "Team members can view their teams" ON teams
     FOR SELECT USING (
         -- Soit l'utilisateur est le créateur
@@ -171,41 +212,6 @@ CREATE POLICY "Team owners can update their teams" ON teams
 CREATE POLICY "Team owners can delete their teams" ON teams
     FOR DELETE USING (auth.uid() = created_by);
 
--- Créer des fonctions SECURITY DEFINER pour éviter la récursion infinie dans les politiques RLS
-CREATE OR REPLACE FUNCTION is_team_member(team_uuid UUID, user_uuid UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1 FROM team_members
-        WHERE team_id = team_uuid
-        AND user_id = user_uuid
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION is_team_owner_or_admin(team_uuid UUID, user_uuid UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1 FROM team_members
-        WHERE team_id = team_uuid
-        AND user_id = user_uuid
-        AND role IN ('owner', 'admin')
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION user_is_team_member(team_uuid UUID, user_uuid UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1 FROM team_members
-        WHERE team_id = team_uuid
-        AND user_id = user_uuid
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Politiques RLS pour les membres d'équipe
 -- Utiliser les fonctions SECURITY DEFINER pour éviter la récursion
 CREATE POLICY "Team members can view team members" ON team_members
@@ -214,15 +220,18 @@ CREATE POLICY "Team members can view team members" ON team_members
     );
 
 -- Pour INSERT : permettre si l'utilisateur est le créateur de l'équipe (via teams) ou owner/admin
+-- IMPORTANT : Pour la première insertion (création de l'équipe), on vérifie UNIQUEMENT teams.created_by
+-- Pour éviter la récursion, on ne vérifie pas d'abord si l'utilisateur est membre
 CREATE POLICY "Team owners/admins can add members" ON team_members
     FOR INSERT WITH CHECK (
-        -- Soit l'utilisateur est le créateur de l'équipe (première insertion lors de la création)
+        -- Condition 1 : L'utilisateur est le créateur de l'équipe (permet la première insertion)
         EXISTS (
             SELECT 1 FROM teams
             WHERE teams.id = team_members.team_id
             AND teams.created_by = auth.uid()
         )
-        -- Soit l'utilisateur est déjà owner/admin (pour les ajouts ultérieurs)
+        -- Condition 2 : L'utilisateur est déjà owner/admin (pour les ajouts ultérieurs)
+        -- Cette fonction utilise SECURITY DEFINER et contourne RLS
         OR is_team_owner_or_admin(team_members.team_id, auth.uid())
     );
 
