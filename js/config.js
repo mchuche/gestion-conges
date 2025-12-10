@@ -228,17 +228,31 @@ function setupEventListeners() {
     this.setupYearViewFormatSelector();
 
     // Boutons de période (matin/après-midi/journée complète)
-    document.querySelectorAll('.period-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            this.selectedPeriod = e.target.dataset.period;
-            
-            // Mettre à jour la mise en évidence des boutons
-            const leaveInfo = this.getLeaveForDate(this.selectedDate);
-            this.updateLeaveButtonsHighlight(leaveInfo);
-        });
-    });
+    // Utiliser la délégation d'événements pour s'assurer que ça fonctionne même si les boutons sont recréés
+    const periodButtonsContainer = document.querySelector('.period-buttons');
+    if (periodButtonsContainer) {
+        if (!periodButtonsContainer.hasAttribute('data-listener-added')) {
+            periodButtonsContainer.setAttribute('data-listener-added', 'true');
+            periodButtonsContainer.addEventListener('click', (e) => {
+                const periodBtn = e.target.closest('.period-btn');
+                if (periodBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    periodBtn.classList.add('active');
+                    this.selectedPeriod = periodBtn.dataset.period;
+                    
+                    // Mettre à jour la mise en évidence des boutons
+                    if (this.selectedDate) {
+                        const leaveInfo = this.getLeaveForDate(this.selectedDate);
+                        this.updateLeaveButtonsHighlight(leaveInfo);
+                    }
+                }
+            });
+        }
+    } else {
+        logger.warn('[Config] Conteneur .period-buttons non trouvé lors de setupEventListeners');
+    }
 
     // Boutons de type de congé (déléguation d'événement pour les boutons dynamiques)
     const leaveTypesContainer = document.getElementById('leaveTypes');
@@ -271,11 +285,44 @@ function setupEventListeners() {
     }
 
     // Bouton supprimer
-    document.getElementById('removeLeave').addEventListener('click', async () => {
-        if (this.selectedDate) {
-            await this.removeLeave(this.selectedDate);
+    const removeLeaveBtn = document.getElementById('removeLeave');
+    if (removeLeaveBtn) {
+        if (!removeLeaveBtn.hasAttribute('data-listener-added')) {
+            removeLeaveBtn.setAttribute('data-listener-added', 'true');
+            removeLeaveBtn.addEventListener('click', async () => {
+                if (this.selectedDate) {
+                    await this.removeLeave(this.selectedDate);
+                }
+            });
         }
-    });
+    } else {
+        logger.warn('[Config] Bouton removeLeave non trouvé lors de setupEventListeners');
+    }
+
+    // Bouton "Appliquer aux jours sélectionnés"
+    const openSelectionBtn = document.getElementById('openSelectionBtn');
+    if (openSelectionBtn) {
+        if (!openSelectionBtn.hasAttribute('data-listener-added')) {
+            openSelectionBtn.setAttribute('data-listener-added', 'true');
+            openSelectionBtn.addEventListener('click', async () => {
+                if (this.selectedDates.length > 1 && this.selectedDate) {
+                    const leaveInfo = this.getLeaveForDate(this.selectedDate);
+                    const currentType = leaveInfo[this.selectedPeriod || 'full'];
+                    
+                    if (currentType) {
+                        // Appliquer le congé à tous les jours sélectionnés
+                        for (const date of this.selectedDates) {
+                            await this.setLeave(date, currentType);
+                        }
+                        // Fermer la modale après application
+                        this.closeModal();
+                    } else {
+                        await swalError('Aucun type sélectionné', 'Veuillez d\'abord sélectionner un type de congé.');
+                    }
+                }
+            });
+        }
+    }
 
     // Fermer la modal principale (pas celle de config)
     const modalCloseBtn = document.querySelector('#modal .close');
