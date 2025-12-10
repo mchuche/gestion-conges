@@ -26,9 +26,17 @@ async function init() {
         if (this.viewMode === 'year') {
             viewToggle.textContent = '📆';
             viewToggle.title = 'Vue semestrielle';
+            // Mettre à jour le sélecteur de format
+            if (typeof this.updateYearViewFormatSelector === 'function') {
+                this.updateYearViewFormatSelector();
+            }
         } else {
             viewToggle.textContent = '📅';
             viewToggle.title = 'Vue annuelle';
+            // Masquer le sélecteur de format
+            if (typeof this.updateYearViewFormatSelector === 'function') {
+                this.updateYearViewFormatSelector();
+            }
         }
     }
     
@@ -185,32 +193,98 @@ function setupEventListeners() {
         // Utiliser bind pour s'assurer que 'this' est correctement lié
         const manager = this;
         viewToggle.addEventListener('click', function() {
-            console.log('[ViewToggle] Bouton cliqué, vue actuelle:', manager.viewMode);
+            logger.debug('[ViewToggle] Bouton cliqué, vue actuelle:', manager.viewMode);
             
             // Basculer entre les vues
             if (manager.viewMode === 'semester') {
-                console.log('[ViewToggle] Passage en vue annuelle');
+                logger.debug('[ViewToggle] Passage en vue annuelle');
                 manager.viewMode = 'year';
-                manager.yearViewFormat = 'presence'; // Format fixe : présence
+                // Conserver le format de vue annuelle ou utiliser 'compact' par défaut
+                if (!manager.yearViewFormat) {
+                    manager.yearViewFormat = 'compact';
+                }
                 viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue semestrielle';
             } else {
-                console.log('[ViewToggle] Passage en vue semestrielle');
+                logger.debug('[ViewToggle] Passage en vue semestrielle');
                 manager.viewMode = 'semester';
                 viewToggle.textContent = '📅';
                 viewToggle.title = 'Vue annuelle';
             }
             // Re-rendre le calendrier avec la nouvelle vue
-            console.log('[ViewToggle] Nouvelle vue:', manager.viewMode);
+            logger.debug('[ViewToggle] Nouvelle vue:', manager.viewMode);
             manager.renderCalendar();
-            // Mettre à jour la visibilité du sélecteur d'équipe
+            // Mettre à jour la visibilité du sélecteur d'équipe et du sélecteur de format
             if (typeof manager.updateTeamSelectorVisibility === 'function') {
                 manager.updateTeamSelectorVisibility();
             }
+            manager.updateYearViewFormatSelector();
         });
     } else if (!viewToggle) {
-        console.warn('[ViewToggle] Bouton viewToggle non trouvé dans le DOM');
+        logger.warn('[ViewToggle] Bouton viewToggle non trouvé dans le DOM');
     }
+
+    // Créer et gérer le sélecteur de format de vue annuelle
+    this.setupYearViewFormatSelector();
+}
+
+/**
+ * Configure le sélecteur de format de vue annuelle (Présence / Compacte)
+ */
+function setupYearViewFormatSelector() {
+    // Vérifier si le sélecteur existe déjà
+    let formatSelect = document.getElementById('yearViewFormatSelect');
+    
+    if (!formatSelect) {
+        // Créer le sélecteur
+        formatSelect = document.createElement('select');
+        formatSelect.id = 'yearViewFormatSelect';
+        formatSelect.className = 'year-view-format-select';
+        formatSelect.innerHTML = `
+            <option value="compact">Vue Compacte</option>
+            <option value="presence">Matrice de Présence</option>
+        `;
+        
+        // Ajouter l'événement de changement
+        const manager = this;
+        formatSelect.addEventListener('change', function(e) {
+            manager.yearViewFormat = e.target.value;
+            if (manager.viewMode === 'year') {
+                manager.renderCalendar();
+            }
+        });
+        
+        // Insérer le sélecteur dans header-controls (après viewToggle)
+        const headerControls = document.querySelector('.header-controls');
+        if (headerControls) {
+            const viewToggle = document.getElementById('viewToggle');
+            if (viewToggle && viewToggle.nextSibling) {
+                headerControls.insertBefore(formatSelect, viewToggle.nextSibling);
+            } else {
+                headerControls.appendChild(formatSelect);
+            }
+        }
+    }
+    
+    // Mettre à jour la visibilité et la valeur
+    this.updateYearViewFormatSelector();
+}
+
+/**
+ * Met à jour la visibilité et la valeur du sélecteur de format de vue annuelle
+ */
+function updateYearViewFormatSelector() {
+    const formatSelect = document.getElementById('yearViewFormatSelect');
+    if (!formatSelect) return;
+    
+    // Afficher seulement en vue annuelle
+    if (this.viewMode === 'year') {
+        formatSelect.style.display = 'inline-block';
+        formatSelect.value = this.yearViewFormat || 'compact';
+    } else {
+        formatSelect.style.display = 'none';
+    }
+}
 
     // Boutons de période (matin/après-midi/journée complète)
     document.querySelectorAll('.period-btn').forEach(btn => {

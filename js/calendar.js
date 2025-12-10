@@ -34,12 +34,18 @@ function renderCalendar() {
     console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
     
     if (this.viewMode === 'year') {
-        // Utiliser la vue présence (seule vue annuelle disponible)
-        this.yearViewFormat = 'presence'; // Format fixe
-        // La vue présence est async car elle charge les données de l'équipe
-        this.renderYearViewPresence().catch(error => {
-            console.error('Erreur lors du rendu de la vue présence:', error);
-        });
+        // Choisir entre vue présence et vue compacte
+        if (this.yearViewFormat === 'compact') {
+            this.renderYearViewCompact().catch(error => {
+                logger.error('Erreur lors du rendu de la vue compacte:', error);
+            });
+        } else {
+            this.yearViewFormat = 'presence'; // Format par défaut
+            // La vue présence est async car elle charge les données de l'équipe
+            this.renderYearViewPresence().catch(error => {
+                logger.error('Erreur lors du rendu de la vue présence:', error);
+            });
+        }
     } else {
         // S'assurer que la classe est correcte pour la vue semestrielle
         semesterCalendar.className = 'semester-calendar';

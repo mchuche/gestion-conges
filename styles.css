@@ -632,6 +632,40 @@ header h1 {
     transform: translateY(0);
 }
 
+/* Sélecteur de format de vue annuelle */
+.year-view-format-select {
+    padding: 8px 12px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.year-view-format-select:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.year-view-format-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+[data-theme="dark"] .year-view-format-select {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .year-view-format-select:hover {
+    border-color: var(--primary-color);
+}
+
 /* Vue Annuelle (ancienne - pour compatibilité) */
 .year-view {
     overflow-x: auto;

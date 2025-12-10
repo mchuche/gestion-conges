@@ -1,0 +1,224 @@
+/* ===== VUE ANNUELLE COMPACTE ===== */
+
+.year-compact-view {
+    padding: 20px;
+    background: var(--bg-color);
+    overflow-y: auto;
+}
+
+.year-compact-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.year-compact-month-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.year-compact-month-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.year-compact-month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+    margin-bottom: 8px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.year-compact-month-header .month-name {
+    font-weight: 600;
+    font-size: 1em;
+    color: var(--text-color);
+}
+
+.year-compact-month-header .month-year {
+    font-size: 0.85em;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.year-compact-week-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 6px;
+}
+
+.year-compact-day-header {
+    text-align: center;
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--text-color);
+    opacity: 0.7;
+    padding: 4px 0;
+}
+
+.year-compact-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.year-compact-day-empty {
+    aspect-ratio: 1;
+    background: transparent;
+}
+
+.year-compact-day {
+    aspect-ratio: 1;
+    min-height: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--card-bg);
+    position: relative;
+    overflow: hidden;
+}
+
+.year-compact-day:hover {
+    background: var(--hover-color);
+    transform: scale(1.05);
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.year-compact-day.weekend {
+    background: var(--bg-color);
+    opacity: 0.7;
+}
+
+.year-compact-day.holiday {
+    border-color: #ffc107;
+    border-width: 2px;
+}
+
+.year-compact-day.today {
+    border: 2px solid var(--primary-color);
+    font-weight: bold;
+    background: rgba(74, 144, 226, 0.1);
+}
+
+.year-compact-day.has-leave {
+    border-width: 2px;
+}
+
+.year-compact-day-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 2px;
+}
+
+.year-compact-day-number {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--text-color);
+    z-index: 2;
+}
+
+.year-compact-day.weekend .year-compact-day-number {
+    opacity: 0.6;
+}
+
+.year-compact-day.today .year-compact-day-number {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Indicateur de congé */
+.year-compact-leave-indicator {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 4px;
+    z-index: 1;
+}
+
+.year-compact-leave-indicator.full-day {
+    opacity: 0.4;
+}
+
+.year-compact-leave-indicator.morning {
+    border-top: 3px solid;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    height: 50%;
+}
+
+.year-compact-leave-indicator.afternoon {
+    border-bottom: 3px solid;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    height: 50%;
+    top: 50%;
+}
+
+/* Indicateur de jour férié */
+.year-compact-holiday-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background: #ffc107;
+    border-radius: 50%;
+    z-index: 3;
+}
+
+/* Mode sombre */
+[data-theme="dark"] .year-compact-day.weekend {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .year-compact-day.today {
+    background: rgba(91, 163, 245, 0.2);
+}
+
+[data-theme="dark"] .year-compact-day.holiday {
+    border-color: #ffa726;
+}
+
+[data-theme="dark"] .year-compact-holiday-indicator {
+    background: #ffa726;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .year-compact-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .year-compact-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .year-compact-day {
+        min-height: 40px;
+    }
+    
+    .year-compact-day-number {
+        font-size: 0.9em;
+    }
+}
+
