@@ -226,65 +226,6 @@ function setupEventListeners() {
 
     // Créer et gérer le sélecteur de format de vue annuelle
     this.setupYearViewFormatSelector();
-}
-
-/**
- * Configure le sélecteur de format de vue annuelle (Présence / Compacte)
- */
-function setupYearViewFormatSelector() {
-    // Vérifier si le sélecteur existe déjà
-    let formatSelect = document.getElementById('yearViewFormatSelect');
-    
-    if (!formatSelect) {
-        // Créer le sélecteur
-        formatSelect = document.createElement('select');
-        formatSelect.id = 'yearViewFormatSelect';
-        formatSelect.className = 'year-view-format-select';
-        formatSelect.innerHTML = `
-            <option value="compact">Vue Compacte</option>
-            <option value="presence">Matrice de Présence</option>
-        `;
-        
-        // Ajouter l'événement de changement
-        const manager = this;
-        formatSelect.addEventListener('change', function(e) {
-            manager.yearViewFormat = e.target.value;
-            if (manager.viewMode === 'year') {
-                manager.renderCalendar();
-            }
-        });
-        
-        // Insérer le sélecteur dans header-controls (après viewToggle)
-        const headerControls = document.querySelector('.header-controls');
-        if (headerControls) {
-            const viewToggle = document.getElementById('viewToggle');
-            if (viewToggle && viewToggle.nextSibling) {
-                headerControls.insertBefore(formatSelect, viewToggle.nextSibling);
-            } else {
-                headerControls.appendChild(formatSelect);
-            }
-        }
-    }
-    
-    // Mettre à jour la visibilité et la valeur
-    this.updateYearViewFormatSelector();
-}
-
-/**
- * Met à jour la visibilité et la valeur du sélecteur de format de vue annuelle
- */
-function updateYearViewFormatSelector() {
-    const formatSelect = document.getElementById('yearViewFormatSelect');
-    if (!formatSelect) return;
-    
-    // Afficher seulement en vue annuelle
-    if (this.viewMode === 'year') {
-        formatSelect.style.display = 'inline-block';
-        formatSelect.value = this.yearViewFormat || 'compact';
-    } else {
-        formatSelect.style.display = 'none';
-    }
-}
 
     // Boutons de période (matin/après-midi/journée complète)
     document.querySelectorAll('.period-btn').forEach(btn => {
@@ -457,6 +398,64 @@ function updateYearViewFormatSelector() {
         resetLeavesBtn.addEventListener('click', async () => {
             await this.resetAllLeaves();
         });
+    }
+}
+
+/**
+ * Configure le sélecteur de format de vue annuelle (Présence / Compacte)
+ */
+function setupYearViewFormatSelector() {
+    // Vérifier si le sélecteur existe déjà
+    let formatSelect = document.getElementById('yearViewFormatSelect');
+    
+    if (!formatSelect) {
+        // Créer le sélecteur
+        formatSelect = document.createElement('select');
+        formatSelect.id = 'yearViewFormatSelect';
+        formatSelect.className = 'year-view-format-select';
+        formatSelect.innerHTML = `
+            <option value="compact">Vue Compacte</option>
+            <option value="presence">Matrice de Présence</option>
+        `;
+        
+        // Ajouter l'événement de changement
+        const manager = this;
+        formatSelect.addEventListener('change', function(e) {
+            manager.yearViewFormat = e.target.value;
+            if (manager.viewMode === 'year') {
+                manager.renderCalendar();
+            }
+        });
+        
+        // Insérer le sélecteur dans header-controls (après viewToggle)
+        const headerControls = document.querySelector('.header-controls');
+        if (headerControls) {
+            const viewToggle = document.getElementById('viewToggle');
+            if (viewToggle && viewToggle.nextSibling) {
+                headerControls.insertBefore(formatSelect, viewToggle.nextSibling);
+            } else {
+                headerControls.appendChild(formatSelect);
+            }
+        }
+    }
+    
+    // Mettre à jour la visibilité et la valeur
+    this.updateYearViewFormatSelector();
+}
+
+/**
+ * Met à jour la visibilité et la valeur du sélecteur de format de vue annuelle
+ */
+function updateYearViewFormatSelector() {
+    const formatSelect = document.getElementById('yearViewFormatSelect');
+    if (!formatSelect) return;
+    
+    // Afficher seulement en vue annuelle
+    if (this.viewMode === 'year') {
+        formatSelect.style.display = 'inline-block';
+        formatSelect.value = this.yearViewFormat || 'compact';
+    } else {
+        formatSelect.style.display = 'none';
     }
 }
 
