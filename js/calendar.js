@@ -34,10 +34,14 @@ function renderCalendar() {
     console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
     
     if (this.viewMode === 'year') {
-        // Choisir entre vue présence et vue compacte
+        // Choisir entre les différentes vues annuelles
         if (this.yearViewFormat === 'compact') {
             this.renderYearViewCompact().catch(error => {
                 logger.error('Erreur lors du rendu de la vue compacte:', error);
+            });
+        } else if (this.yearViewFormat === 'semester') {
+            this.renderYearViewSemester().catch(error => {
+                logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
             });
         } else {
             this.yearViewFormat = 'presence'; // Format par défaut
