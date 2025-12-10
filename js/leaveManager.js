@@ -74,7 +74,9 @@ if (typeof formatNumber !== 'undefined') {
         formatNumber,
         getDateKey,
         getDateKeyWithPeriod,
-        getDateKeys
+        getDateKeys,
+        calculateWorkingDays,
+        calculateWorkingDaysFromDates
     });
 }
 
@@ -142,6 +144,7 @@ if (typeof getLeaveForDate !== 'undefined') {
         getLeaveTypeLabel,
         getLeaveTypeConfig,
         updateDateSelectionVisual,
+        updateWorkingDaysInfo,
         openModal,
         updateLeaveButtonsHighlight,
         getLeaveColor,
@@ -307,7 +310,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } catch (error) {
         console.error('Erreur lors de l\'initialisation:', error);
-        alert('Erreur lors du chargement de l\'application. Veuillez vérifier la console pour plus de détails.');
+        // Utiliser SweetAlert2 pour afficher l'erreur d'initialisation
+        await swalError(
+            'Erreur d\'initialisation',
+            'Erreur lors du chargement de l\'application. Veuillez vérifier la console pour plus de détails.'
+        );
     }
 });
 

@@ -1,7 +1,24 @@
-// Config - Configuration des événements et initialisation
-// Ces fonctions seront ajoutées au prototype de LeaveManager
+/**
+ * Config - Configuration des événements et initialisation
+ * 
+ * Ce module gère :
+ * - L'initialisation de l'application (rendu du calendrier, statistiques, quotas)
+ * - La configuration de tous les event listeners (navigation, modales, thème, etc.)
+ * - La gestion des interactions utilisateur (clics, clavier, etc.)
+ * 
+ * Ces fonctions seront ajoutées au prototype de LeaveManager.
+ */
 
-// Initialiser l'application
+/**
+ * Initialise l'application après la connexion de l'utilisateur
+ * 
+ * Cette fonction :
+ * 1. Initialise le bouton de bascule de vue (semestrielle/annuelle)
+ * 2. Rend le calendrier avec les données de l'utilisateur
+ * 3. Met à jour les statistiques et quotas
+ * 4. Configure tous les event listeners nécessaires
+ * 5. Met à jour la visibilité des éléments (sélecteur d'équipe, bouton admin, etc.)
+ */
 async function init() {
     // Initialiser le bouton de bascule de vue
     const viewToggle = document.getElementById('viewToggle');
@@ -61,7 +78,22 @@ async function init() {
     }
 }
 
-// Configuration des événements
+/**
+ * Configure tous les event listeners de l'application
+ * 
+ * Cette fonction configure les listeners pour :
+ * - Navigation entre semestres/années
+ * - Bascule entre vue semestrielle et annuelle
+ * - Sélection de période (matin/après-midi/journée complète)
+ * - Sélection de type de congé
+ * - Suppression de congé
+ * - Ouverture/fermeture des modales
+ * - Bascule de thème (clair/sombre)
+ * - Navigation au clavier (Escape pour fermer les modales)
+ * - Configuration (types de congés, quotas)
+ * 
+ * Les listeners sont protégés contre les doublons avec des vérifications.
+ */
 function setupEventListeners() {
     // Vérifier que les éléments existent avant d'ajouter les listeners
     const prevMonthBtn = document.getElementById('prevMonth');
@@ -343,8 +375,14 @@ function setupEventListeners() {
         this.addLeaveType();
     });
 
-    document.getElementById('resetLeavesBtn').addEventListener('click', async () => {
-        await this.resetAllLeaves();
-    });
+    // Bouton de réinitialisation des congés (débogage)
+    // Note: Ce bouton est masqué en production mais l'event listener est conservé
+    // pour éviter les erreurs si le bouton est réactivé
+    const resetLeavesBtn = document.getElementById('resetLeavesBtn');
+    if (resetLeavesBtn) {
+        resetLeavesBtn.addEventListener('click', async () => {
+            await this.resetAllLeaves();
+        });
+    }
 }
 

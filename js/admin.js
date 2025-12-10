@@ -15,13 +15,13 @@ async function checkIsAdmin() {
             .single();
 
         if (error && error.code !== 'PGRST116') {
-            console.error('[checkIsAdmin] Erreur:', error);
+            logger.error('[checkIsAdmin] Erreur:', error);
             return false;
         }
 
         return data !== null;
     } catch (e) {
-        console.error('[checkIsAdmin] Erreur:', e);
+        logger.error('[checkIsAdmin] Erreur:', e);
         return false;
     }
 }
@@ -41,62 +41,94 @@ async function checkIsSuperAdmin() {
             .single();
 
         if (error && error.code !== 'PGRST116') {
-            console.error('[checkIsSuperAdmin] Erreur:', error);
+            logger.error('[checkIsSuperAdmin] Erreur:', error);
             return false;
         }
 
         return data !== null;
     } catch (e) {
-        console.error('[checkIsSuperAdmin] Erreur:', e);
+        logger.error('[checkIsSuperAdmin] Erreur:', e);
         return false;
     }
 }
 
-// Charger tous les utilisateurs (pour les admins)
+/**
+ * Charger tous les utilisateurs avec leurs statistiques (optimisé)
+ * 
+ * Cette fonction utilise une fonction SQL optimisée pour éviter les requêtes N+1.
+ * Au lieu de faire une requête par utilisateur pour les statistiques, on fait
+ * une seule requête avec des jointures.
+ * 
+ * @param {string} searchTerm - Terme de recherche pour filtrer par email
+ * @returns {Promise<Array>} - Liste des utilisateurs avec leurs statistiques
+ */
 async function loadAllUsers(searchTerm = '') {
     if (!this.user || !supabase) {
         return [];
     }
 
     try {
-        let query = supabase
-            .from('user_emails')
-            .select('user_id, email, created_at')
-            .order('created_at', { ascending: false });
+        // Utiliser la fonction SQL optimisée si disponible, sinon fallback sur l'ancienne méthode
+        const searchEmail = searchTerm && searchTerm.trim() ? searchTerm.trim() : null;
+        
+        // Essayer d'abord avec la fonction optimisée
+        const { data, error } = await supabase.rpc('get_users_with_stats', {
+            search_email: searchEmail
+        });
 
-        if (searchTerm && searchTerm.trim()) {
-            query = query.ilike('email', `%${searchTerm.trim()}%`);
+        if (error) {
+            // Si la fonction n'existe pas encore, utiliser l'ancienne méthode
+            logger.warn('[loadAllUsers] Fonction SQL optimisée non disponible, utilisation de la méthode classique:', error);
+            
+            // Fallback sur l'ancienne méthode (pour compatibilité)
+            let query = supabase
+                .from('user_emails')
+                .select('user_id, email, created_at')
+                .order('created_at', { ascending: false });
+
+            if (searchTerm && searchTerm.trim()) {
+                query = query.ilike('email', `%${searchTerm.trim()}%`);
+            }
+
+            const { data: fallbackData, error: fallbackError } = await query;
+            if (fallbackError) throw fallbackError;
+
+            // Enrichir avec des statistiques (méthode classique avec N+1 queries)
+            const usersWithStats = await Promise.all((fallbackData || []).map(async (user) => {
+                // Compter les congés
+                const { count: leavesCount } = await supabase
+                    .from('leaves')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', user.user_id);
+
+                // Compter les équipes
+                const { count: teamsCount } = await supabase
+                    .from('team_members')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', user.user_id);
+
+                return {
+                    id: user.user_id,
+                    email: user.email,
+                    createdAt: user.created_at,
+                    leavesCount: leavesCount || 0,
+                    teamsCount: teamsCount || 0
+                };
+            }));
+
+            return usersWithStats;
         }
 
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Enrichir avec des statistiques
-        const usersWithStats = await Promise.all((data || []).map(async (user) => {
-            // Compter les congés
-            const { count: leavesCount } = await supabase
-                .from('leaves')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', user.user_id);
-
-            // Compter les équipes
-            const { count: teamsCount } = await supabase
-                .from('team_members')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', user.user_id);
-
-            return {
-                id: user.user_id,
-                email: user.email,
-                createdAt: user.created_at,
-                leavesCount: leavesCount || 0,
-                teamsCount: teamsCount || 0
-            };
+        // Transformer les données de la fonction SQL en format attendu
+        return (data || []).map(user => ({
+            id: user.user_id,
+            email: user.email,
+            createdAt: user.created_at,
+            leavesCount: Number(user.leaves_count) || 0,
+            teamsCount: Number(user.teams_count) || 0
         }));
-
-        return usersWithStats;
     } catch (e) {
-        console.error('[loadAllUsers] Erreur:', e);
+        logger.error('[loadAllUsers] Erreur:', e);
         return [];
     }
 }
@@ -120,13 +152,13 @@ async function deleteUser(userId) {
         // Supprimer les données associées (cascade devrait le faire automatiquement)
         // Mais on peut aussi le faire manuellement pour être sûr
         
-        console.log('[deleteUser] Suppression de l\'utilisateur:', userId);
+        logger.debug('[deleteUser] Suppression de l\'utilisateur:', userId);
         // Note: La suppression réelle dans auth.users doit être faite via l'Admin API
         // ou depuis le dashboard Supabase
         
         return { success: true, message: 'Les données de l\'utilisateur ont été supprimées. La suppression du compte doit être faite depuis le dashboard Supabase.' };
     } catch (e) {
-        console.error('[deleteUser] Erreur:', e);
+        logger.error('[deleteUser] Erreur:', e);
         throw e;
     }
 }
@@ -164,7 +196,7 @@ async function loadAllTeams() {
             membersCount: team.team_members?.length || 0
         }));
     } catch (e) {
-        console.error('[loadAllTeams] Erreur:', e);
+        logger.error('[loadAllTeams] Erreur:', e);
         return [];
     }
 }
@@ -190,7 +222,7 @@ async function deleteTeamAsAdmin(teamId) {
 
         return { success: true };
     } catch (e) {
-        console.error('[deleteTeamAsAdmin] Erreur:', e);
+        logger.error('[deleteTeamAsAdmin] Erreur:', e);
         throw e;
     }
 }
@@ -218,7 +250,7 @@ async function loadDefaultSettings() {
 
         return settings;
     } catch (e) {
-        console.error('[loadDefaultSettings] Erreur:', e);
+        logger.error('[loadDefaultSettings] Erreur:', e);
         return {};
     }
 }
@@ -254,7 +286,7 @@ async function saveDefaultSettings(settings) {
 
         return { success: true };
     } catch (e) {
-        console.error('[saveDefaultSettings] Erreur:', e);
+        logger.error('[saveDefaultSettings] Erreur:', e);
         throw e;
     }
 }
@@ -294,7 +326,7 @@ async function loadAdminStats() {
             pendingInvitationsCount: pendingInvitationsCount || 0
         };
     } catch (e) {
-        console.error('[loadAdminStats] Erreur:', e);
+        logger.error('[loadAdminStats] Erreur:', e);
         return null;
     }
 }
@@ -302,7 +334,7 @@ async function loadAdminStats() {
 // Enregistrer un log d'audit
 async function logAuditEvent(action, entityType, entityId = null, details = {}) {
     if (!supabase) {
-        console.warn('[logAuditEvent] Supabase non disponible');
+        logger.warn('[logAuditEvent] Supabase non disponible');
         return;
     }
 
@@ -322,10 +354,10 @@ async function logAuditEvent(action, entityType, entityId = null, details = {}) 
             .insert(logData);
 
         if (error) {
-            console.error('[logAuditEvent] Erreur:', error);
+            logger.error('[logAuditEvent] Erreur:', error);
         }
     } catch (e) {
-        console.error('[logAuditEvent] Erreur:', e);
+        logger.error('[logAuditEvent] Erreur:', e);
     }
 }
 
@@ -379,7 +411,7 @@ async function loadAuditLogs(limit = 100) {
             createdAt: log.created_at
         }));
     } catch (e) {
-        console.error('[loadAuditLogs] Erreur:', e);
+        logger.error('[loadAuditLogs] Erreur:', e);
         return [];
     }
 }

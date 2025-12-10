@@ -1,7 +1,24 @@
-// AdminUI - Interface utilisateur pour l'administration
-// Ces fonctions seront ajoutées au prototype de LeaveManager
+/**
+ * AdminUI - Interface utilisateur pour l'administration
+ * 
+ * Ce module gère toute l'interface utilisateur de la page d'administration :
+ * - Affichage/masquage du bouton admin selon les droits
+ * - Gestion de la modale d'administration avec ses onglets
+ * - Affichage et gestion des utilisateurs (liste, suppression)
+ * - Affichage et gestion des équipes (liste, suppression)
+ * - Configuration des paramètres par défaut (types de congés, quotas, pays)
+ * - Affichage des statistiques globales
+ * - Affichage des logs d'audit
+ * 
+ * Ces fonctions seront ajoutées au prototype de LeaveManager.
+ */
 
-// Vérifier et mettre à jour la visibilité du bouton admin
+/**
+ * Vérifie si l'utilisateur est administrateur et met à jour la visibilité du bouton admin
+ * 
+ * Le bouton admin n'est affiché que si l'utilisateur a les droits d'administrateur.
+ * Cette fonction est appelée lors du chargement des données utilisateur.
+ */
 async function updateAdminButtonVisibility() {
     const adminBtn = document.getElementById('adminBtn');
     if (!adminBtn) return;
@@ -14,22 +31,36 @@ async function updateAdminButtonVisibility() {
     }
 }
 
-// Ouvrir la modale d'administration
+/**
+ * Ouvre la modale d'administration
+ * 
+ * Cette fonction :
+ * 1. Vérifie que la modale existe dans le DOM
+ * 2. Vérifie que l'utilisateur a les droits d'administrateur
+ * 3. Affiche la modale
+ * 4. Charge et affiche l'onglet par défaut (utilisateurs)
+ */
 async function openAdminModal() {
     console.log('[AdminUI] openAdminModal appelée');
     const adminModal = document.getElementById('adminModal');
     if (!adminModal) {
         console.error('[AdminUI] Modale adminModal introuvable dans le DOM');
-        alert('Erreur: La modale d\'administration est introuvable');
+        await swalError(
+            'Erreur',
+            'La modale d\'administration est introuvable dans le DOM.'
+        );
         return;
     }
 
     console.log('[AdminUI] Modale trouvée, vérification des droits admin...');
-    // Vérifier que l'utilisateur est admin
+    // Vérifier que l'utilisateur est admin avant d'afficher la modale
     const isAdmin = await this.checkIsAdmin();
     console.log('[AdminUI] isAdmin:', isAdmin);
     if (!isAdmin) {
-        alert('Vous n\'avez pas les droits d\'administrateur');
+        await swalError(
+            'Accès refusé',
+            'Vous n\'avez pas les droits d\'administrateur pour accéder à cette page.'
+        );
         return;
     }
 
@@ -280,7 +311,10 @@ async function renderAdminSettings() {
         }
     } catch (error) {
         console.error('[renderAdminSettings] Erreur:', error);
-        alert('Erreur lors du chargement des paramètres');
+        await swalError(
+            'Erreur',
+            'Erreur lors du chargement des paramètres. Vérifiez la console pour plus de détails.'
+        );
     }
 }
 
@@ -305,19 +339,30 @@ async function handleSaveDefaultSettings() {
 
         await this.saveDefaultSettings(settings);
         
-        // Enregistrer le log d'audit
+        // Enregistrer le log d'audit pour tracer les modifications
         await this.logAuditEvent('settings_updated', 'settings', null, {
             updated_by: this.user?.email,
             settings_keys: Object.keys(settings)
         });
         
-        alert('✅ Paramètres sauvegardés avec succès');
+        // Afficher un message de succès
+        await swalSuccess(
+            '✅ Paramètres sauvegardés',
+            'Les paramètres par défaut ont été sauvegardés avec succès.',
+            2000
+        );
     } catch (error) {
         console.error('[handleSaveDefaultSettings] Erreur:', error);
         if (error instanceof SyntaxError) {
-            alert('❌ Erreur: JSON invalide. Vérifiez la syntaxe.');
+            await swalError(
+                '❌ Erreur de syntaxe JSON',
+                'Le JSON est invalide. Vérifiez la syntaxe (virgules, guillemets, accolades, etc.).'
+            );
         } else {
-            alert('❌ Erreur lors de la sauvegarde: ' + (error.message || error));
+            await swalError(
+                '❌ Erreur de sauvegarde',
+                'Erreur lors de la sauvegarde: ' + (error.message || error)
+            );
         }
     }
 }

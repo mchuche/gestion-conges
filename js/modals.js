@@ -1,7 +1,14 @@
-// Modals - Gestion des modales (config, help)
-// Ces fonctions seront ajoutées au prototype de LeaveManager
+/**
+ * Modals - Gestion des modales (configuration, aide)
+ * 
+ * Ce module contient toutes les fonctions liées à l'affichage et à la gestion
+ * des modales de l'application (modale d'aide, modale de configuration).
+ * Ces fonctions seront ajoutées au prototype de LeaveManager.
+ */
 
-// Ouvrir la modale d'aide
+/**
+ * Ouvre la modale d'aide qui contient les instructions d'utilisation de l'application
+ */
 function openHelpModal() {
     const modal = document.getElementById('helpModal');
     if (modal) {
@@ -10,7 +17,9 @@ function openHelpModal() {
     }
 }
 
-// Fermer la modale d'aide
+/**
+ * Ferme la modale d'aide
+ */
 function closeHelpModal() {
     const modal = document.getElementById('helpModal');
     if (modal) {
@@ -19,7 +28,12 @@ function closeHelpModal() {
     }
 }
 
-// Ouvrir la modale de configuration
+/**
+ * Ouvre la modale de configuration où l'utilisateur peut :
+ * - Configurer les types de congés (nom, label, couleur, quota)
+ * - Réinitialiser tous les congés
+ * - Supprimer son compte
+ */
 function openConfigModal() {
     const modal = document.getElementById('configModal');
     // Réinitialiser l'année de configuration à l'année en cours
@@ -28,18 +42,28 @@ function openConfigModal() {
     modal.style.display = 'block';
 }
 
-// Fermer la modale de configuration
+/**
+ * Ferme la modale de configuration
+ */
 function closeConfigModal() {
     const modal = document.getElementById('configModal');
     modal.style.display = 'none';
 }
 
-// Rendre la modale de configuration
+/**
+ * Rend (affiche) le contenu de la modale de configuration
+ * 
+ * Cette fonction :
+ * 1. Met à jour le sélecteur d'année avec les années disponibles
+ * 2. Affiche tous les types de congés configurés avec leurs paramètres
+ * 3. Ajoute les event listeners pour les interactions (suppression, modification)
+ */
 function renderConfigModal() {
     // Mettre à jour le sélecteur d'année
     const yearSelect = document.getElementById('configYearSelect');
     if (yearSelect) {
         // Générer les options d'années (année actuelle - 2 à année actuelle + 5)
+        // Cela permet de configurer les quotas pour les années passées et futures
         const currentYear = this.currentDate.getFullYear();
         yearSelect.innerHTML = '';
         for (let year = currentYear - 2; year <= currentYear + 5; year++) {
@@ -52,12 +76,12 @@ function renderConfigModal() {
             yearSelect.appendChild(option);
         }
         
-        // Event listener pour le changement d'année (éviter les doublons)
+        // Event listener pour le changement d'année (éviter les doublons avec l'attribut data-listener-added)
         if (!yearSelect.hasAttribute('data-listener-added')) {
             yearSelect.setAttribute('data-listener-added', 'true');
             yearSelect.addEventListener('change', (e) => {
                 this.configYear = parseInt(e.target.value);
-                this.renderConfigModal();
+                this.renderConfigModal(); // Re-rendre avec la nouvelle année
             });
         }
     }
@@ -87,25 +111,34 @@ function renderConfigModal() {
         container.appendChild(item);
     });
 
-    // Ajouter les événements
+    // Ajouter les événements pour les boutons de suppression de type
     container.querySelectorAll('.delete-type-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const index = parseInt(e.target.dataset.index);
             const typeToDelete = this.leaveTypesConfig[index];
             
-            // Vérifier si ce type est utilisé dans les congés
+            // Vérifier si ce type est utilisé dans les congés existants
             const isUsed = this.isLeaveTypeUsed(typeToDelete.id);
             
+            // Construire le message de confirmation avec les avertissements appropriés
             let confirmMessage = `Êtes-vous sûr de vouloir supprimer le type "${typeToDelete.name}" ?`;
             if (isUsed) {
-                confirmMessage += `\n\nAttention : Ce type est utilisé dans ${this.countLeaveTypeUsage(typeToDelete.id)} jour(s) de congé. Ces congés seront également supprimés.`;
+                const usageCount = this.countLeaveTypeUsage(typeToDelete.id);
+                confirmMessage += `\n\n⚠️ Attention : Ce type est utilisé dans ${usageCount} jour(s) de congé. Ces congés seront également supprimés.`;
             }
             if (this.leaveTypesConfig.length === 1) {
-                confirmMessage += `\n\nAttention : C'est le dernier type de congé. Vous devrez en créer un nouveau.`;
+                confirmMessage += `\n\n⚠️ Attention : C'est le dernier type de congé. Vous devrez en créer un nouveau.`;
             }
             
-            if (confirm(confirmMessage)) {
-                // Supprimer les congés de ce type
+            // Utiliser SweetAlert2 pour la confirmation au lieu de confirm() natif
+            const confirmed = await swalConfirm(
+                'Supprimer le type de congé',
+                confirmMessage,
+                'warning'
+            );
+            
+            if (confirmed) {
+                // Supprimer les congés de ce type si nécessaire
                 if (isUsed) {
                     await this.removeLeavesOfType(typeToDelete.id);
                 }
@@ -113,7 +146,7 @@ function renderConfigModal() {
                 // Supprimer le type de la configuration
                 this.leaveTypesConfig.splice(index, 1);
                 
-                // Si c'était le dernier type, en créer un par défaut
+                // Si c'était le dernier type, en créer un par défaut pour éviter une configuration vide
                 if (this.leaveTypesConfig.length === 0) {
                     this.leaveTypesConfig.push({
                         id: `type-${Date.now()}`,
@@ -124,34 +157,48 @@ function renderConfigModal() {
                     });
                 }
                 
+                // Sauvegarder et re-rendre la modale
+                await this.saveLeaveTypesConfig();
                 this.renderConfigModal();
             }
         });
     });
 }
 
-// Vérifier si un type de congé est utilisé
+/**
+ * Vérifie si un type de congé est utilisé dans au moins un jour de congé
+ * 
+ * @param {string} typeId - L'identifiant du type de congé à vérifier
+ * @returns {boolean} - true si le type est utilisé, false sinon
+ */
 function isLeaveTypeUsed(typeId) {
     return Object.values(this.leaves).includes(typeId);
 }
 
-// Compter le nombre de jours où un type de congé est utilisé
+/**
+ * Compte le nombre de jours (ou demi-jours) où un type de congé est utilisé
+ * 
+ * @param {string} typeId - L'identifiant du type de congé à compter
+ * @returns {number} - Le nombre de jours (1 = journée complète, 0.5 = demi-journée)
+ */
 function countLeaveTypeUsage(typeId) {
     let count = 0;
-    const processedDates = new Set();
+    const processedDates = new Set(); // Éviter de compter deux fois la même date
 
     Object.keys(this.leaves).forEach(dateKey => {
+        // Extraire la date de base (sans le suffixe de période -morning/-afternoon)
         const baseDateKey = dateKey.split('-').slice(0, 3).join('-');
         
         if (!processedDates.has(baseDateKey)) {
             processedDates.add(baseDateKey);
             const leaveInfo = this.getLeaveForDate(new Date(baseDateKey));
             
+            // Compter les journées complètes et les demi-journées
             if (leaveInfo.full === typeId) {
-                count += 1;
+                count += 1; // Journée complète
             } else {
-                if (leaveInfo.morning === typeId) count += 0.5;
-                if (leaveInfo.afternoon === typeId) count += 0.5;
+                if (leaveInfo.morning === typeId) count += 0.5; // Demi-journée matin
+                if (leaveInfo.afternoon === typeId) count += 0.5; // Demi-journée après-midi
             }
         }
     });
@@ -159,41 +206,72 @@ function countLeaveTypeUsage(typeId) {
     return count;
 }
 
-// Supprimer tous les congés d'un type donné
+/**
+ * Supprime tous les congés d'un type donné
+ * 
+ * @param {string} typeId - L'identifiant du type de congé à supprimer
+ */
 async function removeLeavesOfType(typeId) {
     const keysToDelete = [];
     
+    // Collecter toutes les clés de dates qui utilisent ce type
     Object.keys(this.leaves).forEach(dateKey => {
         if (this.leaves[dateKey] === typeId) {
             keysToDelete.push(dateKey);
         }
     });
     
+    // Supprimer les congés de l'objet local
     keysToDelete.forEach(key => {
         delete this.leaves[key];
     });
     
+    // Sauvegarder dans la base de données et mettre à jour l'affichage
     if (keysToDelete.length > 0) {
         await this.saveLeaves();
         this.renderCalendar();
     }
 }
 
-// Réinitialiser tous les jours de congé (pour débogage)
+/**
+ * Réinitialise tous les jours de congé de l'utilisateur
+ * 
+ * ⚠️ ATTENTION : Cette action est irréversible et supprime définitivement
+ * tous les congés enregistrés dans la base de données.
+ * 
+ * Cette fonction :
+ * 1. Vérifie que l'utilisateur est connecté
+ * 2. Demande confirmation avec un message d'avertissement
+ * 3. Supprime tous les congés de la base de données
+ * 4. Réinitialise l'objet local
+ * 5. Met à jour l'affichage (calendrier, statistiques, quotas)
+ */
 async function resetAllLeaves() {
+    // Vérifier que l'utilisateur est connecté
     if (!this.user || !supabase) {
-        alert('Erreur : Vous devez être connecté pour réinitialiser les congés.');
+        await swalError(
+            'Erreur',
+            'Vous devez être connecté pour réinitialiser les congés.'
+        );
         return;
     }
 
-    const confirmMessage = `⚠️ ATTENTION : Cette action est irréversible !\n\nÊtes-vous sûr de vouloir supprimer TOUS vos jours de congé ?\n\nCette action supprimera ${Object.keys(this.leaves).length} jour(s) de congé.`;
+    const leavesCount = Object.keys(this.leaves).length;
+    const confirmMessage = `⚠️ <strong>ATTENTION : Cette action est irréversible !</strong><br><br>Êtes-vous sûr de vouloir supprimer <strong>TOUS</strong> vos jours de congé ?<br><br>Cette action supprimera <strong>${leavesCount}</strong> jour(s) de congé.`;
     
-    if (!confirm(confirmMessage)) {
+    // Utiliser SweetAlert2 pour la confirmation
+    const confirmed = await swalConfirmHTML(
+        'Réinitialiser tous les congés',
+        confirmMessage,
+        'warning'
+    );
+    
+    if (!confirmed) {
         return;
     }
 
     try {
-        // Supprimer tous les congés de la base de données
+        // Supprimer tous les congés de la base de données Supabase
         const { error } = await supabase
             .from('leaves')
             .delete()
@@ -201,10 +279,10 @@ async function resetAllLeaves() {
 
         if (error) throw error;
 
-        // Réinitialiser l'objet local
+        // Réinitialiser l'objet local (mémoire)
         this.leaves = {};
         
-        // Mettre à jour l'affichage
+        // Mettre à jour l'affichage pour refléter les changements
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
@@ -212,14 +290,30 @@ async function resetAllLeaves() {
         // Fermer la modale de configuration
         this.closeConfigModal();
         
-        alert('✅ Tous les jours de congé ont été supprimés avec succès.');
+        // Afficher un message de succès
+        await swalSuccess(
+            '✅ Réinitialisation réussie',
+            `Tous les jours de congé (${leavesCount} jour(s)) ont été supprimés avec succès.`
+        );
     } catch (e) {
         console.error('Erreur lors de la réinitialisation des congés:', e);
-        alert('❌ Erreur lors de la suppression des congés. Vérifiez la console pour plus de détails.');
+        await swalError(
+            '❌ Erreur',
+            'Erreur lors de la suppression des congés. Vérifiez la console pour plus de détails.'
+        );
     }
 }
 
-// Ajouter un nouveau type de congé
+/**
+ * Ajoute un nouveau type de congé à la configuration
+ * 
+ * Crée un type par défaut avec :
+ * - Un ID unique basé sur le timestamp
+ * - Un nom par défaut "Nouveau Type"
+ * - Un label par défaut "NT"
+ * - Une couleur par défaut bleue
+ * - Pas de quota (illimité)
+ */
 function addLeaveType() {
     const newType = {
         id: `type-${Date.now()}`,
@@ -229,20 +323,33 @@ function addLeaveType() {
         quota: null
     };
     this.leaveTypesConfig.push(newType);
-    this.renderConfigModal();
+    this.renderConfigModal(); // Re-rendre pour afficher le nouveau type
 }
 
-// Sauvegarder la configuration
+/**
+ * Sauvegarde la configuration des types de congés et des quotas
+ * 
+ * Cette fonction :
+ * 1. Collecte tous les types de congés depuis les inputs de la modale
+ * 2. Valide que chaque type a au moins un nom et un label
+ * 3. Sauvegarde les quotas pour l'année sélectionnée
+ * 4. Met à jour la configuration locale
+ * 5. Sauvegarde dans Supabase
+ * 6. Met à jour l'affichage (calendrier, statistiques, quotas)
+ */
 async function saveConfig() {
+    // Récupérer tous les éléments de type de congé depuis la modale
     const inputs = document.querySelectorAll('#leaveTypesConfig .leave-type-item');
     const newConfig = [];
     const selectedYear = this.configYear;
 
-    // Initialiser l'année dans leaveQuotasByYear si elle n'existe pas
+    // Initialiser l'année dans leaveQuotasByYear si elle n'existe pas encore
+    // Cela permet de stocker les quotas par année
     if (!this.leaveQuotasByYear[selectedYear]) {
         this.leaveQuotasByYear[selectedYear] = {};
     }
 
+    // Parcourir chaque type de congé et collecter ses informations
     inputs.forEach((item, index) => {
         const name = item.querySelector('.leave-type-name').value.trim();
         const label = item.querySelector('.leave-type-label').value.trim();
@@ -251,22 +358,24 @@ async function saveConfig() {
         const quota = quotaInput === '' ? null : parseInt(quotaInput);
         
         // Récupérer l'ID du type depuis la configuration actuelle
-        const typeId = this.leaveTypesConfig[index].id;
+        // L'ID est important car il lie les congés existants au type
+        const typeId = this.leaveTypesConfig[index]?.id;
         
         // Sauvegarder le quota pour l'année sélectionnée
         if (quota !== null && !isNaN(quota)) {
             this.leaveQuotasByYear[selectedYear][typeId] = quota;
         } else {
-            // Supprimer le quota si vide
+            // Supprimer le quota si le champ est vide (quota illimité)
             if (this.leaveQuotasByYear[selectedYear][typeId] !== undefined) {
                 delete this.leaveQuotasByYear[selectedYear][typeId];
             }
         }
 
+        // Ajouter le type à la nouvelle configuration seulement s'il a un nom et un label
         if (name && label) {
             const oldType = this.leaveTypesConfig[index];
             newConfig.push({
-                id: oldType ? oldType.id : `type-${Date.now()}-${index}`,
+                id: oldType ? oldType.id : `type-${Date.now()}-${index}`, // Conserver l'ID existant ou en créer un nouveau
                 name: name,
                 label: label,
                 color: color
@@ -274,24 +383,33 @@ async function saveConfig() {
         }
     });
 
+    // Valider qu'au moins un type de congé est configuré
     if (newConfig.length > 0) {
         // Sauvegarder les types de congés AVANT de mettre à jour la configuration
         // pour s'assurer que les jours de congé existants ne sont pas perdus
         console.log('Jours de congé avant sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');
         
+        // Mettre à jour la configuration locale
         this.leaveTypesConfig = newConfig;
+        
+        // Sauvegarder dans Supabase
         await this.saveLeaveTypesConfig();
         await this.saveLeaveQuotasByYear();
         
-        // Vérifier que les jours de congé sont toujours présents
+        // Vérifier que les jours de congé sont toujours présents après la sauvegarde
         console.log('Jours de congé après sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');
         
+        // Fermer la modale et mettre à jour l'affichage
         this.closeConfigModal();
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
     } else {
-        alert('Veuillez remplir au moins un type de congé avec un nom et un label.');
+        // Afficher une erreur si aucun type n'est configuré
+        await swalError(
+            'Configuration incomplète',
+            'Veuillez remplir au moins un type de congé avec un nom et un label.'
+        );
     }
 }
 

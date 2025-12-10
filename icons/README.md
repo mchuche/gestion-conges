@@ -61,3 +61,4 @@ Pour vérifier que les icônes sont correctement configurées :
 4. Vérifiez que toutes les icônes sont chargées sans erreur
 
 
+

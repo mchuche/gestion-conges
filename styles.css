@@ -989,6 +989,32 @@ header h1 {
     color: var(--warning-color);
 }
 
+.working-days-info {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #e7f3ff;
+    border: 1px solid #4a90e2;
+    border-radius: 6px;
+    color: #004085;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.working-days-info strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+[data-theme="dark"] .working-days-info {
+    background: rgba(91, 163, 245, 0.15);
+    border-color: var(--primary-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .working-days-info strong {
+    color: var(--primary-color);
+}
+
 .half-day-selector {
     margin-bottom: 20px;
     padding: 15px;

@@ -439,7 +439,7 @@ function createYearDayElement(date) {
         const hasCtrl = this.ctrlKeyPressed || e.ctrlKey || e.metaKey;
         const isMultiSelect = !isMobile && hasCtrl;
         
-        console.log('Clic sur jour:', {
+        logger.debug('[Calendar] Clic sur jour:', {
             date: date.toISOString().split('T')[0],
             ctrlKeyPressed: this.ctrlKeyPressed,
             eventCtrlKey: e.ctrlKey,
@@ -458,14 +458,19 @@ function createYearDayElement(date) {
             if (index > -1) {
                 // Déjà sélectionné, le retirer
                 this.selectedDates.splice(index, 1);
-                console.log('Jour retiré de la sélection, total:', this.selectedDates.length);
+                logger.debug('[Calendar] Jour retiré de la sélection, total:', this.selectedDates.length);
             } else {
                 // Pas sélectionné, l'ajouter
                 this.selectedDates.push(date);
-                console.log('Jour ajouté à la sélection, total:', this.selectedDates.length);
+                logger.debug('[Calendar] Jour ajouté à la sélection, total:', this.selectedDates.length);
             }
             
             this.updateDateSelectionVisual();
+            
+            // Mettre à jour les jours ouvrés dans la modale si elle est ouverte
+            if (document.getElementById('modal')?.style.display === 'block') {
+                this.updateWorkingDaysInfo();
+            }
             
             // Ne pas ouvrir la modale automatiquement en mode sélection multiple
             // L'utilisateur peut continuer à sélectionner, puis cliquer sur un jour sélectionné pour ouvrir la modale
@@ -533,6 +538,60 @@ function updateDateSelectionVisual() {
     });
 }
 
+/**
+ * Met à jour l'affichage des jours ouvrés dans la modale
+ * Cette fonction est appelée quand l'utilisateur sélectionne/désélectionne des dates
+ */
+function updateWorkingDaysInfo() {
+    const workingDaysInfo = document.getElementById('workingDaysInfo');
+    const selectionInfo = document.getElementById('selectionInfo');
+    const country = this.selectedCountry || 'FR';
+    
+    if (!workingDaysInfo) return;
+    
+    if (this.selectedDates.length > 1) {
+        // Trier les dates pour avoir la première et la dernière
+        const sortedDates = [...this.selectedDates].sort((a, b) => a.getTime() - b.getTime());
+        const firstDate = sortedDates[0];
+        const lastDate = sortedDates[sortedDates.length - 1];
+        
+        // Calculer les jours ouvrés
+        const workingDays = calculateWorkingDaysFromDates(this.selectedDates, country);
+        const totalDays = this.selectedDates.length;
+        
+        // Mettre à jour le message de sélection
+        if (selectionInfo) {
+            selectionInfo.textContent = `⚠️ ${totalDays} jour${totalDays > 1 ? 's' : ''} sélectionné${totalDays > 1 ? 's' : ''} - Le congé sera appliqué à tous ces jours`;
+        }
+        
+        // Afficher les informations sur les jours ouvrés
+        const dateRangeStr = `${firstDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} - ${lastDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        workingDaysInfo.innerHTML = `📅 <strong>${workingDays}</strong> jour${workingDays > 1 ? 's' : ''} ouvré${workingDays > 1 ? 's' : ''} sur ${totalDays} jour${totalDays > 1 ? 's' : ''} sélectionné${totalDays > 1 ? 's' : ''} (${dateRangeStr})`;
+        workingDaysInfo.style.display = 'block';
+    } else if (this.selectedDates.length === 1) {
+        const date = this.selectedDates[0];
+        const dayOfWeek = date.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        
+        // Obtenir les jours fériés pour l'année
+        const year = date.getFullYear();
+        const holidays = typeof getPublicHolidays === 'function' ? getPublicHolidays(country, year) : {};
+        const dateKey = getDateKey(date);
+        const isHoliday = holidays[dateKey];
+        
+        if (isWeekend || isHoliday) {
+            const reason = isWeekend ? (dayOfWeek === 0 ? 'dimanche' : 'samedi') : `jour férié (${isHoliday})`;
+            workingDaysInfo.innerHTML = `ℹ️ Ce jour est un <strong>${reason}</strong> - Non comptabilisé dans les jours ouvrés`;
+            workingDaysInfo.style.display = 'block';
+        } else {
+            workingDaysInfo.innerHTML = `✅ <strong>Jour ouvré</strong> - Comptabilisé dans les jours ouvrés`;
+            workingDaysInfo.style.display = 'block';
+        }
+    } else {
+        workingDaysInfo.style.display = 'none';
+    }
+}
+
 // Ouvrir la modal
 function openModal(date) {
     // Si plusieurs dates sont sélectionnées, utiliser la première
@@ -550,6 +609,7 @@ function openModal(date) {
     const selectionInfo = document.getElementById('selectionInfo');
     const openSelectionBtn = document.getElementById('openSelectionBtn');
     
+    // Afficher les informations de sélection et les jours ouvrés
     if (this.selectedDates.length > 1) {
         dateStr = date.toLocaleDateString('fr-FR', {
             weekday: 'long',
@@ -557,7 +617,6 @@ function openModal(date) {
             month: 'long',
             day: 'numeric'
         });
-        selectionInfo.textContent = `⚠️ ${this.selectedDates.length} jours sélectionnés - Le congé sera appliqué à tous ces jours`;
         selectionInfo.style.display = 'block';
         if (openSelectionBtn) {
             openSelectionBtn.style.display = 'inline-block';
@@ -574,6 +633,9 @@ function openModal(date) {
             openSelectionBtn.style.display = 'none';
         }
     }
+    
+    // Mettre à jour l'affichage des jours ouvrés
+    this.updateWorkingDaysInfo();
     
     document.getElementById('selectedDate').textContent = dateStr;
     

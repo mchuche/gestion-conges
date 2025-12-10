@@ -1,14 +1,39 @@
-// Auth - Gestion de l'authentification (login, signup, logout, deleteAccount)
-// Ces fonctions seront ajoutées au prototype de LeaveManager
+/**
+ * Auth - Gestion de l'authentification (login, signup, logout, deleteAccount)
+ * 
+ * Ce module gère toute l'authentification de l'application :
+ * - Initialisation et vérification de session
+ * - Connexion et inscription
+ * - Déconnexion
+ * - Suppression de compte
+ * - Gestion des tokens de confirmation d'email
+ * 
+ * Ces fonctions seront ajoutées au prototype de LeaveManager.
+ */
 
+/**
+ * Initialise le système d'authentification
+ * 
+ * Cette fonction :
+ * 1. Vérifie que Supabase est initialisé
+ * 2. Gère les tokens de confirmation d'email dans l'URL
+ * 3. Vérifie si l'utilisateur est déjà connecté
+ * 4. Configure les listeners pour les changements d'état d'authentification
+ * 5. Configure les event listeners pour les formulaires de connexion/inscription
+ */
 async function initAuth() {
+    // Vérifier que Supabase est correctement initialisé
     if (!supabase) {
-        alert('Erreur : Supabase n\'est pas initialisé. Vérifiez config.js');
+        await swalError(
+            'Erreur de configuration',
+            'Supabase n\'est pas initialisé. Vérifiez que config.js est correctement configuré.'
+        );
         return;
     }
 
     // Gérer le cas où l'utilisateur arrive avec un token de confirmation dans l'URL
-    // Format: #access_token=...&type=signup
+    // Cela se produit quand l'utilisateur clique sur le lien dans l'email de confirmation
+    // Format de l'URL: #access_token=...&refresh_token=...&type=signup
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
     const refreshToken = hashParams.get('refresh_token');
@@ -17,7 +42,7 @@ async function initAuth() {
     if (accessToken && type === 'signup') {
         // L'utilisateur a cliqué sur le lien de confirmation d'email
         try {
-            // Échanger le token contre une session
+            // Échanger le token contre une session Supabase valide
             const { data: { session }, error } = await supabase.auth.setSession({
                 access_token: accessToken,
                 refresh_token: refreshToken || ''
@@ -26,26 +51,28 @@ async function initAuth() {
             if (error) throw error;
             
             if (session) {
-                // Nettoyer l'URL (retirer le hash)
+                // Nettoyer l'URL (retirer le hash avec les tokens)
+                // Cela évite que les tokens restent visibles dans l'URL
                 window.history.replaceState(null, '', window.location.pathname);
                 
-                // Charger les données utilisateur
+                // Charger les données utilisateur depuis Supabase
                 this.user = session.user;
                 await this.loadUserData();
                 
-                // Afficher un message de succès
+                // Afficher un message de succès pour confirmer la confirmation
                 await swalSuccess(
                     '✅ Email confirmé !',
                     'Votre compte a été activé avec succès. Vous êtes maintenant connecté.',
                     3000
                 );
                 
+                // Afficher l'application principale
                 this.showMainApp();
                 return;
             }
         } catch (error) {
             console.error('Erreur lors de la confirmation de l\'email:', error);
-            // Nettoyer l'URL même en cas d'erreur
+            // Nettoyer l'URL même en cas d'erreur pour éviter les problèmes
             window.history.replaceState(null, '', window.location.pathname);
             await swalError(
                 '❌ Erreur de confirmation',
@@ -54,11 +81,11 @@ async function initAuth() {
         }
     }
 
-    // Vérifier si l'utilisateur est déjà connecté
+    // Vérifier si l'utilisateur est déjà connecté (session existante)
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
         console.error('Erreur lors de la vérification de session:', error);
-        // Nettoyer la session en cas d'erreur
+        // Nettoyer la session en cas d'erreur et afficher la modale de connexion
         await this.clearInvalidSession();
         this.showAuthModal();
         this.setupAuthListeners();
@@ -66,11 +93,13 @@ async function initAuth() {
     }
     
     if (session) {
-        // Vérifier que la session est vraiment valide en testant une requête
+        // Vérifier que la session est vraiment valide en testant une requête à la base de données
+        // Parfois les sessions peuvent être expirées ou invalides
         const isValid = await this.validateSession(session);
         if (isValid) {
             this.user = session.user;
             try {
+                // Charger toutes les données utilisateur (congés, types, quotas, etc.)
                 await this.loadUserData();
                 this.showMainApp();
             } catch (error) {
@@ -85,10 +114,12 @@ async function initAuth() {
             this.showAuthModal();
         }
     } else {
+        // Pas de session, afficher la modale de connexion
         this.showAuthModal();
     }
     
-    // Écouter les changements d'authentification
+    // Écouter les changements d'état d'authentification en temps réel
+    // Cela permet de réagir automatiquement aux connexions/déconnexions
     supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
             this.user = session.user;
@@ -121,12 +152,21 @@ async function initAuth() {
     this.setupAuthListeners();
 }
 
-// Valider que la session fonctionne vraiment
+/**
+ * Valide qu'une session Supabase est vraiment fonctionnelle
+ * 
+ * Parfois, Supabase peut retourner une session qui semble valide mais qui est en fait expirée.
+ * Cette fonction teste la session en effectuant une requête simple à la base de données.
+ * 
+ * @param {Object} session - La session Supabase à valider
+ * @returns {boolean} - true si la session est valide, false sinon
+ */
 async function validateSession(session) {
     if (!session || !session.user) return false;
     
     try {
         // Tester une requête simple pour vérifier que la session est valide
+        // On utilise maybeSingle() pour éviter une erreur si aucune donnée n'existe
         const { error } = await supabase
             .from('leaves')
             .select('id')
@@ -161,17 +201,26 @@ async function validateSession(session) {
     }
 }
 
-// Nettoyer une session invalide
+/**
+ * Nettoie une session invalide ou expirée
+ * 
+ * Cette fonction :
+ * 1. Déconnecte l'utilisateur de Supabase
+ * 2. Réinitialise toutes les données locales
+ * 3. Nettoie le localStorage de Supabase
+ * 
+ * Utilisée quand une session est détectée comme invalide ou expirée.
+ */
 async function clearInvalidSession() {
     try {
-        // Déconnecter proprement
+        // Déconnecter proprement de Supabase
         await supabase.auth.signOut();
     } catch (error) {
-        // Ignorer les erreurs de déconnexion
+        // Ignorer les erreurs de déconnexion (peut échouer si pas de session)
         console.warn('Erreur lors du nettoyage de session:', error);
     }
     
-    // Nettoyer l'état local
+    // Nettoyer l'état local de l'application
     this.user = null;
     this.leaves = {};
     this.leaveTypesConfig = [];
@@ -179,6 +228,7 @@ async function clearInvalidSession() {
     this.selectedCountry = 'FR';
     
     // Nettoyer le localStorage de Supabase (optionnel, mais peut aider)
+    // Cela supprime les tokens et données de session stockées localement
     try {
         const supabaseKeys = Object.keys(localStorage).filter(key => key.startsWith('sb-'));
         supabaseKeys.forEach(key => localStorage.removeItem(key));
@@ -297,14 +347,25 @@ function setupAuthListeners() {
         });
     }
 
-    // Bouton de nettoyage des données
+    // Bouton de nettoyage des données (pour résoudre les problèmes de session)
     const clearAuthDataBtn = document.getElementById('clearAuthDataBtn');
     if (clearAuthDataBtn && !clearAuthDataBtn.hasAttribute('data-listener-added')) {
         clearAuthDataBtn.setAttribute('data-listener-added', 'true');
         clearAuthDataBtn.addEventListener('click', async () => {
-            if (confirm('Voulez-vous vraiment nettoyer toutes les données locales ? Cela vous déconnectera et supprimera les données en cache. Vous pourrez ensuite vous reconnecter normalement.')) {
+            // Utiliser SweetAlert2 pour la confirmation
+            const confirmed = await swalConfirm(
+                'Nettoyer les données locales',
+                'Voulez-vous vraiment nettoyer toutes les données locales ?<br><br>Cela vous déconnectera et supprimera les données en cache. Vous pourrez ensuite vous reconnecter normalement.',
+                'warning'
+            );
+            
+            if (confirmed) {
                 await this.clearInvalidSession();
-                alert('✅ Données nettoyées ! Vous pouvez maintenant vous reconnecter.');
+                await swalSuccess(
+                    '✅ Données nettoyées',
+                    'Les données locales ont été supprimées. Vous pouvez maintenant vous reconnecter.',
+                    2000
+                );
                 // Recharger la page pour s'assurer que tout est propre
                 window.location.reload();
             }
@@ -461,50 +522,101 @@ async function logout() {
     }
 }
 
+/**
+ * Supprime définitivement le compte utilisateur et toutes ses données
+ * 
+ * ⚠️ ATTENTION : Cette action est IRRÉVERSIBLE !
+ * 
+ * Cette fonction :
+ * 1. Demande une double confirmation à l'utilisateur
+ * 2. Supprime toutes les données de l'utilisateur dans Supabase :
+ *    - Tous les congés (table leaves)
+ *    - Tous les types de congés (table leave_types)
+ *    - Tous les quotas (table leave_quotas)
+ *    - Toutes les préférences (table user_preferences)
+ * 3. Déconnecte l'utilisateur
+ * 4. Réinitialise l'état local
+ * 5. Affiche la modale de connexion
+ */
 async function deleteAccount() {
+    // Vérifier que l'utilisateur est connecté
     if (!this.user || !supabase) {
-        alert('Erreur : Vous devez être connecté pour supprimer votre compte.');
+        await swalError(
+            'Erreur',
+            'Vous devez être connecté pour supprimer votre compte.'
+        );
         return;
     }
 
-    const confirmMessage = `⚠️ ATTENTION : Cette action est IRRÉVERSIBLE !\n\nÊtes-vous ABSOLUMENT sûr de vouloir supprimer votre compte ?\n\nCette action va :\n- Supprimer tous vos jours de congé\n- Supprimer tous vos types de congés personnalisés\n- Supprimer tous vos quotas\n- Supprimer toutes vos préférences\n- Supprimer votre compte utilisateur\n\nCette action ne peut PAS être annulée !\n\nTapez "SUPPRIMER" pour confirmer :`;
+    // Première confirmation avec SweetAlert2
+    const confirmMessage = `⚠️ <strong>ATTENTION : Cette action est IRRÉVERSIBLE !</strong><br><br>Êtes-vous <strong>ABSOLUMENT sûr</strong> de vouloir supprimer votre compte ?<br><br>Cette action va :<br>• Supprimer tous vos jours de congé<br>• Supprimer tous vos types de congés personnalisés<br>• Supprimer tous vos quotas<br>• Supprimer toutes vos préférences<br>• Supprimer votre compte utilisateur<br><br><strong>Cette action ne peut PAS être annulée !</strong>`;
     
-    const userInput = prompt(confirmMessage);
+    const firstConfirm = await swalConfirmHTML(
+        'Supprimer mon compte',
+        confirmMessage,
+        'error',
+        'Oui, supprimer',
+        'Annuler',
+        true // Focus sur le bouton Annuler par défaut pour éviter les suppressions accidentelles
+    );
+    
+    if (!firstConfirm) {
+        return;
+    }
+    
+    // Deuxième confirmation : demander à l'utilisateur de taper "SUPPRIMER"
+    const userInput = await swalInput(
+        'Confirmation finale',
+        'text',
+        'Tapez "SUPPRIMER" (en majuscules) pour confirmer la suppression :',
+        'SUPPRIMER',
+        '',
+        (value) => {
+            if (value !== 'SUPPRIMER') {
+                return 'Vous devez taper exactement "SUPPRIMER" pour confirmer';
+            }
+        }
+    );
+    
     if (userInput !== 'SUPPRIMER') {
         return;
     }
 
     try {
         // Supprimer toutes les données utilisateur dans Supabase
-        // 1. Supprimer tous les congés
+        // L'ordre est important : d'abord les données dépendantes, puis les préférences
+        
+        // 1. Supprimer tous les congés (table leaves)
         const { error: leavesError } = await supabase
             .from('leaves')
             .delete()
             .eq('user_id', this.user.id);
         if (leavesError) throw leavesError;
 
-        // 2. Supprimer tous les types de congés
+        // 2. Supprimer tous les types de congés personnalisés (table leave_types)
         const { error: typesError } = await supabase
             .from('leave_types')
             .delete()
             .eq('user_id', this.user.id);
         if (typesError) throw typesError;
 
-        // 3. Supprimer tous les quotas
+        // 3. Supprimer tous les quotas (table leave_quotas)
         const { error: quotasError } = await supabase
             .from('leave_quotas')
             .delete()
             .eq('user_id', this.user.id);
         if (quotasError) throw quotasError;
 
-        // 4. Supprimer les préférences
+        // 4. Supprimer les préférences utilisateur (table user_preferences)
         const { error: prefsError } = await supabase
             .from('user_preferences')
             .delete()
             .eq('user_id', this.user.id);
         if (prefsError) throw prefsError;
 
-        // 5. Déconnecter l'utilisateur
+        // 5. Déconnecter l'utilisateur de Supabase Auth
+        // Note: Le compte utilisateur dans auth.users sera supprimé automatiquement
+        // par les triggers CASCADE si configurés, sinon il faut le faire manuellement
         const { error: signOutError } = await supabase.auth.signOut();
         if (signOutError) throw signOutError;
 

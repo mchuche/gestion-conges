@@ -1,7 +1,26 @@
-// TeamsUI - Interface utilisateur pour la gestion des équipes
-// Ces fonctions seront ajoutées au prototype de LeaveManager
+/**
+ * TeamsUI - Interface utilisateur pour la gestion des équipes
+ * 
+ * Ce module gère toute l'interface utilisateur liée aux équipes :
+ * - Affichage/masquage du sélecteur d'équipe
+ * - Gestion de la modale des équipes
+ * - Création et affichage des équipes
+ * - Invitation de membres aux équipes
+ * - Affichage des détails d'une équipe (membres, invitations en attente)
+ * 
+ * Ces fonctions seront ajoutées au prototype de LeaveManager.
+ */
 
-// Afficher/masquer le sélecteur d'équipe selon le contexte
+/**
+ * Affiche ou masque le sélecteur d'équipe selon le contexte
+ * 
+ * Le sélecteur est affiché si :
+ * - L'utilisateur est connecté
+ * - L'utilisateur a au moins une équipe OU est en vue présence annuelle
+ * 
+ * Le bouton "Équipes" est toujours affiché si l'utilisateur est connecté
+ * pour permettre la création d'équipes même sans équipe existante.
+ */
 function updateTeamSelectorVisibility() {
     const teamSelect = document.getElementById('teamSelect');
     const teamsBtn = document.getElementById('teamsBtn');
@@ -36,7 +55,12 @@ function updateTeamSelectorVisibility() {
     }
 }
 
-// Remplir le sélecteur d'équipe
+/**
+ * Remplit le sélecteur d'équipe avec les équipes de l'utilisateur
+ * 
+ * Ajoute une option "Mon calendrier" par défaut et une option pour chaque équipe.
+ * Si une équipe est déjà sélectionnée, elle reste sélectionnée après le remplissage.
+ */
 function populateTeamSelector() {
     const teamSelect = document.getElementById('teamSelect');
     if (!teamSelect) {
@@ -300,8 +324,12 @@ async function handleCreateTeam() {
     const nameInput = document.getElementById('teamNameInput');
     const descriptionInput = document.getElementById('teamDescriptionInput');
     
+    // Valider que le nom de l'équipe est renseigné
     if (!nameInput || !nameInput.value.trim()) {
-        alert('Veuillez entrer un nom pour l\'équipe');
+        await swalError(
+            'Nom manquant',
+            'Veuillez entrer un nom pour l\'équipe.'
+        );
         return;
     }
     
@@ -325,7 +353,12 @@ async function handleCreateTeam() {
         this.populateTeamSelector();
         this.updateTeamSelectorVisibility();
         
-        alert('Équipe créée avec succès !');
+        // Afficher un message de succès avec SweetAlert2
+        await swalSuccess(
+            '✅ Équipe créée',
+            'L\'équipe a été créée avec succès !',
+            2000
+        );
         
         // Recharger les équipes pour afficher la nouvelle équipe
         await this.loadUserTeams();
@@ -337,7 +370,10 @@ async function handleCreateTeam() {
         createTeamSection.style.display = 'none';
     } catch (error) {
         console.error('Erreur lors de la création de l\'équipe:', error);
-        alert('Erreur lors de la création de l\'équipe: ' + (error.message || error));
+        await swalError(
+            '❌ Erreur',
+            'Erreur lors de la création de l\'équipe: ' + (error.message || error)
+        );
     } finally {
         // Réactiver le bouton dans tous les cas
         if (saveTeamBtn) {

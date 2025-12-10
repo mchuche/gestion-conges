@@ -4,14 +4,14 @@
 // Charger les équipes de l'utilisateur
 async function loadUserTeams() {
     if (!this.user || !supabase) {
-        console.warn('[loadUserTeams] Utilisateur ou Supabase non disponible');
+        logger.warn('[loadUserTeams] Utilisateur ou Supabase non disponible');
         this.userTeams = [];
         this.currentTeamId = null;
         return;
     }
 
     try {
-        console.log('[loadUserTeams] Chargement des équipes pour l\'utilisateur:', this.user.id);
+        logger.debug('[loadUserTeams] Chargement des équipes pour l\'utilisateur:', this.user.id);
         
         // Charger les équipes où l'utilisateur est membre
         const { data, error } = await supabase
@@ -30,15 +30,15 @@ async function loadUserTeams() {
             .eq('user_id', this.user.id);
 
         if (error) {
-            console.error('[loadUserTeams] Erreur Supabase:', error);
+            logger.error('[loadUserTeams] Erreur Supabase:', error);
             throw error;
         }
 
-        console.log('[loadUserTeams] Données brutes reçues:', data);
+        logger.debug('[loadUserTeams] Données brutes reçues:', data);
 
         // Vérifier que les données sont valides
         if (!data || !Array.isArray(data)) {
-            console.warn('[loadUserTeams] Données invalides, initialisation d\'un tableau vide');
+            logger.warn('[loadUserTeams] Données invalides, initialisation d\'un tableau vide');
             this.userTeams = [];
             this.currentTeamId = null;
             return;
@@ -61,9 +61,9 @@ async function loadUserTeams() {
             this.currentTeamId = this.userTeams[0].id;
         }
 
-        console.log('[loadUserTeams] Équipes chargées:', this.userTeams.length, this.userTeams);
+        logger.debug('[loadUserTeams] Équipes chargées:', this.userTeams.length, this.userTeams);
     } catch (e) {
-        console.error('[loadUserTeams] Erreur lors du chargement des équipes:', e);
+        logger.error('[loadUserTeams] Erreur lors du chargement des équipes:', e);
         this.userTeams = [];
         this.currentTeamId = null;
     }
@@ -107,76 +107,98 @@ async function createTeam(name, description = '') {
 
         return team;
     } catch (e) {
-        console.error('Erreur lors de la création de l\'équipe:', e);
+        logger.error('Erreur lors de la création de l\'équipe:', e);
         throw e;
     }
 }
 
 // Charger les membres d'une équipe
+/**
+ * Charger les membres d'une équipe avec leurs emails (optimisé)
+ * 
+ * Cette fonction utilise une fonction SQL optimisée pour éviter les requêtes multiples.
+ * Au lieu de charger les membres puis les emails séparément, on fait une seule requête.
+ * 
+ * @param {string} teamId - ID de l'équipe
+ * @returns {Promise<Array>} - Liste des membres avec leurs emails
+ */
 async function loadTeamMembers(teamId) {
     if (!this.user || !supabase || !teamId) {
-        console.warn('[loadTeamMembers] Paramètres manquants');
+        logger.warn('[loadTeamMembers] Paramètres manquants');
         return [];
     }
 
     try {
-        console.log('[loadTeamMembers] Chargement des membres pour l\'équipe:', teamId);
+        logger.debug('[loadTeamMembers] Chargement des membres pour l\'équipe:', teamId);
         
-        // D'abord, charger les membres de l'équipe
-        const { data: membersData, error: membersError } = await supabase
-            .from('team_members')
-            .select(`
-                id,
-                role,
-                joined_at,
-                user_id
-            `)
-            .eq('team_id', teamId)
-            .order('joined_at', { ascending: false });
+        // Essayer d'abord avec la fonction SQL optimisée
+        const { data, error } = await supabase.rpc('get_team_members_with_emails', {
+            team_uuid: teamId
+        });
 
-        if (membersError) {
-            console.error('[loadTeamMembers] Erreur lors du chargement des membres:', membersError);
-            throw membersError;
+        if (error) {
+            // Si la fonction n'existe pas encore, utiliser l'ancienne méthode
+            logger.warn('[loadTeamMembers] Fonction SQL optimisée non disponible, utilisation de la méthode classique:', error);
+            
+            // Fallback sur l'ancienne méthode (pour compatibilité)
+            const { data: membersData, error: membersError } = await supabase
+                .from('team_members')
+                .select(`
+                    id,
+                    role,
+                    joined_at,
+                    user_id
+                `)
+                .eq('team_id', teamId)
+                .order('joined_at', { ascending: false });
+
+            if (membersError) {
+                logger.error('[loadTeamMembers] Erreur lors du chargement des membres:', membersError);
+                throw membersError;
+            }
+
+            if (!membersData || membersData.length === 0) {
+                return [];
+            }
+
+            // Récupérer les emails depuis user_emails pour chaque membre
+            const userIds = membersData.map(m => m.user_id);
+            const { data: emailsData, error: emailsError } = await supabase
+                .from('user_emails')
+                .select('user_id, email')
+                .in('user_id', userIds);
+
+            if (emailsError) {
+                logger.warn('[loadTeamMembers] Erreur lors du chargement des emails:', emailsError);
+            }
+
+            // Créer un map pour accéder rapidement aux emails
+            const emailMap = {};
+            if (emailsData) {
+                emailsData.forEach(item => {
+                    emailMap[item.user_id] = item.email;
+                });
+            }
+
+            // Mapper les membres avec leurs emails
+            return membersData.map(member => ({
+                id: member.id,
+                userId: member.user_id,
+                email: emailMap[member.user_id] || 'Utilisateur inconnu',
+                role: member.role,
+                joinedAt: member.joined_at
+            }));
         }
 
-        console.log('[loadTeamMembers] Membres trouvés:', membersData?.length || 0);
-
-        if (!membersData || membersData.length === 0) {
-            return [];
-        }
-
-        // Récupérer les emails depuis user_emails pour chaque membre
-        const userIds = membersData.map(m => m.user_id);
-        const { data: emailsData, error: emailsError } = await supabase
-            .from('user_emails')
-            .select('user_id, email')
-            .in('user_id', userIds);
-
-        if (emailsError) {
-            console.warn('[loadTeamMembers] Erreur lors du chargement des emails:', emailsError);
-        }
-
-        // Créer un map pour accéder rapidement aux emails
-        const emailMap = {};
-        if (emailsData) {
-            emailsData.forEach(item => {
-                emailMap[item.user_id] = item.email;
-            });
-        }
-
-        // Mapper les membres avec leurs emails
-        const members = membersData.map(member => ({
-            id: member.id,
+        // Transformer les données de la fonction SQL en format attendu
+        return (data || []).map(member => ({
             userId: member.user_id,
-            email: emailMap[member.user_id] || 'Utilisateur inconnu',
+            email: member.email || 'Utilisateur inconnu',
             role: member.role,
             joinedAt: member.joined_at
         }));
-
-        console.log('[loadTeamMembers] Membres mappés:', members);
-        return members;
     } catch (e) {
-        console.error('[loadTeamMembers] Erreur lors du chargement des membres:', e);
+        logger.error('[loadTeamMembers] Erreur lors du chargement des membres:', e);
         return [];
     }
 }
@@ -217,7 +239,7 @@ async function inviteUserToTeam(teamId, email) {
 
         if (userEmailError && userEmailError.code !== 'PGRST116') {
             // PGRST116 = no rows found, ce qui est normal si l'utilisateur n'existe pas
-            console.warn('Erreur lors de la recherche de l\'utilisateur:', userEmailError);
+            logger.warn('Erreur lors de la recherche de l\'utilisateur:', userEmailError);
         }
 
         // Si l'utilisateur existe déjà, l'ajouter directement à l'équipe
@@ -229,7 +251,7 @@ async function inviteUserToTeam(teamId, email) {
                 try {
                     // Ajouter directement l'utilisateur à l'équipe
                     await this.addMemberToTeam(teamId, existingUserId);
-                    console.log('Utilisateur ajouté directement à l\'équipe:', trimmedEmail, 'ID:', existingUserId);
+                    logger.debug('Utilisateur ajouté directement à l\'équipe:', trimmedEmail, 'ID:', existingUserId);
                     return { 
                         type: 'direct_add',
                         message: `✅ L'utilisateur ${trimmedEmail} a été ajouté directement à l'équipe !`,
@@ -237,7 +259,7 @@ async function inviteUserToTeam(teamId, email) {
                         email: trimmedEmail
                     };
                 } catch (addError) {
-                    console.error('Erreur lors de l\'ajout direct:', addError);
+                    logger.error('Erreur lors de l\'ajout direct:', addError);
                     // Si l'ajout direct échoue, continuer avec l'invitation
                 }
             } else {
@@ -275,14 +297,14 @@ async function inviteUserToTeam(teamId, email) {
 
         if (error) throw error;
 
-        console.log('Invitation créée avec succès:', data);
+        logger.debug('Invitation créée avec succès:', data);
         return { 
             type: 'invitation',
             message: `Invitation envoyée à ${trimmedEmail}. L'utilisateur recevra une notification lorsqu'il se connectera.`,
             invitation: data
         };
     } catch (e) {
-        console.error('Erreur lors de l\'invitation:', e);
+        logger.error('Erreur lors de l\'invitation:', e);
         throw e;
     }
 }
@@ -322,7 +344,7 @@ async function loadTeamInvitations(teamId) {
             teamName: invitation.teams?.name || 'Équipe inconnue'
         }));
     } catch (e) {
-        console.error('Erreur lors du chargement des invitations:', e);
+        logger.error('Erreur lors du chargement des invitations:', e);
         return [];
     }
 }
@@ -351,11 +373,11 @@ async function loadUserPendingInvitations() {
         }
 
         if (!userEmail) {
-            console.warn('[loadUserPendingInvitations] Email utilisateur non trouvé');
+            logger.warn('[loadUserPendingInvitations] Email utilisateur non trouvé');
             return [];
         }
 
-        console.log('[loadUserPendingInvitations] Recherche d\'invitations pour:', userEmail);
+        logger.debug('[loadUserPendingInvitations] Recherche d\'invitations pour:', userEmail);
 
         const { data, error } = await supabase
             .from('team_invitations')
@@ -379,11 +401,11 @@ async function loadUserPendingInvitations() {
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('[loadUserPendingInvitations] Erreur Supabase:', error);
+            logger.error('[loadUserPendingInvitations] Erreur Supabase:', error);
             throw error;
         }
 
-        console.log('[loadUserPendingInvitations] Invitations trouvées:', data?.length || 0);
+        logger.debug('[loadUserPendingInvitations] Invitations trouvées:', data?.length || 0);
 
         return (data || []).map(invitation => ({
             id: invitation.id,
@@ -395,7 +417,7 @@ async function loadUserPendingInvitations() {
             inviterEmail: invitation.inviter?.email || 'Utilisateur inconnu'
         }));
     } catch (e) {
-        console.error('Erreur lors du chargement des invitations en attente:', e);
+        logger.error('Erreur lors du chargement des invitations en attente:', e);
         return [];
     }
 }
