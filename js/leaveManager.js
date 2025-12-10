@@ -287,13 +287,13 @@ if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
 }
 
 // Initialiser l'application quand le DOM est chargé
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM chargé, initialisation du gestionnaire de congés...');
+document.addEventListener('DOMContentLoaded', async () => {
+    logger.debug('[LeaveManager] DOM chargé, initialisation du gestionnaire de congés...');
     
     // Vérifier que toutes les fonctions nécessaires sont disponibles
     if (typeof init === 'undefined' || typeof setupEventListeners === 'undefined') {
-        console.error('Erreur: js/config.js n\'a pas été chargé correctement');
-        console.log('Fonctions disponibles:', {
+        logger.error('[LeaveManager] Erreur: js/config.js n\'a pas été chargé correctement');
+        logger.debug('[LeaveManager] Fonctions disponibles:', {
             init: typeof init,
             setupEventListeners: typeof setupEventListeners
         });
@@ -301,20 +301,26 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
         const manager = new LeaveManager();
-        console.log('Gestionnaire de congés initialisé avec succès', manager);
+        logger.debug('[LeaveManager] Gestionnaire de congés initialisé avec succès', manager);
         
         // Vérifier que init est bien une fonction
         if (typeof manager.init !== 'function') {
-            console.error('ERREUR: manager.init n\'est pas une fonction', typeof manager.init);
-            console.log('Prototype LeaveManager:', Object.getOwnPropertyNames(LeaveManager.prototype));
+            logger.error('[LeaveManager] ERREUR: manager.init n\'est pas une fonction', typeof manager.init);
+            logger.debug('[LeaveManager] Prototype LeaveManager:', Object.getOwnPropertyNames(LeaveManager.prototype));
         }
     } catch (error) {
-        console.error('Erreur lors de l\'initialisation:', error);
+        logger.error('[LeaveManager] Erreur lors de l\'initialisation:', error);
         // Utiliser SweetAlert2 pour afficher l'erreur d'initialisation
-        await swalError(
-            'Erreur d\'initialisation',
-            'Erreur lors du chargement de l\'application. Veuillez vérifier la console pour plus de détails.'
-        );
+        // Vérifier que swalError est disponible avant de l'utiliser
+        if (typeof swalError === 'function') {
+            await swalError(
+                'Erreur d\'initialisation',
+                'Erreur lors du chargement de l\'application. Veuillez vérifier la console pour plus de détails.'
+            );
+        } else {
+            // Fallback si SweetAlert2 n'est pas disponible
+            alert('Erreur lors du chargement de l\'application. Veuillez vérifier la console pour plus de détails.');
+        }
     }
 });
 
