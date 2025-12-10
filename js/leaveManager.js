@@ -279,6 +279,14 @@ if (typeof updateAdminButtonVisibility !== 'undefined') {
 if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
     LeaveManager.prototype.init = init;
     LeaveManager.prototype.setupEventListeners = setupEventListeners;
+    
+    // Ajouter les fonctions de sélecteur de format si elles existent
+    if (typeof setupYearViewFormatSelector !== 'undefined') {
+        LeaveManager.prototype.setupYearViewFormatSelector = setupYearViewFormatSelector;
+    }
+    if (typeof updateYearViewFormatSelector !== 'undefined') {
+        LeaveManager.prototype.updateYearViewFormatSelector = updateYearViewFormatSelector;
+    }
 } else {
     console.error('Erreur: init ou setupEventListeners non définis. Vérifiez que js/config.js est chargé.');
     // Définir des fonctions par défaut pour éviter les erreurs
