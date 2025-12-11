@@ -38,6 +38,10 @@ function setMinimizeHeader(enabled) {
         if (toggleBtn) {
             toggleBtn.classList.add('active');
             toggleBtn.title = 'Afficher les éléments du header';
+            // Déplacer le bouton dans header-controls pour qu'il soit visible
+            if (toggleBtn.parentElement !== headerControls) {
+                headerControls.insertBefore(toggleBtn, headerControls.firstChild);
+            }
         }
         
         // Créer un groupe pour centrer l'année et la navigation
@@ -64,6 +68,11 @@ function setMinimizeHeader(enabled) {
         if (toggleBtn) {
             toggleBtn.classList.remove('active');
             toggleBtn.title = 'Masquer les éléments du header';
+            // Remettre le bouton dans header-top
+            const headerTop = document.querySelector('.header-top');
+            if (headerTop && toggleBtn.parentElement !== headerTop) {
+                headerTop.insertBefore(toggleBtn, headerTop.querySelector('h1'));
+            }
         }
         
         // Restaurer la structure normale

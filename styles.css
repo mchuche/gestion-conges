@@ -298,7 +298,11 @@ body.minimal-header .header-top {
 }
 
 body.minimal-header .header-controls .view-toggle-btn,
-body.minimal-header .header-controls .team-select,
+body.minimal-header .header-controls .team-select {
+    display: none !important;
+}
+
+/* Cacher le sélecteur de vue annuelle quand on est en vue annuelle (semester) */
 body.minimal-header .header-controls #yearViewFormatSelect {
     display: none !important;
 }
@@ -360,6 +364,8 @@ body.minimal-header .header-controls .nav-center-group {
 body.minimal-header .header-controls .full-width-toggle {
     margin-left: auto;
     order: 999;
+    position: relative;
+    z-index: 1;
 }
 
 .nav-btn {
