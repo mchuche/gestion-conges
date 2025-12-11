@@ -42,7 +42,7 @@ function updateTeamSelectorVisibility() {
             console.log('[TeamsUI] Sélecteur d\'équipe affiché (équipes disponibles:', this.userTeams.length, ')');
             // S'assurer que le sélecteur est rempli
             this.populateTeamSelector();
-        } else if (this.viewMode === 'year' && this.yearViewFormat === 'presence') {
+        } else if (this.viewMode === 'year' && (this.yearViewFormat === 'presence' || this.yearViewFormat === 'presence-vertical')) {
             teamSelect.style.display = 'inline-block';
             console.log('[TeamsUI] Sélecteur d\'équipe affiché (vue présence)');
         } else {
@@ -489,7 +489,7 @@ async function handleDeleteTeam(teamId) {
         // Si on était en vue présence avec cette équipe, revenir à la vue normale
         if (this.currentTeamId === teamId) {
             this.currentTeamId = null;
-            if (this.viewMode === 'year' && this.yearViewFormat === 'presence') {
+            if (this.viewMode === 'year' && (this.yearViewFormat === 'presence' || this.yearViewFormat === 'presence-vertical')) {
                 this.renderCalendar();
             }
         }
@@ -509,8 +509,8 @@ function handleTeamSelectChange() {
     const selectedTeamId = teamSelect.value || null;
     this.currentTeamId = selectedTeamId;
     
-    // Si on est en vue présence, recharger le calendrier
-    if (this.viewMode === 'year' && this.yearViewFormat === 'presence') {
+    // Si on est en vue présence (horizontale ou verticale), recharger le calendrier
+    if (this.viewMode === 'year' && (this.yearViewFormat === 'presence' || this.yearViewFormat === 'presence-vertical')) {
         this.renderCalendar();
     }
 }
