@@ -1752,7 +1752,19 @@ body.minimal-header .header-controls .full-width-toggle {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
-        justify-content: flex-end;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* S'assurer que tous les boutons d'icônes sont alignés */
+    .header-right .theme-toggle,
+    .header-right .full-width-toggle,
+    .header-right .menu-btn,
+    .header-right .logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
 
     .menu-dropdown-content {
@@ -1903,7 +1915,19 @@ body.minimal-header .header-controls .full-width-toggle {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
-        justify-content: flex-end;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* S'assurer que tous les boutons d'icônes sont alignés */
+    .header-right .theme-toggle,
+    .header-right .full-width-toggle,
+    .header-right .menu-btn,
+    .header-right .logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
 
     .menu-dropdown-content {
