@@ -540,15 +540,15 @@ function getLeaveTypeConfig(type) {
 
 // Mettre à jour l'affichage visuel des dates sélectionnées
 function updateDateSelectionVisual() {
-    // Retirer toutes les classes de sélection
-    document.querySelectorAll('.year-day.selected').forEach(el => {
+    // Retirer toutes les classes de sélection de tous les types de cellules
+    document.querySelectorAll('.year-day.selected, .year-presence-day-cell.selected, .year-view-day.selected').forEach(el => {
         el.classList.remove('selected');
     });
     
     // Ajouter la classe de sélection aux dates sélectionnées
     this.selectedDates.forEach(date => {
         const dateKey = getDateKey(date);
-        // Chercher par attribut data-date-key
+        // Chercher par attribut data-date-key (fonctionne pour tous les types de cellules)
         const dayElements = document.querySelectorAll(`[data-date-key="${dateKey}"]`);
         dayElements.forEach(el => el.classList.add('selected'));
     });

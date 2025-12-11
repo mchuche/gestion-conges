@@ -163,6 +163,13 @@
     border-width: 2px;
 }
 
+.year-presence-day-cell.selected {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+    z-index: 10;
+    box-shadow: 0 0 0 3px var(--primary-color);
+}
+
 .year-presence-stats-cell {
     aspect-ratio: 1;
     min-width: 20px;

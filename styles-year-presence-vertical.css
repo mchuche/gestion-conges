@@ -164,6 +164,13 @@
     border-width: 2px;
 }
 
+.year-presence-vertical-view .year-presence-day-cell.selected {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+    z-index: 10;
+    box-shadow: 0 0 0 3px var(--primary-color);
+}
+
 /* Réutiliser les styles de la vue présence normale pour les cellules de stats */
 .year-presence-vertical-view .year-presence-stats-cell {
     aspect-ratio: 1;
