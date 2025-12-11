@@ -316,52 +316,81 @@ function setupEventListeners() {
     const menuBtn = document.getElementById('menuBtn');
     const menuDropdown = document.getElementById('menuDropdown');
     
+    if (!menuBtn) {
+        logger.error('[Menu] Bouton menuBtn non trouvé dans le DOM');
+    }
+    if (!menuDropdown) {
+        logger.error('[Menu] Menu dropdown non trouvé dans le DOM');
+    }
+    
     if (menuBtn && menuDropdown) {
+        logger.debug('[Menu] Initialisation du menu déroulant');
+        
         // Toggle du menu au clic sur le bouton
         menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            e.preventDefault();
+            logger.debug('[Menu] Clic sur le bouton menu');
             menuDropdown.classList.toggle('show');
+            logger.debug('[Menu] Menu togglé, classe show:', menuDropdown.classList.contains('show'));
         });
         
         // Fermer le menu si on clique ailleurs
         document.addEventListener('click', (e) => {
-            if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+            if (menuBtn && menuDropdown && !menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
                 menuDropdown.classList.remove('show');
             }
         });
         
         // Gérer les actions du menu
         const menuItems = menuDropdown.querySelectorAll('.menu-item');
+        logger.debug('[Menu] Nombre d\'éléments du menu:', menuItems.length);
         menuItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 const action = item.getAttribute('data-action');
+                logger.debug('[Menu] Action sélectionnée:', action);
                 menuDropdown.classList.remove('show');
                 
                 switch(action) {
                     case 'config':
                         logger.debug('Menu: Configuration sélectionnée');
-                        this.openConfigModal();
+                        if (typeof this.openConfigModal === 'function') {
+                            this.openConfigModal();
+                        } else {
+                            logger.error('[Menu] openConfigModal n\'est pas une fonction');
+                        }
                         break;
                     case 'teams':
                         logger.debug('Menu: Gérer les équipes sélectionnée');
                         if (typeof this.openTeamsModal === 'function') {
                             this.openTeamsModal();
+                        } else {
+                            logger.error('[Menu] openTeamsModal n\'est pas une fonction');
                         }
                         break;
                     case 'help':
                         logger.debug('Menu: Aide sélectionnée');
-                        this.openHelpModal();
+                        if (typeof this.openHelpModal === 'function') {
+                            this.openHelpModal();
+                        } else {
+                            logger.error('[Menu] openHelpModal n\'est pas une fonction');
+                        }
                         break;
                     case 'admin':
                         logger.debug('Menu: Administration sélectionnée');
                         if (typeof this.openAdminModal === 'function') {
                             this.openAdminModal();
+                        } else {
+                            logger.error('[Menu] openAdminModal n\'est pas une fonction');
                         }
                         break;
                 }
             });
         });
+    } else {
+        logger.warn('[Menu] Menu déroulant non initialisé - éléments manquants');
     }
 
     const closeHelpBtn = document.getElementById('closeHelpBtn');

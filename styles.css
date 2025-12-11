@@ -163,7 +163,7 @@ header {
     min-width: 200px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
-    z-index: 1000;
+    z-index: 10000;
     border: 1px solid var(--border-color);
     overflow: hidden;
 }
