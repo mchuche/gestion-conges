@@ -1947,7 +1947,7 @@ body.minimal-header .header-controls .full-width-toggle {
     .header-controls {
         display: grid;
         grid-template-columns: auto 1fr auto;
-        grid-template-rows: auto auto;
+        grid-template-rows: auto auto auto;
         gap: 10px;
         align-items: center;
     }
@@ -1974,11 +1974,19 @@ body.minimal-header .header-controls .full-width-toggle {
         grid-row: 1;
     }
     
-    /* Sélecteur de vue et équipe en colonne - FORCER l'affichage */
-    .header-controls #yearViewFormatSelect,
-    .header-controls .team-select {
+    /* Sélecteur de vue sur la ligne 2 */
+    .header-controls #yearViewFormatSelect {
         grid-column: 1 / -1;
         grid-row: 2;
+        width: 100%;
+        margin: 5px 0;
+        display: block !important; /* Forcer l'affichage sur mobile */
+    }
+    
+    /* Sélecteur d'équipe sur la ligne 3 */
+    .header-controls .team-select {
+        grid-column: 1 / -1;
+        grid-row: 3;
         width: 100%;
         margin: 5px 0;
         display: block !important; /* Forcer l'affichage sur mobile */
