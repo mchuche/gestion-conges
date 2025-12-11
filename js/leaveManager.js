@@ -135,7 +135,6 @@ if (typeof getLeaveForDate !== 'undefined') {
     safeAssign(LeaveManager.prototype, {
         getLeaveForDate,
         renderCalendar,
-        renderSemesterView,
         renderYearView,
         renderYearViewPresence,
         renderYearViewPresenceVertical,

@@ -118,65 +118,20 @@ function setupEventListeners() {
     
     // Navigation (semestrielle ou annuelle selon la vue)
     newPrevBtn.addEventListener('click', () => {
-        if (this.viewMode === 'year') {
-            // Vue annuelle : passer à l'année précédente
-            const prevYear = getYear(this.currentDate) - 1;
-            this.currentDate = startOfYear(setYear(this.currentDate, prevYear));
-            this.currentYear = prevYear;
-        } else {
-            // Vue semestrielle : passer au semestre précédent
-            const currentMonth = getMonth(this.currentDate);
-            const currentYear = getYear(this.currentDate);
-            
-            if (currentMonth < 6) {
-                // On est au 1er semestre (janvier-juin), aller au 2ème semestre de l'année précédente
-                const prevYear = currentYear - 1;
-                this.currentDate = createDate(prevYear, 6, 1); // 1er juillet de l'année précédente
-                this.currentYear = prevYear;
-            } else {
-                // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de la même année
-                this.currentDate = createDate(currentYear, 0, 1); // 1er janvier de la même année
-                this.currentYear = currentYear;
-            }
-        }
+        // Vue annuelle : passer à l'année précédente
+        const prevYear = getYear(this.currentDate) - 1;
+        this.currentDate = startOfYear(setYear(this.currentDate, prevYear));
+        this.currentYear = prevYear;
         this.renderCalendar();
         this.updateStats();
         this.updateLeaveQuotas();
     });
 
     newNextBtn.addEventListener('click', () => {
-        if (this.viewMode === 'year') {
-            // Vue annuelle : passer à l'année suivante
-            const nextYear = getYear(this.currentDate) + 1;
-            this.currentDate = startOfYear(setYear(this.currentDate, nextYear));
-            this.currentYear = nextYear;
-        } else {
-            // Vue semestrielle : passer au semestre suivant
-            const currentMonth = getMonth(this.currentDate);
-            const currentYear = getYear(this.currentDate);
-            console.log('[Navigation] Avant changement - Mois actuel:', currentMonth, 'Année:', currentYear);
-            
-            if (currentMonth < 6) {
-                // On est au 1er semestre (janvier-juin), aller au 2ème semestre de la même année
-                this.currentDate = createDate(currentYear, 6, 1); // 1er juillet de la même année
-                this.currentYear = currentYear;
-                console.log('[Navigation] Passage au 2ème semestre de', currentYear, '- Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
-            } else {
-                // On est au 2ème semestre (juillet-décembre), aller au 1er semestre de l'année suivante
-                const nextYear = currentYear + 1;
-                this.currentDate = createDate(nextYear, 0, 1); // 1er janvier de l'année suivante
-                this.currentYear = nextYear;
-                console.log('[Navigation] Passage au 1er semestre de', nextYear, '- Mois après changement:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
-            }
-            // Vérification finale de synchronisation
-            const finalYear = getYear(this.currentDate);
-            const finalMonth = getMonth(this.currentDate);
-            if (this.currentYear !== finalYear) {
-                console.warn('[Navigation] Désynchronisation détectée - Correction:', this.currentYear, '->', finalYear);
-                this.currentYear = finalYear;
-            }
-            console.log('[Navigation] Après changement - Mois:', finalMonth, 'Année:', this.currentYear, 'Date complète:', this.currentDate.toISOString());
-        }
+        // Vue annuelle : passer à l'année suivante
+        const nextYear = getYear(this.currentDate) + 1;
+        this.currentDate = startOfYear(setYear(this.currentDate, nextYear));
+        this.currentYear = nextYear;
         // Forcer le rendu immédiatement après la mise à jour
         this.renderCalendar();
         this.updateStats();
@@ -423,7 +378,6 @@ function setupYearViewFormatSelector() {
         formatSelect.id = 'yearViewFormatSelect';
         formatSelect.className = 'year-view-format-select';
         formatSelect.innerHTML = `
-            <option value="semester-view">Vue Semestrielle</option>
             <option value="semester">Vue Annuelle Semestrielle</option>
             <option value="presence">Matrice de Présence</option>
             <option value="presence-vertical">Matrice de Présence (Verticale)</option>
@@ -433,17 +387,10 @@ function setupYearViewFormatSelector() {
         const manager = this;
         formatSelect.addEventListener('change', function(e) {
             const selectedValue = e.target.value;
-            
-            if (selectedValue === 'semester-view') {
-                // Passer en vue semestrielle
-                manager.viewMode = 'semester';
-                manager.renderCalendar();
-            } else {
-                // Passer en vue annuelle avec le format sélectionné
-                manager.viewMode = 'year';
-                manager.yearViewFormat = selectedValue;
-                manager.renderCalendar();
-            }
+            // Toujours en vue annuelle, seul le format change
+            manager.viewMode = 'year';
+            manager.yearViewFormat = selectedValue;
+            manager.renderCalendar();
         });
         
         // Insérer le sélecteur dans header-controls (après les boutons de navigation)
@@ -469,14 +416,10 @@ function updateYearViewFormatSelector() {
     const formatSelect = document.getElementById('yearViewFormatSelect');
     if (!formatSelect) return;
     
-    // Toujours afficher le sélecteur
+    // Toujours afficher le sélecteur (toujours en vue annuelle maintenant)
     formatSelect.style.display = 'inline-block';
     
-    // Mettre à jour la valeur selon le mode actuel
-    if (this.viewMode === 'year') {
-        formatSelect.value = this.yearViewFormat || 'semester';
-    } else {
-        formatSelect.value = 'semester-view';
-    }
+    // Mettre à jour la valeur
+    formatSelect.value = this.yearViewFormat || 'semester';
 }
 

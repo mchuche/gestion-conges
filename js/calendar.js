@@ -23,7 +23,7 @@ function getLeaveForDate(date) {
     return result;
 }
 
-// Rendre le calendrier (semestriel ou annuel selon la vue)
+// Rendre le calendrier (toujours en vue annuelle maintenant)
 function renderCalendar() {
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
@@ -31,120 +31,32 @@ function renderCalendar() {
         return;
     }
     
-    console.log('[RenderCalendar] Vue:', this.viewMode, 'Date actuelle:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate), 'Année:', getYear(this.currentDate));
+    console.log('[RenderCalendar] Vue annuelle, format:', this.yearViewFormat, 'Date actuelle:', this.currentDate.toISOString(), 'Année:', getYear(this.currentDate));
     
-    if (this.viewMode === 'year') {
-        // Choisir entre les différentes vues annuelles
-        if (this.yearViewFormat === 'semester') {
-            this.renderYearViewSemester().catch(error => {
-                logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
-            });
-        } else if (this.yearViewFormat === 'presence') {
-            // La vue présence est async car elle charge les données de l'équipe
-            this.renderYearViewPresence().catch(error => {
-                logger.error('Erreur lors du rendu de la vue présence:', error);
-            });
-        } else if (this.yearViewFormat === 'presence-vertical') {
-            // La vue présence verticale est async car elle charge les données de l'équipe
-            this.renderYearViewPresenceVertical().catch(error => {
-                logger.error('Erreur lors du rendu de la vue présence verticale:', error);
-            });
-        } else {
-            // Format par défaut : vue semestrielle
-            this.yearViewFormat = 'semester';
-            this.renderYearViewSemester().catch(error => {
-                logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
-            });
-        }
+    // Toujours en vue annuelle, choisir entre les différents formats
+    if (this.yearViewFormat === 'semester') {
+        this.renderYearViewSemester().catch(error => {
+            logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
+        });
+    } else if (this.yearViewFormat === 'presence') {
+        // La vue présence est async car elle charge les données de l'équipe
+        this.renderYearViewPresence().catch(error => {
+            logger.error('Erreur lors du rendu de la vue présence:', error);
+        });
+    } else if (this.yearViewFormat === 'presence-vertical') {
+        // La vue présence verticale est async car elle charge les données de l'équipe
+        this.renderYearViewPresenceVertical().catch(error => {
+            logger.error('Erreur lors du rendu de la vue présence verticale:', error);
+        });
     } else {
-        // S'assurer que la classe est correcte pour la vue semestrielle
-        semesterCalendar.className = 'semester-calendar';
-        const semesterView = document.getElementById('semesterView');
-        if (semesterView) {
-            semesterView.className = 'semester-view';
-        }
-        // Vérifier que currentDate est bien à jour avant le rendu
-        console.log('[RenderCalendar] Avant renderSemesterView - currentDate:', this.currentDate.toISOString(), 'Mois:', getMonth(this.currentDate));
-        this.renderSemesterView();
+        // Format par défaut : vue annuelle semestrielle
+        this.yearViewFormat = 'semester';
+        this.renderYearViewSemester().catch(error => {
+            logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
+        });
     }
 }
 
-
-// Rendre la vue semestrielle
-function renderSemesterView() {
-    const semesterCalendar = document.getElementById('semesterCalendar');
-    if (!semesterCalendar) {
-        console.error('semesterCalendar element not found');
-        return;
-    }
-    semesterCalendar.innerHTML = '';
-    semesterCalendar.className = 'semester-calendar';
-
-    // Utiliser date-fns pour obtenir l'année et le mois actuels
-    // Cela garantit la cohérence avec la navigation
-    const year = getYear(this.currentDate);
-    const currentMonth = getMonth(this.currentDate);
-    
-    // Vérifier et corriger la synchronisation pour éviter les problèmes de cache Chrome
-    if (this.currentYear !== year) {
-        console.warn('[RenderSemesterView] Désynchronisation détectée - currentYear:', this.currentYear, 'vs year:', year, '- Correction...');
-        this.currentYear = year;
-    }
-    
-    // S'assurer que currentDate est bien à jour et aligné sur le début du semestre
-    const expectedMonth = currentMonth < 6 ? 0 : 6; // Premier mois du semestre
-    if (getMonth(this.currentDate) !== expectedMonth || getDate(this.currentDate) !== 1) {
-        console.warn('[RenderSemesterView] Date non alignée sur le début du semestre - Correction...');
-        this.currentDate = createDate(year, expectedMonth, 1);
-    }
-    
-    const finalYear = getYear(this.currentDate);
-    const finalMonth = getMonth(this.currentDate);
-    
-    console.log('[RenderSemesterView] Année:', finalYear, 'Mois:', finalMonth, 'currentYear:', this.currentYear);
-    
-    const monthNames = [
-        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ];
-
-    // Déterminer le semestre (1er semestre: 0-5, 2ème semestre: 6-11)
-    const semesterStart = finalMonth < 6 ? 0 : 6;
-    const semesterEnd = finalMonth < 6 ? 6 : 12;
-
-    // Mettre à jour le titre
-    const semesterName = finalMonth < 6 ? '1er Semestre' : '2ème Semestre';
-    document.getElementById('currentMonth').textContent = `${semesterName} ${finalYear}`;
-    console.log('[RenderSemesterView] Semestre affiché:', semesterName, finalYear, 'Mois de début:', semesterStart, 'Mois de fin:', semesterEnd);
-
-    // Créer une colonne pour chaque mois du semestre
-    for (let month = semesterStart; month < semesterEnd; month++) {
-        const monthColumn = document.createElement('div');
-        monthColumn.className = 'semester-month-column';
-
-        // En-tête du mois
-        const monthHeader = document.createElement('div');
-        monthHeader.className = 'semester-month-header';
-        monthHeader.textContent = monthNames[month];
-        monthColumn.appendChild(monthHeader);
-
-        // Jours du mois - utiliser date-fns pour garantir la cohérence
-        const monthDate = createDate(finalYear, month, 1);
-        const daysInMonth = getDaysInMonth(monthDate);
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = createDate(finalYear, month, day);
-            const dayElement = this.createYearDayElement(date);
-            monthColumn.appendChild(dayElement);
-        }
-
-        semesterCalendar.appendChild(monthColumn);
-    }
-    
-    // Finaliser la synchronisation avec date-fns
-    this.currentYear = finalYear;
-    this.currentDate = createDate(finalYear, finalMonth, 1);
-}
 
 // Rendre la vue annuelle (mini-calendriers)
 function renderYearView() {
