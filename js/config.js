@@ -20,24 +20,15 @@
  * 5. Met à jour la visibilité des éléments (sélecteur d'équipe, bouton admin, etc.)
  */
 async function init() {
-    // Initialiser le bouton de bascule de vue
+    // Masquer le bouton viewToggle (remplacé par le sélecteur)
     const viewToggle = document.getElementById('viewToggle');
     if (viewToggle) {
-        if (this.viewMode === 'year') {
-            viewToggle.textContent = '📆';
-            viewToggle.title = 'Vue semestrielle';
-            // Mettre à jour le sélecteur de format
-            if (typeof this.updateYearViewFormatSelector === 'function') {
-                this.updateYearViewFormatSelector();
-            }
-        } else {
-            viewToggle.textContent = '📆';
-            viewToggle.title = 'Vue annuelle';
-            // Masquer le sélecteur de format
-            if (typeof this.updateYearViewFormatSelector === 'function') {
-                this.updateYearViewFormatSelector();
-            }
-        }
+        viewToggle.style.display = 'none';
+    }
+    
+    // Mettre à jour le sélecteur de format
+    if (typeof this.updateYearViewFormatSelector === 'function') {
+        this.updateYearViewFormatSelector();
     }
     
     // Rendre le calendrier
@@ -192,46 +183,10 @@ function setupEventListeners() {
         this.updateLeaveQuotas();
     });
 
-    // Bouton de bascule entre vue semestrielle et annuelle
-    const viewToggle = document.getElementById('viewToggle');
-    if (viewToggle && !viewToggle.hasAttribute('data-listener-added')) {
-        viewToggle.setAttribute('data-listener-added', 'true');
-        
-        // Utiliser bind pour s'assurer que 'this' est correctement lié
-        const manager = this;
-        viewToggle.addEventListener('click', function() {
-            logger.debug('[ViewToggle] Bouton cliqué, vue actuelle:', manager.viewMode);
-            
-            // Basculer entre les vues
-            if (manager.viewMode === 'semester') {
-                logger.debug('[ViewToggle] Passage en vue annuelle');
-                manager.viewMode = 'year';
-                // Conserver le format de vue annuelle ou utiliser 'semester' par défaut
-                if (!manager.yearViewFormat) {
-                    manager.yearViewFormat = 'semester';
-                }
-                viewToggle.textContent = '📆';
-                viewToggle.title = 'Vue semestrielle';
-            } else {
-                logger.debug('[ViewToggle] Passage en vue semestrielle');
-                manager.viewMode = 'semester';
-                viewToggle.textContent = '📆';
-                viewToggle.title = 'Vue annuelle';
-            }
-            // Re-rendre le calendrier avec la nouvelle vue
-            logger.debug('[ViewToggle] Nouvelle vue:', manager.viewMode);
-            manager.renderCalendar();
-            // Mettre à jour la visibilité du sélecteur d'équipe et du sélecteur de format
-            if (typeof manager.updateTeamSelectorVisibility === 'function') {
-                manager.updateTeamSelectorVisibility();
-            }
-            manager.updateYearViewFormatSelector();
-        });
-    } else if (!viewToggle) {
-        logger.warn('[ViewToggle] Bouton viewToggle non trouvé dans le DOM');
-    }
+    // Le bouton viewToggle est maintenant remplacé par le sélecteur de vues
+    // Plus besoin de gérer le clic sur viewToggle
 
-    // Créer et gérer le sélecteur de format de vue annuelle
+    // Créer et gérer le sélecteur de vues (remplace le bouton viewToggle)
     this.setupYearViewFormatSelector();
 
     // Boutons de période (matin/après-midi/journée complète)
@@ -468,7 +423,8 @@ function setupYearViewFormatSelector() {
         formatSelect.id = 'yearViewFormatSelect';
         formatSelect.className = 'year-view-format-select';
         formatSelect.innerHTML = `
-            <option value="semester">Vue Semestrielle</option>
+            <option value="semester-view">Vue Semestrielle</option>
+            <option value="semester">Vue Annuelle Semestrielle</option>
             <option value="presence">Matrice de Présence</option>
             <option value="presence-vertical">Matrice de Présence (Verticale)</option>
         `;
@@ -476,18 +432,26 @@ function setupYearViewFormatSelector() {
         // Ajouter l'événement de changement
         const manager = this;
         formatSelect.addEventListener('change', function(e) {
-            manager.yearViewFormat = e.target.value;
-            if (manager.viewMode === 'year') {
+            const selectedValue = e.target.value;
+            
+            if (selectedValue === 'semester-view') {
+                // Passer en vue semestrielle
+                manager.viewMode = 'semester';
+                manager.renderCalendar();
+            } else {
+                // Passer en vue annuelle avec le format sélectionné
+                manager.viewMode = 'year';
+                manager.yearViewFormat = selectedValue;
                 manager.renderCalendar();
             }
         });
         
-        // Insérer le sélecteur dans header-controls (après viewToggle)
+        // Insérer le sélecteur dans header-controls (après les boutons de navigation)
         const headerControls = document.querySelector('.header-controls');
         if (headerControls) {
-            const viewToggle = document.getElementById('viewToggle');
-            if (viewToggle && viewToggle.nextSibling) {
-                headerControls.insertBefore(formatSelect, viewToggle.nextSibling);
+            const nextMonthBtn = document.getElementById('nextMonth');
+            if (nextMonthBtn && nextMonthBtn.nextSibling) {
+                headerControls.insertBefore(formatSelect, nextMonthBtn.nextSibling);
             } else {
                 headerControls.appendChild(formatSelect);
             }
@@ -505,12 +469,14 @@ function updateYearViewFormatSelector() {
     const formatSelect = document.getElementById('yearViewFormatSelect');
     if (!formatSelect) return;
     
-    // Afficher seulement en vue annuelle
+    // Toujours afficher le sélecteur
+    formatSelect.style.display = 'inline-block';
+    
+    // Mettre à jour la valeur selon le mode actuel
     if (this.viewMode === 'year') {
-        formatSelect.style.display = 'inline-block';
         formatSelect.value = this.yearViewFormat || 'semester';
     } else {
-        formatSelect.style.display = 'none';
+        formatSelect.value = 'semester-view';
     }
 }
 
