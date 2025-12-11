@@ -357,6 +357,114 @@ function setupEventListeners() {
 }
 
 /**
+ * Configure le menu déroulant
+ * Cette fonction peut être appelée plusieurs fois pour réinitialiser le menu
+ */
+function setupMenuDropdown() {
+    // Retirer les anciens listeners si ils existent
+    const oldMenuBtn = document.getElementById('menuBtn');
+    if (oldMenuBtn) {
+        const newMenuBtn = oldMenuBtn.cloneNode(true);
+        oldMenuBtn.parentNode.replaceChild(newMenuBtn, oldMenuBtn);
+    }
+    
+    const menuBtn = document.getElementById('menuBtn');
+    const menuDropdown = document.getElementById('menuDropdown');
+    
+    if (!menuBtn) {
+        logger.error('[Menu] Bouton menuBtn non trouvé dans le DOM');
+        return;
+    }
+    if (!menuDropdown) {
+        logger.error('[Menu] Menu dropdown non trouvé dans le DOM');
+        return;
+    }
+    
+    logger.debug('[Menu] Initialisation du menu déroulant');
+    
+    // Utiliser le contexte correct
+    const manager = this;
+    
+    // Toggle du menu au clic sur le bouton
+    menuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        logger.debug('[Menu] Clic sur le bouton menu');
+        menuDropdown.classList.toggle('show');
+        logger.debug('[Menu] Menu togglé, classe show:', menuDropdown.classList.contains('show'));
+    });
+    
+    // Fermer le menu si on clique ailleurs (une seule fois pour éviter les doublons)
+    if (!document.menuDropdownClickHandler) {
+        document.menuDropdownClickHandler = function(e) {
+            const btn = document.getElementById('menuBtn');
+            const dropdown = document.getElementById('menuDropdown');
+            if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        };
+        document.addEventListener('click', document.menuDropdownClickHandler);
+    }
+    
+    // Gérer les actions du menu
+    const menuItems = menuDropdown.querySelectorAll('.menu-item');
+    logger.debug('[Menu] Nombre d\'éléments du menu:', menuItems.length);
+    
+    // Retirer les anciens listeners des items
+    menuItems.forEach(item => {
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+    });
+    
+    // Ajouter les nouveaux listeners
+    const newMenuItems = menuDropdown.querySelectorAll('.menu-item');
+    newMenuItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const action = item.getAttribute('data-action');
+            logger.debug('[Menu] Action sélectionnée:', action);
+            menuDropdown.classList.remove('show');
+            
+            switch(action) {
+                case 'config':
+                    logger.debug('Menu: Configuration sélectionnée');
+                    if (typeof manager.openConfigModal === 'function') {
+                        manager.openConfigModal();
+                    } else {
+                        logger.error('[Menu] openConfigModal n\'est pas une fonction');
+                    }
+                    break;
+                case 'teams':
+                    logger.debug('Menu: Gérer les équipes sélectionnée');
+                    if (typeof manager.openTeamsModal === 'function') {
+                        manager.openTeamsModal();
+                    } else {
+                        logger.error('[Menu] openTeamsModal n\'est pas une fonction');
+                    }
+                    break;
+                case 'help':
+                    logger.debug('Menu: Aide sélectionnée');
+                    if (typeof manager.openHelpModal === 'function') {
+                        manager.openHelpModal();
+                    } else {
+                        logger.error('[Menu] openHelpModal n\'est pas une fonction');
+                    }
+                    break;
+                case 'admin':
+                    logger.debug('Menu: Administration sélectionnée');
+                    if (typeof manager.openAdminModal === 'function') {
+                        manager.openAdminModal();
+                    } else {
+                        logger.error('[Menu] openAdminModal n\'est pas une fonction');
+                    }
+                    break;
+            }
+        });
+    });
+}
+
+/**
  * Configure le sélecteur de format de vue annuelle (Semestrielle / Présence)
  */
 function setupYearViewFormatSelector() {
