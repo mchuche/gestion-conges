@@ -312,11 +312,55 @@ function setupEventListeners() {
         logger.warn('[Theme] Bouton themeToggle non trouvé dans le DOM');
     }
 
-    // Aide
-    const helpBtn = document.getElementById('helpBtn');
-    if (helpBtn) {
-        helpBtn.addEventListener('click', () => {
-            this.openHelpModal();
+    // Menu déroulant
+    const menuBtn = document.getElementById('menuBtn');
+    const menuDropdown = document.getElementById('menuDropdown');
+    
+    if (menuBtn && menuDropdown) {
+        // Toggle du menu au clic sur le bouton
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDropdown.classList.toggle('show');
+        });
+        
+        // Fermer le menu si on clique ailleurs
+        document.addEventListener('click', (e) => {
+            if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+                menuDropdown.classList.remove('show');
+            }
+        });
+        
+        // Gérer les actions du menu
+        const menuItems = menuDropdown.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = item.getAttribute('data-action');
+                menuDropdown.classList.remove('show');
+                
+                switch(action) {
+                    case 'config':
+                        logger.debug('Menu: Configuration sélectionnée');
+                        this.openConfigModal();
+                        break;
+                    case 'teams':
+                        logger.debug('Menu: Gérer les équipes sélectionnée');
+                        if (typeof this.openTeamsModal === 'function') {
+                            this.openTeamsModal();
+                        }
+                        break;
+                    case 'help':
+                        logger.debug('Menu: Aide sélectionnée');
+                        this.openHelpModal();
+                        break;
+                    case 'admin':
+                        logger.debug('Menu: Administration sélectionnée');
+                        if (typeof this.openAdminModal === 'function') {
+                            this.openAdminModal();
+                        }
+                        break;
+                }
+            });
         });
     }
 
@@ -332,17 +376,6 @@ function setupEventListeners() {
         helpClose.addEventListener('click', () => {
             this.closeHelpModal();
         });
-    }
-
-    // Configuration
-    const configBtn = document.getElementById('configBtn');
-    if (configBtn) {
-        configBtn.addEventListener('click', () => {
-            logger.debug('Bouton de configuration cliqué');
-            this.openConfigModal();
-        });
-    } else {
-        logger.error('Bouton de configuration non trouvé');
     }
 
     document.querySelector('.config-close').addEventListener('click', () => {

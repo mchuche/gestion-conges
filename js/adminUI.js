@@ -20,14 +20,14 @@
  * Cette fonction est appelée lors du chargement des données utilisateur.
  */
 async function updateAdminButtonVisibility() {
-    const adminBtn = document.getElementById('adminBtn');
-    if (!adminBtn) return;
+    const adminMenuItem = document.querySelector('.menu-item[data-action="admin"]');
+    if (!adminMenuItem) return;
 
     const isAdmin = await this.checkIsAdmin();
-    adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    adminMenuItem.style.display = isAdmin ? 'block' : 'none';
     
     if (isAdmin) {
-        logger.debug('[AdminUI] Bouton admin affiché pour:', this.user?.email);
+        logger.debug('[AdminUI] Option admin affichée dans le menu pour:', this.user?.email);
     }
 }
 

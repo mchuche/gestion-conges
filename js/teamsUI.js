@@ -23,35 +23,39 @@
  */
 function updateTeamSelectorVisibility() {
     const teamSelect = document.getElementById('teamSelect');
-    const teamsBtn = document.getElementById('teamsBtn');
+    const teamsMenuItem = document.querySelector('.menu-item[data-action="teams"]');
     
-    if (!teamSelect || !teamsBtn) {
-        console.warn('[TeamsUI] Éléments teamsBtn ou teamSelect non trouvés dans le DOM');
+    if (!teamSelect) {
+        logger.warn('[TeamsUI] Élément teamSelect non trouvé dans le DOM');
         return;
     }
     
-    // Afficher le bouton si l'utilisateur est connecté (toujours visible pour permettre la création d'équipes)
+    // Afficher l'option du menu si l'utilisateur est connecté (toujours visible pour permettre la création d'équipes)
     if (this.user) {
-        teamsBtn.style.display = 'inline-block';
-        console.log('[TeamsUI] Bouton équipes affiché pour utilisateur:', this.user.email);
-        console.log('[TeamsUI] Équipes disponibles:', this.userTeams?.length || 0);
+        if (teamsMenuItem) {
+            teamsMenuItem.style.display = 'block';
+            logger.debug('[TeamsUI] Option équipes affichée dans le menu pour utilisateur:', this.user.email);
+            logger.debug('[TeamsUI] Équipes disponibles:', this.userTeams?.length || 0);
+        }
         
         // Afficher le sélecteur s'il y a des équipes ou si on est en vue présence
         if (this.userTeams && this.userTeams.length > 0) {
             teamSelect.style.display = 'inline-block';
-            console.log('[TeamsUI] Sélecteur d\'équipe affiché (équipes disponibles:', this.userTeams.length, ')');
+            logger.debug('[TeamsUI] Sélecteur d\'équipe affiché (équipes disponibles:', this.userTeams.length, ')');
             // S'assurer que le sélecteur est rempli
             this.populateTeamSelector();
         } else if (this.viewMode === 'year' && (this.yearViewFormat === 'presence' || this.yearViewFormat === 'presence-vertical')) {
             teamSelect.style.display = 'inline-block';
-            console.log('[TeamsUI] Sélecteur d\'équipe affiché (vue présence)');
+            logger.debug('[TeamsUI] Sélecteur d\'équipe affiché (vue présence)');
         } else {
             teamSelect.style.display = 'none';
         }
     } else {
-        teamsBtn.style.display = 'none';
+        if (teamsMenuItem) {
+            teamsMenuItem.style.display = 'none';
+        }
         teamSelect.style.display = 'none';
-        console.log('[TeamsUI] Bouton et sélecteur masqués (utilisateur non connecté)');
+        logger.debug('[TeamsUI] Option équipes et sélecteur masqués (utilisateur non connecté)');
     }
 }
 

@@ -79,10 +79,15 @@
                     </div>
                     <button id="themeToggle" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème">☾</button>
                     <button id="fullWidthToggle" class="full-width-toggle" title="Largeur pleine écran" aria-label="Largeur pleine écran">⛶</button>
-                    <button id="configBtn" class="config-btn" title="Configuration">⚙</button>
-                    <button id="teamsBtn" class="teams-btn" title="Gérer les équipes" style="display: none;">👥</button>
-                    <button id="helpBtn" class="help-btn" title="Aide">?</button>
-                    <button id="adminBtn" class="admin-btn" title="Administration" style="display: none;">⚙ Admin</button>
+                    <div class="menu-dropdown">
+                        <button id="menuBtn" class="menu-btn" title="Menu">☰</button>
+                        <div id="menuDropdown" class="menu-dropdown-content">
+                            <button class="menu-item" data-action="config">⚙ Configuration</button>
+                            <button class="menu-item" data-action="teams" style="display: none;">👥 Gérer les équipes</button>
+                            <button class="menu-item" data-action="help">? Aide</button>
+                            <button class="menu-item" data-action="admin" style="display: none;">⚙ Administration</button>
+                        </div>
+                    </div>
                     <button id="logoutBtn" class="logout-btn" title="Déconnexion">⏻</button>
                 </div>
             </div>

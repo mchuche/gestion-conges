@@ -125,7 +125,13 @@ header {
     background: var(--secondary-color);
 }
 
-.config-btn {
+/* Menu déroulant */
+.menu-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.menu-btn {
     background: var(--primary-color);
     color: white;
     border: none;
@@ -142,31 +148,80 @@ header {
     flex-shrink: 0;
 }
 
-.config-btn:hover {
+.menu-btn:hover {
     background: #357abd;
-    transform: scale(1.1) rotate(90deg);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
 }
 
-.help-btn {
-    background: var(--warning-color);
-    color: white;
-    border: none;
-    width: 45px;
-    height: 45px;
+.menu-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background: var(--card-bg);
+    min-width: 200px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
-    font-size: 1.3em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    z-index: 1000;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
 }
 
-.help-btn:hover {
-    background: #d68910;
-    transform: scale(1.1);
+.menu-dropdown-content.show {
+    display: block;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    text-align: left;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-item:hover {
+    background: var(--hover-color);
+    color: var(--primary-color);
+}
+
+.menu-item[data-action="config"]:hover {
+    background: rgba(74, 144, 226, 0.1);
+}
+
+.menu-item[data-action="teams"]:hover {
+    background: rgba(70, 184, 105, 0.1);
+}
+
+.menu-item[data-action="help"]:hover {
+    background: rgba(243, 156, 18, 0.1);
+}
+
+.menu-item[data-action="admin"]:hover {
+    background: rgba(231, 76, 60, 0.1);
 }
 
 .view-toggle {
@@ -248,8 +303,7 @@ body.minimal-header .header-controls #yearViewFormatSelect {
     display: none !important;
 }
 
-body.minimal-header .header-right .teams-btn,
-body.minimal-header .header-right .admin-btn {
+body.minimal-header .header-right .menu-dropdown {
     display: none !important;
 }
 
@@ -1653,8 +1707,10 @@ body.minimal-header .header-controls .full-width-toggle {
         gap: 10px;
     }
 
-    .config-btn {
-        margin-bottom: 0;
+    .menu-dropdown-content {
+        right: auto;
+        left: 0;
+        min-width: 180px;
     }
 
     .header-top {
@@ -1781,8 +1837,10 @@ body.minimal-header .header-controls .full-width-toggle {
         gap: 10px;
     }
 
-    .config-btn {
-        margin-bottom: 0;
+    .menu-dropdown-content {
+        right: auto;
+        left: 0;
+        min-width: 180px;
     }
 
     .header-top {
