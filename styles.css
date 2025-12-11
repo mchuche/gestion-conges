@@ -94,6 +94,17 @@ header {
     position: relative;
 }
 
+/* Centrer le titre quand c'est possible (quand le bouton minimizeHeaderBtn n'est pas visible) */
+.header-top h1 {
+    flex: 1;
+    text-align: center;
+}
+
+/* Si le bouton minimizeHeaderBtn est visible, ajuster le padding du titre */
+.header-top #minimizeHeaderBtn:not([style*="display: none"]) ~ h1 {
+    padding-left: 50px;
+}
+
 .header-right {
     display: flex;
     align-items: center;
