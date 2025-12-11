@@ -2003,6 +2003,20 @@ body.minimal-header .header-controls .full-width-toggle {
     
     .header-top .header-right {
         order: 1;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* S'assurer que tous les boutons d'icônes sont alignés sur mobile */
+    .header-top .header-right .theme-toggle,
+    .header-top .header-right .full-width-toggle,
+    .header-top .header-right .menu-btn,
+    .header-top .header-right .logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
 
     .year-month-header {
