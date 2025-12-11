@@ -296,6 +296,16 @@ if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
     };
 }
 
+// FullWidth
+if (typeof initFullWidth !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        initFullWidth,
+        setFullWidth,
+        toggleFullWidth,
+        setupFullWidthListeners
+    });
+}
+
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', async () => {
     logger.debug('[LeaveManager] DOM chargé, initialisation du gestionnaire de congés...');

@@ -63,6 +63,13 @@ async function init() {
     if (typeof this.setupTeamsEventListeners === 'function') {
         this.setupTeamsEventListeners();
     }
+    // Configurer le mode pleine largeur
+    if (typeof this.initFullWidth === 'function') {
+        this.initFullWidth();
+    }
+    if (typeof this.setupFullWidthListeners === 'function') {
+        this.setupFullWidthListeners();
+    }
     
     // Configurer les event listeners pour les invitations
     if (typeof this.setupInvitationsEventListeners === 'function') {
