@@ -152,7 +152,7 @@ function renderTeamsList() {
         teamCard.innerHTML = `
             <div class="team-card-header">
                 <h5>${team.name}</h5>
-                <span class="team-role-badge">${team.role === 'owner' ? '👑 Propriétaire' : team.role === 'admin' ? '🔧 Admin' : '👤 Membre'}</span>
+                <span class="team-role-badge">${team.role === 'owner' ? '👑 Propriétaire' : team.role === 'admin' ? '⚙ Admin' : '👤 Membre'}</span>
             </div>
             ${team.description ? `<p class="team-description">${team.description}</p>` : ''}
             <button class="view-team-btn" data-team-id="${team.id}">Voir les membres</button>
@@ -227,7 +227,7 @@ async function showTeamDetails(teamId) {
             memberCard.innerHTML = `
                 <div class="member-info">
                     <span class="member-email">${member.email}</span>
-                    <span class="member-role">${member.role === 'owner' ? '👑 Propriétaire' : member.role === 'admin' ? '🔧 Admin' : '👤 Membre'}</span>
+                    <span class="member-role">${member.role === 'owner' ? '👑 Propriétaire' : member.role === 'admin' ? '⚙ Admin' : '👤 Membre'}</span>
                 </div>
                 ${canRemove ? `<button class="remove-member-btn" data-user-id="${member.userId}">Retirer</button>` : ''}
             `;
@@ -404,7 +404,7 @@ async function showAddMemberDialog(teamId) {
             );
         } else {
             await swalSuccess(
-                '📨 Invitation envoyée',
+                '✉ Invitation envoyée',
                 `Invitation envoyée à <strong>${email.trim()}</strong> !<br><br>L'utilisateur recevra une notification lorsqu'il se connectera à l'application.`,
                 3000
             );

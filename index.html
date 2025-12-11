@@ -25,14 +25,14 @@
     <div id="authModal" class="modal active" style="display: block;">
         <div class="modal-content auth-modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0;">🔐 Connexion</h3>
-                <button id="themeToggleAuth" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème" style="position: relative; top: 0; right: 0;">🌙</button>
+                <h3 style="margin: 0;">🔒 Connexion</h3>
+                <button id="themeToggleAuth" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème" style="position: relative; top: 0; right: 0;">☾</button>
             </div>
             <div id="authError" class="error-message" style="display: none;"></div>
             
             <div class="auth-help-section" style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-size: 0.9em;">
-                <p style="margin: 0 0 8px 0; color: #666;">💡 Si vous êtes bloqué sur cette page, essayez de nettoyer les données locales :</p>
-                <button id="clearAuthDataBtn" class="clear-data-btn" style="padding: 6px 12px; font-size: 0.85em; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer;">🧹 Nettoyer les données</button>
+                <p style="margin: 0 0 8px 0; color: #666;">ℹ Si vous êtes bloqué sur cette page, essayez de nettoyer les données locales :</p>
+                <button id="clearAuthDataBtn" class="clear-data-btn" style="padding: 6px 12px; font-size: 0.85em; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer;">⌧ Nettoyer les données</button>
             </div>
             
             <div id="loginForm">
@@ -71,15 +71,15 @@
     <div class="container" id="mainContainer" style="display: none;">
         <header>
             <div class="header-top">
-                <h1>📅 Gestionnaire de Congés</h1>
+                <h1>📆 Gestionnaire de Congés</h1>
                 <div class="header-right">
                     <div class="user-info">
                         <span id="userName" class="user-name"></span>
-                        <span id="invitationsBadge" class="invitations-badge" style="display: none;" title="Vous avez des invitations en attente">📨</span>
+                        <span id="invitationsBadge" class="invitations-badge" style="display: none;" title="Vous avez des invitations en attente">✉</span>
                     </div>
-                    <button id="themeToggle" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème">🌙</button>
-                    <button id="helpBtn" class="help-btn" title="Aide">❓</button>
-                <button id="configBtn" class="config-btn" title="Configuration">⚙️</button>
+                    <button id="themeToggle" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème">☾</button>
+                    <button id="helpBtn" class="help-btn" title="Aide">?</button>
+                <button id="configBtn" class="config-btn" title="Configuration">⚙</button>
                     <button id="logoutBtn" class="logout-btn" title="Déconnexion">⏻</button>
                 </div>
             </div>
@@ -87,9 +87,9 @@
                 <button id="prevMonth" class="nav-btn">◀</button>
                 <h2 id="currentMonth"></h2>
                 <button id="nextMonth" class="nav-btn">▶</button>
-                <button id="viewToggle" class="view-toggle-btn" title="Basculer entre vue semestrielle et annuelle">📅</button>
-                <button id="teamsBtn" class="teams-btn" title="Gérer les équipes" style="display: none;">👥</button>
-                <button id="adminBtn" class="admin-btn" title="Administration" style="display: none;">⚙️ Admin</button>
+                <button id="viewToggle" class="view-toggle-btn" title="Basculer entre vue semestrielle et annuelle">📆</button>
+                <button id="teamsBtn" class="teams-btn" title="Gérer les équipes" style="display: none;">👤</button>
+                <button id="adminBtn" class="admin-btn" title="Administration" style="display: none;">⚙ Admin</button>
                 <select id="teamSelect" class="team-select" title="Sélectionner une équipe" style="display: none;">
                     <option value="">Mon calendrier</option>
                 </select>
@@ -108,7 +108,7 @@
         </div>
 
         <div class="help-hint" id="helpHint" style="display: none;">
-            💡 Astuce : Maintenez <strong>Ctrl</strong> (ou <strong>Cmd</strong> sur Mac) et cliquez sur plusieurs jours pour les sélectionner en même temps.
+            ℹ Astuce : Maintenez <strong>Ctrl</strong> (ou <strong>Cmd</strong> sur Mac) et cliquez sur plusieurs jours pour les sélectionner en même temps.
         </div>
 
         <div id="leaveQuotas" class="leave-quotas"></div>
@@ -123,7 +123,7 @@
         <div id="configModal" class="modal">
             <div class="modal-content config-modal-content">
                 <span class="close config-close">&times;</span>
-                <h3>⚙️ Configuration des Congés</h3>
+                <h3>⚙ Configuration des Congés</h3>
 
                 <div class="config-section">
                     <h4>Quotas de Congés par Année</h4>
@@ -155,10 +155,10 @@
                 -->
 
                 <div class="config-section">
-                    <h4>🗑️ Suppression de compte</h4>
+                    <h4>⌧ Suppression de compte</h4>
                     <div class="debug-section">
-                        <p class="config-hint">⚠️ Danger : Cette action supprimera définitivement votre compte et toutes vos données</p>
-                        <button id="deleteAccountBtn" class="delete-account-btn-full" title="Supprimer le compte">🗑️ Supprimer mon compte</button>
+                        <p class="config-hint">⚠ Danger : Cette action supprimera définitivement votre compte et toutes vos données</p>
+                        <button id="deleteAccountBtn" class="delete-account-btn-full" title="Supprimer le compte">⌧ Supprimer mon compte</button>
                     </div>
                 </div>
 
@@ -173,7 +173,7 @@
         <div id="teamsModal" class="modal">
             <div class="modal-content teams-modal-content">
                 <span class="close teams-close">&times;</span>
-                <h3>👥 Gestion des Équipes</h3>
+                <h3>👤 Gestion des Équipes</h3>
                 
                 <div class="teams-section">
                     <h4>Mes équipes</h4>
@@ -186,7 +186,7 @@
                     <div id="teamMembersList" class="team-members-list"></div>
                     <div class="team-actions">
                         <button id="addMemberBtn" class="add-btn">+ Ajouter un membre</button>
-                        <button id="deleteTeamBtn" class="delete-btn" style="display: none;">🗑️ Supprimer l'équipe</button>
+                        <button id="deleteTeamBtn" class="delete-btn" style="display: none;">⌧ Supprimer l'équipe</button>
                     </div>
                 </div>
 
@@ -216,7 +216,7 @@
         <div id="invitationsModal" class="modal">
             <div class="modal-content invitations-modal-content">
                 <span class="close invitations-close">&times;</span>
-                <h3>📨 Invitations en attente</h3>
+                <h3>✉ Invitations en attente</h3>
                 
                 <div id="invitationsList" class="invitations-list">
                     <p class="no-invitations">Chargement...</p>
@@ -232,13 +232,13 @@
         <div id="adminModal" class="modal">
             <div class="modal-content admin-modal-content">
                 <span class="close admin-close">&times;</span>
-                <h3>⚙️ Administration</h3>
+                <h3>⚙ Administration</h3>
                 
                 <!-- Onglets -->
                 <div class="admin-tabs">
-                    <button class="admin-tab active" data-tab="users">👥 Utilisateurs</button>
+                    <button class="admin-tab active" data-tab="users">👤 Utilisateurs</button>
                     <button class="admin-tab" data-tab="teams">🏢 Groupes</button>
-                    <button class="admin-tab" data-tab="settings">⚙️ Paramètres</button>
+                    <button class="admin-tab" data-tab="settings">⚙ Paramètres</button>
                     <button class="admin-tab" data-tab="stats">📊 Statistiques</button>
                     <button class="admin-tab" data-tab="audit">📋 Logs d'audit</button>
                 </div>
@@ -306,10 +306,10 @@
         <div id="helpModal" class="modal">
             <div class="modal-content help-modal-content">
                 <span class="close help-close">&times;</span>
-                <h3>❓ Aide - Guide d'utilisation</h3>
+                <h3>? Aide - Guide d'utilisation</h3>
                 
                 <div class="help-section">
-                    <h4>📅 Utilisation du calendrier</h4>
+                    <h4>📆 Utilisation du calendrier</h4>
                     <ul class="help-list">
                         <li><strong>Ajouter un congé :</strong> Cliquez sur un jour dans le calendrier, choisissez la période (journée complète, matin ou après-midi) et sélectionnez le type de congé.</li>
                         <li><strong>Sélection multiple :</strong> Maintenez <strong>Ctrl</strong> (ou <strong>Cmd</strong> sur Mac) et cliquez sur plusieurs jours pour les sélectionner, puis appliquez un congé à tous en une fois.</li>
@@ -323,7 +323,7 @@
                     <ul class="help-list">
                         <li>Chaque type de congé peut avoir un <strong>quota</strong> (nombre de jours maximum par an).</li>
                         <li>Les types <strong>sans quota</strong> ou avec <strong>quota = 0</strong> ne sont <strong>pas comptabilisés</strong> dans les statistiques.</li>
-                        <li>Vous pouvez personnaliser les types de congés via la configuration (⚙️).</li>
+                        <li>Vous pouvez personnaliser les types de congés via la configuration (⚙).</li>
                         <li>Les types par défaut sont : Congé Payé, RTT, Jours Hiver, Maladie, Télétravail, Formation, Grève.</li>
                     </ul>
                 </div>
@@ -348,7 +348,7 @@
                 </div>
 
                 <div class="help-section">
-                    <h4>⚙️ Configuration</h4>
+                    <h4>⚙ Configuration</h4>
                     <ul class="help-list">
                         <li><strong>Types de congés :</strong> Ajoutez, modifiez ou supprimez des types de congés. Personnalisez les noms, labels et couleurs.</li>
                         <li><strong>Quotas :</strong> Configurez les quotas par type et par année. Laissez vide pour un quota illimité.</li>
@@ -357,7 +357,7 @@
                 </div>
 
                 <div class="help-section">
-                    <h4>🔐 Compte utilisateur</h4>
+                    <h4>🔒 Compte utilisateur</h4>
                     <ul class="help-list">
                         <li>Chaque utilisateur a son propre compte et ses propres données.</li>
                         <li>Vos données sont sauvegardées automatiquement dans le cloud (Supabase).</li>

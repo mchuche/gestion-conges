@@ -31,7 +31,7 @@ async function init() {
                 this.updateYearViewFormatSelector();
             }
         } else {
-            viewToggle.textContent = '📅';
+            viewToggle.textContent = '📆';
             viewToggle.title = 'Vue annuelle';
             // Masquer le sélecteur de format
             if (typeof this.updateYearViewFormatSelector === 'function') {
@@ -208,7 +208,7 @@ function setupEventListeners() {
             } else {
                 logger.debug('[ViewToggle] Passage en vue semestrielle');
                 manager.viewMode = 'semester';
-                viewToggle.textContent = '📅';
+                viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue annuelle';
             }
             // Re-rendre le calendrier avec la nouvelle vue

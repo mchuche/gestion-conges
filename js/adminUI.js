@@ -156,7 +156,7 @@ async function renderAdminUsersList() {
                     </div>
                 </div>
                 <div class="admin-user-actions">
-                    <button class="admin-delete-btn" data-user-id="${user.id}" title="Supprimer l'utilisateur">🗑️</button>
+                    <button class="admin-delete-btn" data-user-id="${user.id}" title="Supprimer l'utilisateur">⌧</button>
                 </div>
             `;
 
@@ -239,7 +239,7 @@ async function renderAdminTeamsList() {
                     </div>
                 </div>
                 <div class="admin-team-actions">
-                    <button class="admin-delete-btn" data-team-id="${team.id}" title="Supprimer le groupe">🗑️</button>
+                    <button class="admin-delete-btn" data-team-id="${team.id}" title="Supprimer le groupe">⌧</button>
                 </div>
             `;
 
@@ -445,12 +445,12 @@ async function renderAuditLogs() {
             let icon = '📝';
             let actionLabel = log.action;
             const actionColors = {
-                'user_deleted': { icon: '🗑️', color: '#e74c3c', label: 'Utilisateur supprimé' },
-                'team_deleted': { icon: '🗑️', color: '#e74c3c', label: 'Groupe supprimé' },
-                'settings_updated': { icon: '⚙️', color: '#3498db', label: 'Paramètres modifiés' },
+                'user_deleted': { icon: '⌧', color: '#e74c3c', label: 'Utilisateur supprimé' },
+                'team_deleted': { icon: '⌧', color: '#e74c3c', label: 'Groupe supprimé' },
+                'settings_updated': { icon: '⚙', color: '#3498db', label: 'Paramètres modifiés' },
                 'team_created': { icon: '➕', color: '#2ecc71', label: 'Groupe créé' },
                 'user_created': { icon: '➕', color: '#2ecc71', label: 'Utilisateur créé' },
-                'admin_action': { icon: '🔐', color: '#9b59b6', label: 'Action admin' }
+                'admin_action': { icon: '🔒', color: '#9b59b6', label: 'Action admin' }
             };
 
             if (actionColors[log.action]) {

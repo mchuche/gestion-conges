@@ -582,7 +582,7 @@ function updateWorkingDaysInfo() {
         
         // Afficher les informations sur les jours ouvrés
         const dateRangeStr = `${firstDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} - ${lastDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-        workingDaysInfo.innerHTML = `📅 <strong>${workingDays}</strong> jour${workingDays > 1 ? 's' : ''} ouvré${workingDays > 1 ? 's' : ''} sur ${totalDays} jour${totalDays > 1 ? 's' : ''} sélectionné${totalDays > 1 ? 's' : ''} (${dateRangeStr})`;
+        workingDaysInfo.innerHTML = `📆 <strong>${workingDays}</strong> jour${workingDays > 1 ? 's' : ''} ouvré${workingDays > 1 ? 's' : ''} sur ${totalDays} jour${totalDays > 1 ? 's' : ''} sélectionné${totalDays > 1 ? 's' : ''} (${dateRangeStr})`;
         workingDaysInfo.style.display = 'block';
     } else if (this.selectedDates.length === 1) {
         const date = this.selectedDates[0];

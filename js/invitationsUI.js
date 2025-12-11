@@ -21,7 +21,7 @@ async function updateInvitationsBadge() {
         
         if (pendingInvitations.length > 0) {
             badge.style.display = 'inline-block';
-            badge.textContent = `📨 ${pendingInvitations.length}`;
+            badge.textContent = `✉ ${pendingInvitations.length}`;
             badge.title = `Vous avez ${pendingInvitations.length} invitation(s) en attente - Cliquez pour voir`;
             console.log('[updateInvitationsBadge] Badge affiché avec', pendingInvitations.length, 'invitation(s)');
         } else {

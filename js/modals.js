@@ -105,7 +105,7 @@ function renderConfigModal() {
                        data-index="${index}">
                 <input type="number" class="leave-type-quota" value="${quota !== null && quota !== undefined ? quota : ''}" 
                        placeholder="Quota (vide = illimité)" min="0" data-index="${index}">
-                <button class="delete-type-btn" data-index="${index}" title="Supprimer ce type" aria-label="Supprimer">🗑️</button>
+                <button class="delete-type-btn" data-index="${index}" title="Supprimer ce type" aria-label="Supprimer">⌧</button>
             </div>
         `;
         container.appendChild(item);

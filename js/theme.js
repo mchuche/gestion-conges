@@ -62,7 +62,7 @@ function updateThemeToggleButton(theme) {
     
     toggleButtons.forEach(toggleButton => {
         if (toggleButton) {
-            toggleButton.textContent = theme === 'dark' ? '☀️' : '🌙';
+            toggleButton.textContent = theme === 'dark' ? '☀' : '☾';
             toggleButton.setAttribute('title', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
             toggleButton.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
         }
