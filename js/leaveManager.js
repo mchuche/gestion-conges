@@ -323,8 +323,18 @@ if (typeof initMinimizeHeader !== 'undefined') {
     });
 }
 
+// Protection contre les initialisations multiples
+let managerInitialized = false;
+
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', async () => {
+    // Éviter les initialisations multiples (peut arriver avec certains navigateurs ou extensions)
+    if (managerInitialized) {
+        logger.warn('[LeaveManager] Initialisation déjà effectuée, ignorée pour éviter les doublons');
+        return;
+    }
+    managerInitialized = true;
+    
     logger.debug('[LeaveManager] DOM chargé, initialisation du gestionnaire de congés...');
     
     // Vérifier que toutes les fonctions nécessaires sont disponibles
@@ -334,6 +344,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             init: typeof init,
             setupEventListeners: typeof setupEventListeners
         });
+        managerInitialized = false; // Réinitialiser en cas d'erreur
+        return;
     }
     
     try {

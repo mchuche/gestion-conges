@@ -21,9 +21,20 @@
  * 4. Configure les listeners pour les changements d'état d'authentification
  * 5. Configure les event listeners pour les formulaires de connexion/inscription
  */
+// Protection contre les initialisations multiples
+let authInitialized = false;
+
 async function initAuth() {
+    // Éviter les initialisations multiples
+    if (authInitialized) {
+        console.log('[Auth] initAuth déjà appelé, ignoré pour éviter les doublons');
+        return;
+    }
+    authInitialized = true;
+    
     // Vérifier que Supabase est correctement initialisé
     if (!supabase) {
+        authInitialized = false; // Réinitialiser en cas d'erreur
         await swalError(
             'Erreur de configuration',
             'Supabase n\'est pas initialisé. Vérifiez que config.js est correctement configuré.'
@@ -237,12 +248,23 @@ async function clearInvalidSession() {
     }
 }
 
+// Protection contre les appels multiples à showAuthModal
+let authModalShown = false;
+
 function showAuthModal() {
     const authModal = document.getElementById('authModal');
     const mainContainer = document.getElementById('mainContainer');
+    
+    // Éviter d'afficher la modale si elle est déjà affichée
+    if (authModalShown && authModal && authModal.style.display === 'block') {
+        console.log('[Auth] showAuthModal déjà appelé, ignoré pour éviter les doublons');
+        return;
+    }
+    
     if (authModal) {
         authModal.style.display = 'block';
         authModal.classList.add('active');
+        authModalShown = true;
     }
     if (mainContainer) mainContainer.style.display = 'none';
 }
@@ -253,6 +275,7 @@ function showMainApp() {
     if (authModal) {
         authModal.style.display = 'none';
         authModal.classList.remove('active');
+        authModalShown = false; // Réinitialiser le flag
     }
     if (mainContainer) mainContainer.style.display = 'block';
     const userNameEl = document.getElementById('userName');
