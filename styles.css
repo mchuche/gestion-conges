@@ -362,6 +362,9 @@ body.minimal-header .header-controls .nav-center-group {
         order: 0;
         align-self: flex-start;
         margin-bottom: 10px;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
     
     body.minimal-header .header-controls .nav-center-group {
@@ -377,11 +380,6 @@ body.minimal-header .header-controls .nav-center-group {
         margin-left: 0;
         align-self: flex-start;
         margin-top: 0;
-    }
-    
-    /* S'assurer que tous les boutons sont alignés verticalement en mode minimal sur mobile */
-    body.minimal-header .header-controls #minimizeHeaderBtn,
-    body.minimal-header .header-controls .full-width-toggle {
         display: flex;
         align-items: center;
         justify-content: center;
