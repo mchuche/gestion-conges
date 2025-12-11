@@ -264,6 +264,24 @@ body.minimal-header #leaveQuotas {
 
 body.minimal-header .header-controls {
     margin-bottom: 10px;
+    justify-content: space-between;
+    position: relative;
+}
+
+/* Centrer l'année et la navigation en mode minimal */
+body.minimal-header .header-controls .nav-center-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Positionner le bouton full-width à droite en mode minimal */
+body.minimal-header .header-controls .full-width-toggle {
+    margin-left: auto;
+    order: 999;
 }
 
 .nav-btn {
