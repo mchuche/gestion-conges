@@ -2366,7 +2366,7 @@ body.minimal-header .header-controls .full-width-toggle {
         font-size: 0.8em;
     }
     
-    /* Forcer l'affichage du sélecteur de vue sur petit mobile, même en mode minimal-header */
+    /* Forcer l'affichage du sélecteur de vue sur petit mobile (sauf en mode minimal-header) */
     .header-controls #yearViewFormatSelect,
     .header-controls .team-select {
         display: block !important;
@@ -2374,12 +2374,10 @@ body.minimal-header .header-controls .full-width-toggle {
         margin: 5px 0;
     }
     
-    /* Surcharger la règle minimal-header pour afficher le sélecteur sur petit mobile */
+    /* En mode minimal-header sur petit mobile, cacher les sélecteurs */
     body.minimal-header .header-controls #yearViewFormatSelect,
     body.minimal-header .header-controls .team-select {
-        display: block !important;
-        width: 100%;
-        margin: 5px 0;
+        display: none !important;
     }
 }
 
