@@ -44,6 +44,11 @@ function renderCalendar() {
             this.renderYearViewPresence().catch(error => {
                 logger.error('Erreur lors du rendu de la vue présence:', error);
             });
+        } else if (this.yearViewFormat === 'presence-vertical') {
+            // La vue présence verticale est async car elle charge les données de l'équipe
+            this.renderYearViewPresenceVertical().catch(error => {
+                logger.error('Erreur lors du rendu de la vue présence verticale:', error);
+            });
         } else {
             // Format par défaut : vue semestrielle
             this.yearViewFormat = 'semester';

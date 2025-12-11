@@ -463,6 +463,7 @@ function setupYearViewFormatSelector() {
         formatSelect.innerHTML = `
             <option value="semester">Vue Semestrielle</option>
             <option value="presence">Matrice de Présence</option>
+            <option value="presence-vertical">Matrice de Présence (Verticale)</option>
         `;
         
         // Ajouter l'événement de changement

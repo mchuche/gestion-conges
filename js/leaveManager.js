@@ -138,6 +138,7 @@ if (typeof getLeaveForDate !== 'undefined') {
         renderSemesterView,
         renderYearView,
         renderYearViewPresence,
+        renderYearViewPresenceVertical,
         renderYearViewSemester,
         createPresenceDayCell,
         createYearDayElement,

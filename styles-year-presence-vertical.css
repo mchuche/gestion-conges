@@ -1,0 +1,235 @@
+/* Styles pour la vue annuelle - Matrice de Présence Verticale */
+
+/* ===== VUE MATRICE DE PRÉSENCE VERTICALE ===== */
+.year-presence-vertical-view {
+    overflow-x: auto;
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--bg-color) !important;
+}
+
+.year-presence-vertical-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    min-width: max-content;
+}
+
+.year-presence-vertical-month-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.year-presence-vertical-month-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1em;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.year-presence-vertical-days-header-row,
+.year-presence-vertical-user-row,
+.year-presence-vertical-stats-row {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 2px;
+}
+
+.year-presence-vertical-user-label {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    padding: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.year-presence-vertical-user-name {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    padding: 10px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.year-presence-vertical-days-container {
+    display: grid;
+    grid-template-columns: repeat(31, 1fr);
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.year-presence-vertical-day-header {
+    aspect-ratio: 1;
+    min-width: 20px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: 600;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    padding: 2px;
+}
+
+.year-presence-vertical-day-header.weekend {
+    background: var(--bg-color);
+    opacity: 0.7;
+}
+
+.year-presence-vertical-day-header.public-holiday {
+    background: #ffc107;
+    color: #000;
+    font-weight: bold;
+}
+
+/* Réutiliser les styles de la vue présence normale pour les cellules */
+.year-presence-vertical-view .year-presence-day-cell {
+    aspect-ratio: 1;
+    min-width: 20px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--bg-color);
+    position: relative;
+}
+
+.year-presence-vertical-view .year-presence-day-cell:hover {
+    transform: scale(1.2);
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.year-presence-vertical-view .year-presence-day-cell.today {
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.year-presence-vertical-view .year-presence-day-cell.past-day {
+    opacity: 0.7;
+}
+
+.year-presence-vertical-view .year-presence-day-cell.weekend {
+    background: var(--bg-color);
+    opacity: 0.6;
+}
+
+.year-presence-vertical-view .year-presence-day-cell.public-holiday {
+    border-color: #ffc107;
+    border-width: 2px;
+}
+
+.year-presence-vertical-view .year-presence-day-cell.present {
+    background: #4caf50;
+    border-color: #4caf50;
+}
+
+.year-presence-vertical-view .year-presence-day-cell.has-leave {
+    border-width: 2px;
+}
+
+/* Réutiliser les styles de la vue présence normale pour les cellules de stats */
+.year-presence-vertical-view .year-presence-stats-cell {
+    aspect-ratio: 1;
+    min-width: 20px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    cursor: help;
+}
+
+/* Responsive pour Matrice de Présence Verticale */
+@media (max-width: 1200px) {
+    .year-presence-vertical-view .year-presence-vertical-day-header,
+    .year-presence-vertical-view .year-presence-day-cell,
+    .year-presence-vertical-view .year-presence-stats-cell {
+        min-width: 16px;
+        min-height: 16px;
+        font-size: 0.6em;
+    }
+    
+    .year-presence-vertical-user-label,
+    .year-presence-vertical-user-name {
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .year-presence-vertical-user-label,
+    .year-presence-vertical-user-name {
+        width: 100px;
+        min-width: 100px;
+        max-width: 100px;
+        font-size: 0.85em;
+        padding: 6px;
+    }
+    
+    .year-presence-vertical-view .year-presence-vertical-day-header,
+    .year-presence-vertical-view .year-presence-day-cell,
+    .year-presence-vertical-view .year-presence-stats-cell {
+        min-width: 12px;
+        min-height: 12px;
+        font-size: 0.5em;
+    }
+    
+    .year-presence-vertical-month-header {
+        font-size: 0.95em;
+        padding: 8px;
+    }
+}
+
+/* Mode sombre */
+[data-theme="dark"] .year-presence-vertical-month-block {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .year-presence-vertical-day-header.weekend,
+[data-theme="dark"] .year-presence-vertical-day-cell.weekend {
+    opacity: 0.5;
+}
+
