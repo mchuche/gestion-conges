@@ -2373,6 +2373,14 @@ body.minimal-header .header-controls .full-width-toggle {
     .day-number {
         font-size: 0.8em;
     }
+    
+    /* Forcer l'affichage du sélecteur de vue sur petit mobile */
+    .header-controls #yearViewFormatSelect,
+    .header-controls .team-select {
+        display: block !important;
+        width: 100%;
+        margin: 5px 0;
+    }
 }
 
 /* Styles pour la gestion des équipes */
