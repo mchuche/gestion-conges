@@ -389,7 +389,7 @@ function setupYearViewFormatSelector() {
         formatSelect.id = 'yearViewFormatSelect';
         formatSelect.className = 'year-view-format-select';
         formatSelect.innerHTML = `
-            <option value="semester">Vue Annuelle Semestrielle</option>
+            <option value="semester">Vue Annuelle</option>
             <option value="presence">Matrice de Présence</option>
             <option value="presence-vertical">Matrice de Présence (Verticale)</option>
         `;

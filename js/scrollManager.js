@@ -14,7 +14,7 @@ function checkScrollbarVisibility() {
     const semesterView = document.getElementById('semesterView');
     if (!semesterView) return;
     
-    // Vérifier si on est en vue annuelle semestrielle
+    // Vérifier si on est en vue annuelle
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar || !semesterCalendar.classList.contains('year-semester-view')) {
         return;

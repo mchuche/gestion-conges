@@ -1,4 +1,4 @@
-/* ===== VUE ANNUELLE STYLE SEMESTRIELLE ===== */
+/* ===== VUE ANNUELLE ===== */
 
 .year-semester-view {
     display: grid;
@@ -9,7 +9,7 @@
     padding: 10px 0;
 }
 
-/* Responsive pour la vue annuelle semestrielle */
+/* Responsive pour la vue annuelle */
 @media (max-width: 2000px) {
     .year-semester-view {
         grid-template-columns: repeat(6, 1fr);

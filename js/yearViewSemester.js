@@ -1,5 +1,5 @@
 /**
- * Vue annuelle style semestrielle - Affiche les 12 mois en colonnes verticales
+ * Vue annuelle - Affiche les 12 mois en colonnes verticales
  * 
  * Cette vue affiche :
  * - L'année
@@ -8,8 +8,6 @@
  * - La lettre de la semaine (D, L, M, M, J, V, S)
  * - Les jours fériés ou weekends
  * - État : matin, après-midi, journée complète
- * 
- * Style similaire à la vue semestrielle mais pour toute l'année
  */
 
 async function renderYearViewSemester() {
@@ -30,7 +28,7 @@ async function renderYearViewSemester() {
 
     const year = getYear(this.currentDate);
     this.currentYear = year;
-    logger.debug('[YearViewSemester] Rendu de la vue annuelle style semestrielle pour l\'année', year);
+    logger.debug('[YearViewSemester] Rendu de la vue annuelle pour l\'année', year);
     
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',

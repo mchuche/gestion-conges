@@ -36,7 +36,7 @@ function renderCalendar() {
     // Toujours en vue annuelle, choisir entre les différents formats
     if (this.yearViewFormat === 'semester') {
         this.renderYearViewSemester().catch(error => {
-            logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
+            logger.error('Erreur lors du rendu de la vue annuelle:', error);
         });
     } else if (this.yearViewFormat === 'presence') {
         // La vue présence est async car elle charge les données de l'équipe
@@ -49,10 +49,10 @@ function renderCalendar() {
             logger.error('Erreur lors du rendu de la vue présence verticale:', error);
         });
     } else {
-        // Format par défaut : vue annuelle semestrielle
+        // Format par défaut : vue annuelle
         this.yearViewFormat = 'semester';
         this.renderYearViewSemester().catch(error => {
-            logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
+            logger.error('Erreur lors du rendu de la vue annuelle:', error);
         });
     }
 }
