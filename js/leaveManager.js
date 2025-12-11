@@ -14,7 +14,7 @@ class LeaveManager {
         this.selectedDates = []; // Pour la sélection multiple
         this.multiSelectMode = false; // Mode sélection multiple activé par long press
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
-        this.viewMode = 'semester'; // Vue semestrielle uniquement
+        this.viewMode = 'year'; // Vue annuelle par défaut
         this.yearViewFormat = 'semester'; // Format de la vue annuelle : 'semester' (vue semestrielle) ou 'presence' (matrice de présence)
         this.ctrlKeyPressed = false; // État de la touche Ctrl/Cmd
         this.userTeams = []; // Liste des équipes de l'utilisateur
