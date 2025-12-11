@@ -35,19 +35,20 @@ function renderCalendar() {
     
     if (this.viewMode === 'year') {
         // Choisir entre les différentes vues annuelles
-        if (this.yearViewFormat === 'compact') {
-            this.renderYearViewCompact().catch(error => {
-                logger.error('Erreur lors du rendu de la vue compacte:', error);
-            });
-        } else if (this.yearViewFormat === 'semester') {
+        if (this.yearViewFormat === 'semester') {
             this.renderYearViewSemester().catch(error => {
                 logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
             });
-        } else {
-            this.yearViewFormat = 'presence'; // Format par défaut
+        } else if (this.yearViewFormat === 'presence') {
             // La vue présence est async car elle charge les données de l'équipe
             this.renderYearViewPresence().catch(error => {
                 logger.error('Erreur lors du rendu de la vue présence:', error);
+            });
+        } else {
+            // Format par défaut : vue semestrielle
+            this.yearViewFormat = 'semester';
+            this.renderYearViewSemester().catch(error => {
+                logger.error('Erreur lors du rendu de la vue annuelle semestrielle:', error);
             });
         }
     } else {

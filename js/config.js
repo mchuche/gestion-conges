@@ -199,9 +199,9 @@ function setupEventListeners() {
             if (manager.viewMode === 'semester') {
                 logger.debug('[ViewToggle] Passage en vue annuelle');
                 manager.viewMode = 'year';
-                // Conserver le format de vue annuelle ou utiliser 'compact' par défaut
+                // Conserver le format de vue annuelle ou utiliser 'semester' par défaut
                 if (!manager.yearViewFormat) {
-                    manager.yearViewFormat = 'compact';
+                    manager.yearViewFormat = 'semester';
                 }
                 viewToggle.textContent = '📆';
                 viewToggle.title = 'Vue semestrielle';
@@ -449,7 +449,7 @@ function setupEventListeners() {
 }
 
 /**
- * Configure le sélecteur de format de vue annuelle (Présence / Compacte)
+ * Configure le sélecteur de format de vue annuelle (Semestrielle / Présence)
  */
 function setupYearViewFormatSelector() {
     // Vérifier si le sélecteur existe déjà
@@ -461,7 +461,6 @@ function setupYearViewFormatSelector() {
         formatSelect.id = 'yearViewFormatSelect';
         formatSelect.className = 'year-view-format-select';
         formatSelect.innerHTML = `
-            <option value="compact">Vue Compacte</option>
             <option value="semester">Vue Semestrielle</option>
             <option value="presence">Matrice de Présence</option>
         `;
@@ -501,7 +500,7 @@ function updateYearViewFormatSelector() {
     // Afficher seulement en vue annuelle
     if (this.viewMode === 'year') {
         formatSelect.style.display = 'inline-block';
-        formatSelect.value = this.yearViewFormat || 'compact';
+        formatSelect.value = this.yearViewFormat || 'semester';
     } else {
         formatSelect.style.display = 'none';
     }

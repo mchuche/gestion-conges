@@ -15,7 +15,7 @@ class LeaveManager {
         this.multiSelectMode = false; // Mode sélection multiple activé par long press
         this.configYear = this.currentYear; // Année sélectionnée dans la configuration
         this.viewMode = 'semester'; // Vue semestrielle uniquement
-        this.yearViewFormat = 'compact'; // Format de la vue annuelle : 'compact' (vue compacte) ou 'presence' (matrice de présence)
+        this.yearViewFormat = 'semester'; // Format de la vue annuelle : 'semester' (vue semestrielle) ou 'presence' (matrice de présence)
         this.ctrlKeyPressed = false; // État de la touche Ctrl/Cmd
         this.userTeams = []; // Liste des équipes de l'utilisateur
         this.currentTeamId = null; // ID de l'équipe actuellement sélectionnée
@@ -138,14 +138,10 @@ if (typeof getLeaveForDate !== 'undefined') {
         renderSemesterView,
         renderYearView,
         renderYearViewPresence,
-        renderYearViewCompact,
         renderYearViewSemester,
         createPresenceDayCell,
         createYearDayElement,
         createYearViewDayElement,
-        createCompactMonthCard,
-        createCompactDayElement,
-        getMonthName,
         getLeaveTypeLabel,
         getLeaveTypeConfig,
         updateDateSelectionVisual,
