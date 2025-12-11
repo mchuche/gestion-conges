@@ -1781,24 +1781,8 @@ body.minimal-header .header-controls .full-width-toggle {
         min-width: 180px;
     }
     
-    .header-controls {
-        flex-direction: column;
-        gap: 10px;
-        align-items: stretch;
-    }
-    
-    .header-controls .nav-center-group {
-        order: 1;
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .header-controls #yearViewFormatSelect,
-    .header-controls .team-select {
-        order: 2;
-        width: 100%;
-        margin: 5px 0;
-    }
+    /* Les règles pour .header-controls sont définies plus bas avec display: grid */
+    /* Cette section a été supprimée car remplacée par le grid layout */
 
     .header-top {
         flex-direction: column;
