@@ -277,6 +277,11 @@ if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
     LeaveManager.prototype.init = init;
     LeaveManager.prototype.setupEventListeners = setupEventListeners;
     
+    // Ajouter setupMenuDropdown si elle existe
+    if (typeof setupMenuDropdown !== 'undefined') {
+        LeaveManager.prototype.setupMenuDropdown = setupMenuDropdown;
+    }
+    
     // Ajouter les fonctions de sélecteur de format si elles existent
     if (typeof setupYearViewFormatSelector !== 'undefined') {
         LeaveManager.prototype.setupYearViewFormatSelector = setupYearViewFormatSelector;

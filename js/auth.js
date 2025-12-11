@@ -278,6 +278,15 @@ function showMainApp() {
         authModalShown = false; // Réinitialiser le flag
     }
     if (mainContainer) mainContainer.style.display = 'block';
+    
+    // Réinitialiser le menu déroulant après que le conteneur soit visible
+    // Utiliser setTimeout pour s'assurer que le DOM est complètement rendu
+    setTimeout(() => {
+        if (typeof this.setupMenuDropdown === 'function') {
+            this.setupMenuDropdown();
+        }
+    }, 100);
+    
     const userNameEl = document.getElementById('userName');
     if (userNameEl && this.user) {
         userNameEl.textContent = this.user.email || 'Utilisateur';
