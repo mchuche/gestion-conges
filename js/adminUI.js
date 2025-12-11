@@ -27,7 +27,7 @@ async function updateAdminButtonVisibility() {
     adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
     
     if (isAdmin) {
-        console.log('[AdminUI] Bouton admin affiché pour:', this.user?.email);
+        logger.debug('[AdminUI] Bouton admin affiché pour:', this.user?.email);
     }
 }
 
@@ -41,10 +41,10 @@ async function updateAdminButtonVisibility() {
  * 4. Charge et affiche l'onglet par défaut (utilisateurs)
  */
 async function openAdminModal() {
-    console.log('[AdminUI] openAdminModal appelée');
+    logger.debug('[AdminUI] openAdminModal appelée');
     const adminModal = document.getElementById('adminModal');
     if (!adminModal) {
-        console.error('[AdminUI] Modale adminModal introuvable dans le DOM');
+        logger.error('[AdminUI] Modale adminModal introuvable dans le DOM');
         await swalError(
             'Erreur',
             'La modale d\'administration est introuvable dans le DOM.'
@@ -52,10 +52,10 @@ async function openAdminModal() {
         return;
     }
 
-    console.log('[AdminUI] Modale trouvée, vérification des droits admin...');
+    logger.debug('[AdminUI] Modale trouvée, vérification des droits admin...');
     // Vérifier que l'utilisateur est admin avant d'afficher la modale
     const isAdmin = await this.checkIsAdmin();
-    console.log('[AdminUI] isAdmin:', isAdmin);
+    logger.debug('[AdminUI] isAdmin:', isAdmin);
     if (!isAdmin) {
         await swalError(
             'Accès refusé',
@@ -64,10 +64,10 @@ async function openAdminModal() {
         return;
     }
 
-    console.log('[AdminUI] Affichage de la modale...');
+    logger.debug('[AdminUI] Affichage de la modale...');
     adminModal.style.display = 'block';
     adminModal.classList.add('active');
-    console.log('[AdminUI] Modale affichée, display:', adminModal.style.display, 'classList:', adminModal.classList.toString());
+    logger.debug('[AdminUI] Modale affichée, display:', adminModal.style.display, 'classList:', adminModal.classList.toString());
 
     // Afficher l'onglet par défaut
     await this.switchAdminTab('users');
@@ -168,7 +168,7 @@ async function renderAdminUsersList() {
             usersList.appendChild(userCard);
         });
     } catch (error) {
-        console.error('[renderAdminUsersList] Erreur:', error);
+        logger.error('[renderAdminUsersList] Erreur:', error);
         usersList.innerHTML = '<p class="error">Erreur lors du chargement des utilisateurs</p>';
     }
 }
@@ -204,7 +204,7 @@ async function handleDeleteUser(userId, userEmail) {
         );
         await this.renderAdminUsersList();
     } catch (error) {
-        console.error('[handleDeleteUser] Erreur:', error);
+        logger.error('[handleDeleteUser] Erreur:', error);
         await swalError('❌ Erreur', 'Erreur lors de la suppression: ' + (error.message || error));
     }
 }
@@ -251,7 +251,7 @@ async function renderAdminTeamsList() {
             teamsList.appendChild(teamCard);
         });
     } catch (error) {
-        console.error('[renderAdminTeamsList] Erreur:', error);
+        logger.error('[renderAdminTeamsList] Erreur:', error);
         teamsList.innerHTML = '<p class="error">Erreur lors du chargement des groupes</p>';
     }
 }
@@ -282,7 +282,7 @@ async function handleDeleteTeamAsAdmin(teamId, teamName) {
         await swalSuccess('✅ Groupe supprimé', 'Le groupe a été supprimé avec succès.', 3000);
         await this.renderAdminTeamsList();
     } catch (error) {
-        console.error('[handleDeleteTeamAsAdmin] Erreur:', error);
+        logger.error('[handleDeleteTeamAsAdmin] Erreur:', error);
         await swalError('❌ Erreur', 'Erreur lors de la suppression: ' + (error.message || error));
     }
 }
@@ -310,7 +310,7 @@ async function renderAdminSettings() {
             defaultCountry.value = settings.default_country.value;
         }
     } catch (error) {
-        console.error('[renderAdminSettings] Erreur:', error);
+        logger.error('[renderAdminSettings] Erreur:', error);
         await swalError(
             'Erreur',
             'Erreur lors du chargement des paramètres. Vérifiez la console pour plus de détails.'
@@ -352,7 +352,7 @@ async function handleSaveDefaultSettings() {
             2000
         );
     } catch (error) {
-        console.error('[handleSaveDefaultSettings] Erreur:', error);
+        logger.error('[handleSaveDefaultSettings] Erreur:', error);
         if (error instanceof SyntaxError) {
             await swalError(
                 '❌ Erreur de syntaxe JSON',
@@ -401,7 +401,7 @@ async function renderAdminStats() {
             </div>
         `;
     } catch (error) {
-        console.error('[renderAdminStats] Erreur:', error);
+        logger.error('[renderAdminStats] Erreur:', error);
         statsContainer.innerHTML = '<p class="error">Erreur lors du chargement des statistiques</p>';
     }
 }
@@ -489,7 +489,7 @@ async function renderAuditLogs() {
 
         logsContainer.appendChild(logsList);
     } catch (error) {
-        console.error('[renderAuditLogs] Erreur:', error);
+        logger.error('[renderAuditLogs] Erreur:', error);
         logsContainer.innerHTML = '<p class="error">Erreur lors du chargement des logs</p>';
     }
 }
@@ -503,7 +503,7 @@ function setupAdminEventListeners() {
     if (adminBtn && !adminBtn.hasAttribute('data-listener-added')) {
         adminBtn.setAttribute('data-listener-added', 'true');
         adminBtn.addEventListener('click', async () => {
-            console.log('[AdminUI] Bouton admin cliqué');
+            logger.debug('[AdminUI] Bouton admin cliqué');
             await manager.openAdminModal();
         });
     }

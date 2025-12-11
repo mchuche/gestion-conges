@@ -27,11 +27,11 @@ function getLeaveForDate(date) {
 function renderCalendar() {
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
-        console.error('[RenderCalendar] semesterCalendar element not found');
+        logger.error('[RenderCalendar] semesterCalendar element not found');
         return;
     }
     
-    console.log('[RenderCalendar] Vue annuelle, format:', this.yearViewFormat, 'Date actuelle:', this.currentDate.toISOString(), 'Année:', getYear(this.currentDate));
+    logger.debug('[RenderCalendar] Vue annuelle, format:', this.yearViewFormat, 'Date actuelle:', this.currentDate.toISOString(), 'Année:', getYear(this.currentDate));
     
     // Toujours en vue annuelle, choisir entre les différents formats
     if (this.yearViewFormat === 'semester') {
@@ -62,7 +62,7 @@ function renderCalendar() {
 function renderYearView() {
     const semesterCalendar = document.getElementById('semesterCalendar');
     if (!semesterCalendar) {
-        console.error('[YearView] semesterCalendar element not found');
+        logger.error('[YearView] semesterCalendar element not found');
         return;
     }
     semesterCalendar.innerHTML = '';
@@ -77,7 +77,7 @@ function renderYearView() {
     // Utiliser date-fns pour obtenir l'année actuelle et synchroniser
     const year = getYear(this.currentDate);
     this.currentYear = year;
-    console.log('[YearView] Rendu de la vue annuelle pour l\'année', year);
+    logger.debug('[YearView] Rendu de la vue annuelle pour l\'année', year);
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -588,11 +588,11 @@ function openModal(date) {
     
     // S'assurer que leaveTypesConfig est chargé avant de rendre les boutons
     if (!this.leaveTypesConfig || this.leaveTypesConfig.length === 0) {
-        console.warn('leaveTypesConfig vide, chargement des types par défaut...');
+        logger.warn('leaveTypesConfig vide, chargement des types par défaut...');
         if (typeof getDefaultLeaveTypes === 'function') {
             this.leaveTypesConfig = getDefaultLeaveTypes();
         } else {
-            console.error('getDefaultLeaveTypes non disponible');
+            logger.error('getDefaultLeaveTypes non disponible');
         }
     }
     
@@ -642,7 +642,7 @@ function getLeaveColor(type) {
 function renderLeaveTypeButtons() {
     const container = document.getElementById('leaveTypes');
     if (!container) {
-        console.error('Conteneur #leaveTypes non trouvé');
+        logger.error('Conteneur #leaveTypes non trouvé');
         return;
     }
     
@@ -650,12 +650,12 @@ function renderLeaveTypeButtons() {
 
     // Vérifier que leaveTypesConfig est chargé
     if (!this.leaveTypesConfig || this.leaveTypesConfig.length === 0) {
-        console.warn('leaveTypesConfig est vide, utilisation des types par défaut');
+        logger.warn('leaveTypesConfig est vide, utilisation des types par défaut');
         // Charger les types par défaut si la config est vide
         if (typeof getDefaultLeaveTypes === 'function') {
             this.leaveTypesConfig = getDefaultLeaveTypes();
         } else {
-            console.error('getDefaultLeaveTypes n\'est pas défini');
+            logger.error('getDefaultLeaveTypes n\'est pas défini');
             container.innerHTML = '<p style="color: red;">Erreur: Aucun type de congé disponible</p>';
             return;
         }
@@ -665,7 +665,7 @@ function renderLeaveTypeButtons() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const defaultBackground = isDark ? 'var(--card-bg)' : 'white';
 
-    console.log('Rendu de', this.leaveTypesConfig.length, 'types de congé');
+    logger.debug('Rendu de', this.leaveTypesConfig.length, 'types de congé');
     this.leaveTypesConfig.forEach(typeConfig => {
         const btn = document.createElement('button');
         btn.className = 'leave-btn';
@@ -679,7 +679,7 @@ function renderLeaveTypeButtons() {
         container.appendChild(btn);
     });
     
-    console.log('Boutons de types de congé rendus:', container.children.length);
+    logger.debug('Boutons de types de congé rendus:', container.children.length);
 }
 
 // Fermer la modal

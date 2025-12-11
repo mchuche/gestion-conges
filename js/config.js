@@ -113,7 +113,7 @@ function setupEventListeners() {
     const nextMonthBtn = document.getElementById('nextMonth');
     
     if (!prevMonthBtn || !nextMonthBtn) {
-        console.error('[Config] Boutons de navigation non trouvés dans le DOM');
+        logger.error('[Config] Boutons de navigation non trouvés dans le DOM');
         return;
     }
     
@@ -185,27 +185,27 @@ function setupEventListeners() {
         if (!leaveTypesContainer.hasAttribute('data-listener-added')) {
             leaveTypesContainer.setAttribute('data-listener-added', 'true');
             leaveTypesContainer.addEventListener('click', async (e) => {
-                console.log('Clic détecté dans #leaveTypes, target:', e.target, 'closest:', e.target.closest('.leave-btn'));
+                logger.debug('Clic détecté dans #leaveTypes, target:', e.target, 'closest:', e.target.closest('.leave-btn'));
                 // Utiliser closest pour trouver le bouton même si on clique sur un élément enfant
                 const leaveBtn = e.target.closest('.leave-btn');
                 if (leaveBtn) {
                     const leaveType = leaveBtn.dataset.type;
-                    console.log('Bouton trouvé, type:', leaveType, 'selectedDate:', this.selectedDate);
+                    logger.debug('Bouton trouvé, type:', leaveType, 'selectedDate:', this.selectedDate);
                     if (this.selectedDate) {
-                        console.log('Appel de setLeave avec date:', this.selectedDate, 'type:', leaveType);
+                        logger.debug('Appel de setLeave avec date:', this.selectedDate, 'type:', leaveType);
                         e.preventDefault();
                         e.stopPropagation();
                         await this.setLeave(this.selectedDate, leaveType);
                     } else {
-                        console.warn('Clic sur bouton de congé mais selectedDate n\'est pas défini');
+                        logger.warn('Clic sur bouton de congé mais selectedDate n\'est pas défini');
                     }
                 } else {
-                    console.log('Clic en dehors d\'un bouton de congé');
+                    logger.debug('Clic en dehors d\'un bouton de congé');
                 }
             });
         }
     } else {
-        console.error('Conteneur #leaveTypes non trouvé lors de setupEventListeners');
+        logger.error('Conteneur #leaveTypes non trouvé lors de setupEventListeners');
     }
 
     // Bouton supprimer
@@ -294,12 +294,12 @@ function setupEventListeners() {
         // Utiliser bind pour s'assurer que 'this' est correctement lié
         const manager = this;
         newThemeToggle.addEventListener('click', function() {
-            console.log('[Theme] Bouton de thème cliqué');
+            logger.debug('[Theme] Bouton de thème cliqué');
             if (typeof manager.toggleTheme === 'function') {
                 manager.toggleTheme();
             } else {
-                console.error('[Theme] toggleTheme n\'est pas une fonction', typeof manager.toggleTheme);
-                console.log('[Theme] Méthodes disponibles:', Object.getOwnPropertyNames(Object.getPrototypeOf(manager)));
+                logger.error('[Theme] toggleTheme n\'est pas une fonction', typeof manager.toggleTheme);
+                logger.debug('[Theme] Méthodes disponibles:', Object.getOwnPropertyNames(Object.getPrototypeOf(manager)));
             }
         });
         
@@ -309,7 +309,7 @@ function setupEventListeners() {
             this.updateThemeToggleButton(currentTheme);
         }
     } else {
-        console.warn('[Theme] Bouton themeToggle non trouvé dans le DOM');
+        logger.warn('[Theme] Bouton themeToggle non trouvé dans le DOM');
     }
 
     // Aide
@@ -338,11 +338,11 @@ function setupEventListeners() {
     const configBtn = document.getElementById('configBtn');
     if (configBtn) {
         configBtn.addEventListener('click', () => {
-            console.log('Bouton de configuration cliqué');
+            logger.debug('Bouton de configuration cliqué');
             this.openConfigModal();
         });
     } else {
-        console.error('Bouton de configuration non trouvé');
+        logger.error('Bouton de configuration non trouvé');
     }
 
     document.querySelector('.config-close').addEventListener('click', () => {

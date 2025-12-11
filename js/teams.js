@@ -485,7 +485,7 @@ async function acceptTeamInvitation(invitationId) {
 
         return true;
     } catch (e) {
-        console.error('Erreur lors de l\'acceptation de l\'invitation:', e);
+        logger.error('Erreur lors de l\'acceptation de l\'invitation:', e);
         throw e;
     }
 }
@@ -510,7 +510,7 @@ async function declineTeamInvitation(invitationId) {
 
         return true;
     } catch (e) {
-        console.error('Erreur lors du refus de l\'invitation:', e);
+        logger.error('Erreur lors du refus de l\'invitation:', e);
         throw e;
     }
 }
@@ -546,7 +546,7 @@ async function deleteTeamInvitation(invitationId) {
 
         return true;
     } catch (e) {
-        console.error('Erreur lors de la suppression de l\'invitation:', e);
+        logger.error('Erreur lors de la suppression de l\'invitation:', e);
         throw e;
     }
 }
@@ -584,7 +584,7 @@ async function addMemberToTeam(teamId, userId) {
 
         return true;
     } catch (e) {
-        console.error('Erreur lors de l\'ajout du membre:', e);
+        logger.error('Erreur lors de l\'ajout du membre:', e);
         throw e;
     }
 }
@@ -618,7 +618,7 @@ async function removeMemberFromTeam(teamId, userId) {
 
         return true;
     } catch (e) {
-        console.error('Erreur lors du retrait du membre:', e);
+        logger.error('Erreur lors du retrait du membre:', e);
         throw e;
     }
 }
@@ -666,7 +666,7 @@ async function loadTeamLeaves(teamId, year) {
 
         return teamLeaves;
     } catch (e) {
-        console.error('Erreur lors du chargement des congés de l\'équipe:', e);
+        logger.error('Erreur lors du chargement des congés de l\'équipe:', e);
         return {};
     }
 }
@@ -708,7 +708,7 @@ async function loadTeamLeaveTypes(teamId) {
 
         return teamLeaveTypes;
     } catch (e) {
-        console.error('Erreur lors du chargement des types de congés de l\'équipe:', e);
+        logger.error('Erreur lors du chargement des types de congés de l\'équipe:', e);
         return {};
     }
 }
@@ -744,7 +744,7 @@ async function deleteTeam(teamId) {
 
         return true;
     } catch (e) {
-        console.error('Erreur lors de la suppression de l\'équipe:', e);
+        logger.error('Erreur lors de la suppression de l\'équipe:', e);
         throw e;
     }
 }

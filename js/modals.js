@@ -296,7 +296,7 @@ async function resetAllLeaves() {
             `Tous les jours de congé (${leavesCount} jour(s)) ont été supprimés avec succès.`
         );
     } catch (e) {
-        console.error('Erreur lors de la réinitialisation des congés:', e);
+        logger.error('Erreur lors de la réinitialisation des congés:', e);
         await swalError(
             '❌ Erreur',
             'Erreur lors de la suppression des congés. Vérifiez la console pour plus de détails.'
@@ -387,7 +387,7 @@ async function saveConfig() {
     if (newConfig.length > 0) {
         // Sauvegarder les types de congés AVANT de mettre à jour la configuration
         // pour s'assurer que les jours de congé existants ne sont pas perdus
-        console.log('Jours de congé avant sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');
+        logger.debug('Jours de congé avant sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');
         
         // Mettre à jour la configuration locale
         this.leaveTypesConfig = newConfig;
@@ -397,7 +397,7 @@ async function saveConfig() {
         await this.saveLeaveQuotasByYear();
         
         // Vérifier que les jours de congé sont toujours présents après la sauvegarde
-        console.log('Jours de congé après sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');
+        logger.debug('Jours de congé après sauvegarde de la config:', Object.keys(this.leaves).length, 'entrées');
         
         // Fermer la modale et mettre à jour l'affichage
         this.closeConfigModal();

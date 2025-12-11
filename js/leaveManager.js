@@ -62,7 +62,7 @@ function safeAssign(target, source) {
         if (typeof source[key] === 'function') {
             filtered[key] = source[key];
         } else {
-            console.warn(`Fonction ${key} non définie, ignorée`);
+            logger.warn(`Fonction ${key} non définie, ignorée`);
         }
     }
     Object.assign(target, filtered);
@@ -285,13 +285,13 @@ if (typeof init !== 'undefined' && typeof setupEventListeners !== 'undefined') {
         LeaveManager.prototype.updateYearViewFormatSelector = updateYearViewFormatSelector;
     }
 } else {
-    console.error('Erreur: init ou setupEventListeners non définis. Vérifiez que js/config.js est chargé.');
+    logger.error('Erreur: init ou setupEventListeners non définis. Vérifiez que js/config.js est chargé.');
     // Définir des fonctions par défaut pour éviter les erreurs
     LeaveManager.prototype.init = async function() {
-        console.warn('init non disponible - js/config.js non chargé');
+        logger.warn('init non disponible - js/config.js non chargé');
     };
     LeaveManager.prototype.setupEventListeners = function() {
-        console.warn('setupEventListeners non disponible - js/config.js non chargé');
+        logger.warn('setupEventListeners non disponible - js/config.js non chargé');
     };
 }
 

@@ -23,9 +23,9 @@ async function loadLeaves() {
                 this.leaves[leave.date_key] = leave.leave_type_id;
             });
         }
-        console.log('Jours de congé chargés:', Object.keys(this.leaves).length, 'entrées');
+        logger.log('Jours de congé chargés:', Object.keys(this.leaves).length, 'entrées');
     } catch (e) {
-        console.error('Erreur lors du chargement des jours de congé:', e);
+        logger.error('Erreur lors du chargement des jours de congé:', e);
         this.leaves = {};
     }
 }
@@ -72,11 +72,11 @@ async function saveLeaves() {
                 .insert(leavesToInsert);
         }
 
-        console.log('Jours de congé sauvegardés:', Object.keys(this.leaves).length, 'entrées');
+        logger.log('Jours de congé sauvegardés:', Object.keys(this.leaves).length, 'entrées');
         this.updateStats();
         this.updateLeaveQuotas();
     } catch (e) {
-        console.error('Erreur lors de la sauvegarde des jours de congé:', e);
+        logger.error('Erreur lors de la sauvegarde des jours de congé:', e);
     }
 }
 
@@ -110,7 +110,7 @@ async function loadLeaveTypesConfig() {
             await this.saveLeaveTypesConfig();
         }
     } catch (e) {
-        console.error('Erreur lors du chargement des types de congés:', e);
+        logger.error('Erreur lors du chargement des types de congés:', e);
         this.leaveTypesConfig = getDefaultLeaveTypes();
     }
 }
@@ -184,7 +184,7 @@ async function saveLeaveTypesConfig() {
         this.renderLeaveTypeButtons();
         this.updateLeaveQuotas();
     } catch (e) {
-        console.error('Erreur lors de la sauvegarde des types de congés:', e);
+        logger.error('Erreur lors de la sauvegarde des types de congés:', e);
     }
 }
 
@@ -225,7 +225,7 @@ async function loadLeaveQuotasByYear() {
             await this.saveLeaveQuotasByYear();
         }
     } catch (e) {
-        console.error('Erreur lors du chargement des quotas:', e);
+        logger.error('Erreur lors du chargement des quotas:', e);
         this.leaveQuotasByYear = {};
     }
 }
@@ -309,7 +309,7 @@ async function saveLeaveQuotasByYear() {
                 .insert(quotasToInsert);
         }
     } catch (e) {
-        console.error('Erreur lors de la sauvegarde des quotas:', e);
+        logger.error('Erreur lors de la sauvegarde des quotas:', e);
     }
 }
 
@@ -336,7 +336,7 @@ async function loadSelectedCountry() {
             await this.saveSelectedCountry();
         }
     } catch (e) {
-        console.error('Erreur lors du chargement du pays:', e);
+        logger.error('Erreur lors du chargement du pays:', e);
         this.selectedCountry = 'FR';
     }
 }
@@ -362,11 +362,8 @@ async function saveSelectedCountry() {
         if (error) throw error;
         this.renderCalendar();
     } catch (e) {
-        console.error('Erreur lors de la sauvegarde du pays:', e);
+        logger.error('Erreur lors de la sauvegarde du pays:', e);
     }
 }
-
-
-
 
 

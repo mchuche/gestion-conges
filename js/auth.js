@@ -27,7 +27,7 @@ let authInitialized = false;
 async function initAuth() {
     // Éviter les initialisations multiples
     if (authInitialized) {
-        console.log('[Auth] initAuth déjà appelé, ignoré pour éviter les doublons');
+        logger.log('[Auth] initAuth déjà appelé, ignoré pour éviter les doublons');
         return;
     }
     authInitialized = true;
@@ -195,19 +195,19 @@ async function validateSession(session) {
                 errorMessage.includes('token') || 
                 errorMessage.includes('session') ||
                 errorMessage.includes('authentication')) {
-                console.warn('Session invalide détectée:', error);
+                logger.warn('Session invalide détectée:', error);
                 return false;
             }
             // Pour les autres erreurs (réseau, table inexistante, etc.), 
             // considérer la session comme valide car l'erreur n'est pas liée à l'auth
-            console.warn('Erreur lors de la validation de session (non bloquante):', error);
+            logger.warn('Erreur lors de la validation de session (non bloquante):', error);
             return true;
         }
         return true;
     } catch (error) {
         // En cas d'exception, ne pas bloquer la connexion
         // La session pourrait être valide malgré l'erreur
-        console.warn('Exception lors de la validation de session (non bloquante):', error);
+        logger.warn('Exception lors de la validation de session (non bloquante):', error);
         return true; // Donner le bénéfice du doute
     }
 }
@@ -228,7 +228,7 @@ async function clearInvalidSession() {
         await supabase.auth.signOut();
     } catch (error) {
         // Ignorer les erreurs de déconnexion (peut échouer si pas de session)
-        console.warn('Erreur lors du nettoyage de session:', error);
+        logger.warn('Erreur lors du nettoyage de session:', error);
     }
     
     // Nettoyer l'état local de l'application
@@ -244,7 +244,7 @@ async function clearInvalidSession() {
         const supabaseKeys = Object.keys(localStorage).filter(key => key.startsWith('sb-'));
         supabaseKeys.forEach(key => localStorage.removeItem(key));
     } catch (e) {
-        console.warn('Impossible de nettoyer le localStorage:', e);
+        logger.warn('Impossible de nettoyer le localStorage:', e);
     }
 }
 
@@ -257,7 +257,7 @@ function showAuthModal() {
     
     // Éviter d'afficher la modale si elle est déjà affichée
     if (authModalShown && authModal && authModal.style.display === 'block') {
-        console.log('[Auth] showAuthModal déjà appelé, ignoré pour éviter les doublons');
+        logger.log('[Auth] showAuthModal déjà appelé, ignoré pour éviter les doublons');
         return;
     }
     
@@ -324,11 +324,11 @@ function setupAuthListeners() {
     if (logoutBtn && !logoutBtn.hasAttribute('data-listener-added')) {
         logoutBtn.setAttribute('data-listener-added', 'true');
         logoutBtn.addEventListener('click', async () => {
-            console.log('Bouton de déconnexion cliqué');
+            logger.log('Bouton de déconnexion cliqué');
             await this.logout();
         });
     } else if (!logoutBtn) {
-        console.warn('Bouton logoutBtn non trouvé dans le DOM');
+        logger.warn('Bouton logoutBtn non trouvé dans le DOM');
     }
 
     // Suppression de compte
@@ -486,7 +486,7 @@ async function signup(email, password, name) {
                     });
             } catch (emailError) {
                 // Ignorer l'erreur si l'email existe déjà (le trigger l'a peut-être déjà ajouté)
-                console.warn('Erreur lors de l\'ajout de l\'email (peut être ignorée):', emailError);
+                logger.warn('Erreur lors de l\'ajout de l\'email (peut être ignorée):', emailError);
             }
         }
         
@@ -521,7 +521,7 @@ async function logout() {
                                    error.name === 'AuthSessionMissingError';
             
             if (!isSessionMissing) {
-                console.warn('Erreur de déconnexion:', error);
+                logger.warn('Erreur de déconnexion:', error);
             }
         }
     } catch (error) {
@@ -532,7 +532,7 @@ async function logout() {
                                error.name === 'AuthSessionMissingError';
         
         if (!isSessionMissing) {
-            console.warn('Erreur lors de la déconnexion:', error);
+            logger.warn('Erreur lors de la déconnexion:', error);
         }
     } finally {
         // Toujours nettoyer l'état local, même en cas d'erreur
