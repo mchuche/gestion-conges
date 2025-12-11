@@ -305,6 +305,14 @@ if (typeof initFullWidth !== 'undefined') {
     });
 }
 
+// ScrollManager
+if (typeof initScrollManager !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        initScrollManager,
+        checkScrollbarVisibility
+    });
+}
+
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', async () => {
     logger.debug('[LeaveManager] DOM chargé, initialisation du gestionnaire de congés...');

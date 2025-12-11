@@ -47,6 +47,13 @@ function setFullWidth(enabled) {
     
     // Sauvegarder la préférence
     localStorage.setItem('fullWidth', enabled.toString());
+    
+    // Vérifier la visibilité de l'ascenseur après le changement de largeur
+    setTimeout(() => {
+        if (typeof this.checkScrollbarVisibility === 'function') {
+            this.checkScrollbarVisibility();
+        }
+    }, 100);
 }
 
 /**

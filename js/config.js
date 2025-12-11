@@ -61,6 +61,10 @@ async function init() {
     if (typeof this.setupFullWidthListeners === 'function') {
         this.setupFullWidthListeners();
     }
+    // Configurer le gestionnaire de scroll
+    if (typeof this.initScrollManager === 'function') {
+        this.initScrollManager();
+    }
     
     // Configurer les event listeners pour les invitations
     if (typeof this.setupInvitationsEventListeners === 'function') {
