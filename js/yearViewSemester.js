@@ -67,12 +67,5 @@ async function renderYearViewSemester() {
 
         semesterCalendar.appendChild(monthColumn);
     }
-    
-    // Vérifier la visibilité de l'ascenseur après le rendu
-    setTimeout(() => {
-        if (typeof this.checkScrollbarVisibility === 'function') {
-            this.checkScrollbarVisibility();
-        }
-    }, 100);
 }
 

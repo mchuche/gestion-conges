@@ -305,13 +305,6 @@ if (typeof initFullWidth !== 'undefined') {
     });
 }
 
-// ScrollManager
-if (typeof initScrollManager !== 'undefined') {
-    safeAssign(LeaveManager.prototype, {
-        initScrollManager,
-        checkScrollbarVisibility
-    });
-}
 
 // MinimizeHeader
 if (typeof initMinimizeHeader !== 'undefined') {

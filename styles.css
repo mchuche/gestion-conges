@@ -564,11 +564,6 @@ body.minimal-header .header-controls .full-width-toggle {
     padding: 10px 0;
 }
 
-/* Masquer l'ascenseur quand la fenêtre est assez large */
-.semester-view.no-scroll {
-    overflow-x: hidden;
-}
-
 .semester-calendar {
     display: grid;
     grid-template-columns: repeat(6, 1fr);

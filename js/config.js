@@ -61,10 +61,6 @@ async function init() {
     if (typeof this.setupFullWidthListeners === 'function') {
         this.setupFullWidthListeners();
     }
-    // Configurer le gestionnaire de scroll
-    if (typeof this.initScrollManager === 'function') {
-        this.initScrollManager();
-    }
     // Configurer le mode header minimal
     if (typeof this.initMinimizeHeader === 'function') {
         this.initMinimizeHeader();
