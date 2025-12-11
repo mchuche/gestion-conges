@@ -356,6 +356,14 @@ body.minimal-header .header-controls .nav-center-group {
         flex-direction: column;
     }
     
+    /* Forcer l'affichage du bouton minimizeHeaderBtn en mode minimal sur mobile */
+    body.minimal-header .header-controls #minimizeHeaderBtn {
+        display: flex !important;
+        order: 0;
+        align-self: flex-start;
+        margin-bottom: 10px;
+    }
+    
     body.minimal-header .header-controls .nav-center-group {
         position: static;
         transform: none;
