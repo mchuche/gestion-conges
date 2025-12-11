@@ -65,6 +65,13 @@ async function init() {
     if (typeof this.initScrollManager === 'function') {
         this.initScrollManager();
     }
+    // Configurer le mode header minimal
+    if (typeof this.initMinimizeHeader === 'function') {
+        this.initMinimizeHeader();
+    }
+    if (typeof this.setupMinimizeHeaderListeners === 'function') {
+        this.setupMinimizeHeaderListeners();
+    }
     
     // Configurer les event listeners pour les invitations
     if (typeof this.setupInvitationsEventListeners === 'function') {

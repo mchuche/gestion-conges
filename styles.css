@@ -210,6 +210,62 @@ header h1 {
     gap: 20px;
 }
 
+.minimize-header-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: auto;
+}
+
+.minimize-header-btn:hover {
+    background: #357abd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.minimize-header-btn.active {
+    background: var(--secondary-color);
+    transform: rotate(180deg);
+}
+
+/* Masquer les éléments quand le mode minimal est activé */
+body.minimal-header .header-top {
+    display: none;
+}
+
+body.minimal-header .header-controls .view-toggle-btn,
+body.minimal-header .header-controls .teams-btn,
+body.minimal-header .header-controls .admin-btn,
+body.minimal-header .header-controls .team-select,
+body.minimal-header .header-controls #yearViewFormatSelect {
+    display: none !important;
+}
+
+body.minimal-header .stats {
+    display: none;
+}
+
+body.minimal-header .help-hint {
+    display: none;
+}
+
+body.minimal-header #leaveQuotas {
+    display: none;
+}
+
+body.minimal-header .header-controls {
+    margin-bottom: 10px;
+}
+
 .nav-btn {
     background: var(--primary-color);
     color: white;

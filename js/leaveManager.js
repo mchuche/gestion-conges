@@ -313,6 +313,16 @@ if (typeof initScrollManager !== 'undefined') {
     });
 }
 
+// MinimizeHeader
+if (typeof initMinimizeHeader !== 'undefined') {
+    safeAssign(LeaveManager.prototype, {
+        initMinimizeHeader,
+        setMinimizeHeader,
+        toggleMinimizeHeader,
+        setupMinimizeHeaderListeners
+    });
+}
+
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', async () => {
     logger.debug('[LeaveManager] DOM chargé, initialisation du gestionnaire de congés...');
