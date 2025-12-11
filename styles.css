@@ -335,6 +335,27 @@ body.minimal-header .header-controls .nav-center-group {
     transform: translateX(-50%);
 }
 
+/* Sur mobile, en mode minimal, garder la colonne pour les sélecteurs */
+@media (max-width: 768px) {
+    body.minimal-header .header-controls {
+        flex-direction: column;
+    }
+    
+    body.minimal-header .header-controls .nav-center-group {
+        position: static;
+        transform: none;
+        order: 1;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    body.minimal-header .header-controls .full-width-toggle {
+        order: 2;
+        margin-left: 0;
+        align-self: flex-end;
+    }
+}
+
 /* Positionner le bouton full-width à droite en mode minimal */
 body.minimal-header .header-controls .full-width-toggle {
     margin-left: auto;
@@ -1703,14 +1724,35 @@ body.minimal-header .header-controls .full-width-toggle {
     }
 
     .header-right {
-        flex-direction: column;
-        gap: 10px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
     }
 
     .menu-dropdown-content {
         right: auto;
         left: 0;
         min-width: 180px;
+    }
+    
+    .header-controls {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .header-controls .nav-center-group {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .header-controls #yearViewFormatSelect,
+    .header-controls .team-select {
+        order: 2;
+        width: 100%;
+        margin: 5px 0;
     }
 
     .header-top {
@@ -1833,14 +1875,35 @@ body.minimal-header .header-controls .full-width-toggle {
     }
 
     .header-right {
-        flex-direction: column;
-        gap: 10px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
     }
 
     .menu-dropdown-content {
         right: auto;
         left: 0;
         min-width: 180px;
+    }
+    
+    .header-controls {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .header-controls .nav-center-group {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .header-controls #yearViewFormatSelect,
+    .header-controls .team-select {
+        order: 2;
+        width: 100%;
+        margin: 5px 0;
     }
 
     .header-top {
