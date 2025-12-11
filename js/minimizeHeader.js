@@ -63,6 +63,12 @@ function setMinimizeHeader(enabled) {
         if (fullWidthToggle && fullWidthToggle.parentElement !== headerControls) {
             headerControls.appendChild(fullWidthToggle);
         }
+        
+        // Cacher le sélecteur de vue si on est en vue annuelle (semester)
+        const yearViewFormatSelect = document.getElementById('yearViewFormatSelect');
+        if (yearViewFormatSelect && this.yearViewFormat === 'semester') {
+            yearViewFormatSelect.style.display = 'none';
+        }
     } else {
         body.classList.remove('minimal-header');
         if (toggleBtn) {
@@ -100,6 +106,12 @@ function setMinimizeHeader(enabled) {
             } else {
                 headerRight.appendChild(fullWidthToggle);
             }
+        }
+        
+        // Réafficher le sélecteur de vue
+        const yearViewFormatSelect = document.getElementById('yearViewFormatSelect');
+        if (yearViewFormatSelect) {
+            yearViewFormatSelect.style.display = '';
         }
     }
     
