@@ -1895,35 +1895,36 @@ body.minimal-header .header-controls .full-width-toggle {
         align-items: center;
     }
     
+    /* Le bouton minimizeHeaderBtn est maintenant dans header-top */
     .header-controls #minimizeHeaderBtn {
-        grid-column: 1;
-        grid-row: 1;
-        align-self: start;
+        display: none;
     }
     
     .header-controls #prevMonth {
         grid-column: 1;
-        grid-row: 2;
+        grid-row: 1;
     }
     
     .header-controls #currentMonth {
         grid-column: 2;
-        grid-row: 2;
+        grid-row: 1;
         text-align: center;
         margin: 0;
     }
     
     .header-controls #nextMonth {
         grid-column: 3;
-        grid-row: 2;
+        grid-row: 1;
     }
     
+    /* Sélecteur de vue et équipe en colonne - FORCER l'affichage */
     .header-controls #yearViewFormatSelect,
     .header-controls .team-select {
         grid-column: 1 / -1;
-        grid-row: 3;
+        grid-row: 2;
         width: 100%;
         margin: 5px 0;
+        display: block !important; /* Forcer l'affichage sur mobile */
     }
     
     .header-controls #viewToggle {
