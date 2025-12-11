@@ -1933,20 +1933,36 @@ body.minimal-header .header-controls .full-width-toggle {
     .header-top {
         flex-direction: column;
         gap: 10px;
+        position: relative;
     }
     
-    /* Mettre l'email sur sa propre ligne en haut */
+    /* Afficher le bouton minimizeHeaderBtn dans header-top sur mobile */
+    .header-top #minimizeHeaderBtn {
+        display: flex !important;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+    }
+    
+    /* Mettre l'email sur sa propre ligne en haut, centré */
     .header-top .user-info {
         order: -1;
         width: 100%;
         margin-bottom: 10px;
         padding-bottom: 10px;
         border-bottom: 1px solid var(--border-color);
+        justify-content: center;
+        text-align: center;
     }
     
     .header-top h1 {
         order: 0;
         margin-bottom: 0;
+        text-align: center;
+        padding-left: 50px; /* Espace pour le bouton minimizeHeaderBtn */
+        padding-right: 0;
     }
     
     .header-top .header-right {
