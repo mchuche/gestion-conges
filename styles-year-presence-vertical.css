@@ -213,7 +213,22 @@
 }
 
 /* Responsive pour Matrice de Présence Verticale */
+@media (min-width: 1400px) {
+    .year-presence-vertical-container {
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    }
+}
+
+@media (min-width: 1800px) {
+    .year-presence-vertical-container {
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    }
+}
+
 @media (max-width: 1200px) {
+    .year-presence-vertical-container {
+        grid-template-columns: 1fr; /* Une seule colonne sur petits écrans */
+    }
     .year-presence-vertical-view .year-presence-vertical-day-header,
     .year-presence-vertical-view .year-presence-day-cell,
     .year-presence-vertical-view .year-presence-stats-cell {
