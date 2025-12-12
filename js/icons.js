@@ -24,48 +24,64 @@ function createIcon(iconName, options = {}) {
         return span;
     }
     
-    // Lucide via CDN expose les icônes via lucide.icons ou directement
+    console.log(`[Icons] Création de l'icône "${iconName}"`);
+    console.log(`[Icons] lucide disponible:`, typeof lucide);
+    console.log(`[Icons] lucide.icons:`, typeof lucide.icons);
+    console.log(`[Icons] lucide[${iconName}]:`, typeof lucide[iconName]);
+    
+    // Lucide via CDN UMD expose les icônes directement
     let IconComponent = null;
     
     // Essayer différentes façons d'accéder aux icônes
-    if (lucide.icons && lucide.icons[iconName]) {
-        IconComponent = lucide.icons[iconName];
-    } else if (lucide[iconName]) {
+    if (lucide[iconName] && typeof lucide[iconName] === 'function') {
         IconComponent = lucide[iconName];
+    } else if (lucide.icons && lucide.icons[iconName]) {
+        IconComponent = lucide.icons[iconName];
     } else if (window.lucide && window.lucide[iconName]) {
         IconComponent = window.lucide[iconName];
     }
     
     if (!IconComponent) {
-        console.warn(`[Icons] Icône "${iconName}" non trouvée dans Lucide`);
+        console.warn(`[Icons] Icône "${iconName}" non trouvée dans Lucide. Icônes disponibles:`, Object.keys(lucide).slice(0, 10));
         // Retourner un span vide en fallback
         const span = document.createElement('span');
         span.className = className;
+        span.textContent = '?'; // Afficher un ? pour voir qu'il y a un problème
         return span;
     }
     
-    // Créer l'icône avec Lucide
-    // Lucide via CDN UMD retourne un élément SVG directement
-    const icon = IconComponent({
-        size: size,
-        color: color,
-        strokeWidth: strokeWidth
-    });
-    
-    // S'assurer que c'est un élément SVG
-    if (!icon || !(icon instanceof SVGElement)) {
-        console.warn(`[Icons] L'icône "${iconName}" n'a pas retourné un SVG valide`);
+    try {
+        // Créer l'icône avec Lucide
+        // Lucide via CDN UMD retourne un élément SVG directement
+        const icon = IconComponent({
+            size: size,
+            color: color,
+            strokeWidth: strokeWidth
+        });
+        
+        // S'assurer que c'est un élément SVG
+        if (!icon || !(icon instanceof SVGElement)) {
+            console.warn(`[Icons] L'icône "${iconName}" n'a pas retourné un SVG valide:`, icon);
+            const span = document.createElement('span');
+            span.className = className;
+            span.textContent = '?';
+            return span;
+        }
+        
+        // Ajouter la classe si fournie
+        if (className) {
+            icon.classList.add(className);
+        }
+        
+        console.log(`[Icons] Icône "${iconName}" créée avec succès`);
+        return icon;
+    } catch (error) {
+        console.error(`[Icons] Erreur lors de la création de l'icône "${iconName}":`, error);
         const span = document.createElement('span');
         span.className = className;
+        span.textContent = '?';
         return span;
     }
-    
-    // Ajouter la classe si fournie
-    if (className) {
-        icon.classList.add(className);
-    }
-    
-    return icon;
 }
 
 /**
