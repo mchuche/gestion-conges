@@ -18,91 +18,96 @@ function createIcon(iconName, options = {}) {
     // Vérifier que Lucide est disponible
     if (typeof lucide === 'undefined') {
         console.warn(`[Icons] Lucide n'est pas disponible`);
-        // Retourner un span vide en fallback
         const span = document.createElement('span');
         span.className = className;
         return span;
     }
     
-    // Méthode 1: Utiliser lucide.createIcons() avec un élément temporaire
-    // Créer un élément i avec data-lucide
-    const tempElement = document.createElement('i');
-    tempElement.setAttribute('data-lucide', iconName);
-    tempElement.style.display = 'none';
-    document.body.appendChild(tempElement);
-    
-    // Initialiser l'icône
-    try {
-        if (typeof lucide.createIcons === 'function') {
-            lucide.createIcons();
-        } else if (typeof lucide.init === 'function') {
-            lucide.init();
-        }
-        
-        // Récupérer le SVG créé
-        const svg = tempElement.querySelector('svg');
-        if (svg) {
-            // Cloner le SVG pour pouvoir retirer l'élément temporaire
-            const clonedSvg = svg.cloneNode(true);
-            
-            // Appliquer les options
-            clonedSvg.setAttribute('width', size);
-            clonedSvg.setAttribute('height', size);
-            clonedSvg.setAttribute('stroke', color);
-            clonedSvg.setAttribute('stroke-width', strokeWidth);
-            clonedSvg.style.color = color;
-            
-            // Ajouter la classe si fournie
-            if (className) {
-                clonedSvg.classList.add(className);
-            }
-            
-            // Retirer l'élément temporaire
-            document.body.removeChild(tempElement);
-            
-            return clonedSvg;
-        }
-        
-        // Retirer l'élément temporaire même en cas d'échec
-        document.body.removeChild(tempElement);
-    } catch (error) {
-        console.error(`[Icons] Erreur avec createIcons pour "${iconName}":`, error);
-        if (tempElement.parentNode) {
-            document.body.removeChild(tempElement);
-        }
-    }
-    
-    // Méthode 2: Essayer d'accéder directement aux icônes
-    // Convertir le nom en PascalCase (ex: 'chevron-left' -> 'ChevronLeft')
+    // Convertir le nom kebab-case en PascalCase pour Lucide
+    // Ex: 'chevron-left' -> 'ChevronLeft', 'log-out' -> 'LogOut'
     const pascalName = iconName
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join('');
     
+    // Essayer d'accéder à l'icône
+    let IconComponent = null;
+    
+    // Lucide UMD expose les icônes directement
     if (lucide[pascalName] && typeof lucide[pascalName] === 'function') {
-        try {
-            const icon = lucide[pascalName]({
-                size: size,
-                color: color,
-                strokeWidth: strokeWidth
-            });
-            
-            if (icon && icon instanceof SVGElement) {
-                if (className) {
-                    icon.classList.add(className);
-                }
-                return icon;
-            }
-        } catch (error) {
-            console.warn(`[Icons] Erreur avec ${pascalName}:`, error);
+        IconComponent = lucide[pascalName];
+    } else if (lucide.icons && lucide.icons[pascalName]) {
+        IconComponent = lucide.icons[pascalName];
+    } else {
+        // Essayer avec le nom original (pour certaines icônes)
+        if (lucide[iconName] && typeof lucide[iconName] === 'function') {
+            IconComponent = lucide[iconName];
         }
     }
     
-    // Fallback: retourner un span avec le nom de l'icône
-    console.warn(`[Icons] Impossible de créer l'icône "${iconName}"`);
+    if (!IconComponent) {
+        console.warn(`[Icons] Icône "${iconName}" (${pascalName}) non trouvée. Essai avec data-lucide...`);
+        
+        // Fallback: utiliser data-lucide avec un élément temporaire
+        const tempDiv = document.createElement('div');
+        tempDiv.style.display = 'none';
+        tempDiv.innerHTML = `<i data-lucide="${iconName}"></i>`;
+        document.body.appendChild(tempDiv);
+        
+        try {
+            if (typeof lucide.createIcons === 'function') {
+                lucide.createIcons({ parent: tempDiv });
+            }
+            
+            const svg = tempDiv.querySelector('svg');
+            if (svg) {
+                const clonedSvg = svg.cloneNode(true);
+                clonedSvg.setAttribute('width', size);
+                clonedSvg.setAttribute('height', size);
+                clonedSvg.setAttribute('stroke', color);
+                clonedSvg.setAttribute('stroke-width', strokeWidth);
+                clonedSvg.style.color = color;
+                if (className) clonedSvg.classList.add(className);
+                document.body.removeChild(tempDiv);
+                return clonedSvg;
+            }
+            document.body.removeChild(tempDiv);
+        } catch (error) {
+            if (tempDiv.parentNode) document.body.removeChild(tempDiv);
+            console.error(`[Icons] Erreur avec data-lucide:`, error);
+        }
+        
+        // Dernier fallback
+        const span = document.createElement('span');
+        span.className = className;
+        span.textContent = '?';
+        return span;
+    }
+    
+    // Créer l'icône
+    try {
+        const icon = IconComponent({
+            size: size,
+            color: color,
+            strokeWidth: strokeWidth
+        });
+        
+        if (icon && icon instanceof SVGElement) {
+            if (className) {
+                icon.classList.add(className);
+            }
+            return icon;
+        } else {
+            console.warn(`[Icons] L'icône "${iconName}" n'a pas retourné un SVG:`, icon);
+        }
+    } catch (error) {
+        console.error(`[Icons] Erreur lors de la création de "${iconName}":`, error);
+    }
+    
+    // Fallback final
     const span = document.createElement('span');
     span.className = className;
-    span.textContent = iconName.charAt(0).toUpperCase();
+    span.textContent = '?';
     return span;
 }
 
