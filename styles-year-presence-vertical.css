@@ -225,23 +225,28 @@
 }
 
 /* Responsive pour Matrice de Présence Verticale */
-/* Forcer plusieurs colonnes dès qu'il y a assez de place */
+/* En mode "largeur limitée" (container max-width: 1200px), toujours une seule colonne */
+.container:not(.full-width) .year-presence-vertical-container {
+    grid-template-columns: 1fr !important;
+}
+
+/* En mode "pleine largeur", permettre plusieurs colonnes */
+.container.full-width .year-presence-vertical-container {
+    grid-template-columns: repeat(auto-fit, minmax(850px, 1fr));
+}
+
+/* Forcer plusieurs colonnes en mode full-width selon la largeur de l'écran */
 @media (min-width: 1800px) {
-    .year-presence-vertical-container {
+    .container.full-width .year-presence-vertical-container {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (min-width: 2700px) {
-    .year-presence-vertical-container {
+    .container.full-width .year-presence-vertical-container {
         grid-template-columns: repeat(3, 1fr);
     }
 }
-
-@media (max-width: 1799px) {
-    .year-presence-vertical-container {
-        grid-template-columns: 1fr; /* Une seule colonne sur petits écrans */
-    }
     .year-presence-vertical-view .year-presence-vertical-day-header,
     .year-presence-vertical-view .year-presence-day-cell,
     .year-presence-vertical-view .year-presence-stats-cell {
