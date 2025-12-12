@@ -67,15 +67,29 @@ async function renderYearViewPresence() {
     userLabelCell.textContent = 'Utilisateur';
     headerRow.appendChild(userLabelCell);
     
+    // Obtenir le mois courant pour le scroll automatique
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const isCurrentYear = year === currentYear;
+    
     // Créer une colonne pour chaque mois avec les jours
     for (let month = 0; month < 12; month++) {
         const monthColumn = document.createElement('div');
         monthColumn.className = 'year-presence-month-column';
         
+        // Ajouter un identifiant pour le mois courant
+        if (isCurrentYear && month === currentMonth) {
+            monthColumn.id = 'current-month-column';
+            monthColumn.classList.add('current-month');
+        }
+        
         // En-tête du mois
         const monthHeader = document.createElement('div');
         monthHeader.className = 'year-presence-month-header';
         monthHeader.textContent = monthNames[month];
+        if (isCurrentYear && month === currentMonth) {
+            monthHeader.classList.add('current-month-header');
+        }
         monthColumn.appendChild(monthHeader);
         
         // Colonnes pour les jours du mois
@@ -224,6 +238,32 @@ async function renderYearViewPresence() {
     
     presenceContainer.appendChild(statsRow);
     semesterCalendar.appendChild(presenceContainer);
+    
+    // Faire défiler automatiquement vers le mois courant si c'est l'année en cours
+    if (isCurrentYear) {
+        setTimeout(() => {
+            const currentMonthColumn = document.getElementById('current-month-column');
+            if (currentMonthColumn) {
+                // Trouver le conteneur scrollable
+                const scrollContainer = semesterCalendar.closest('.semester-view') || semesterCalendar.parentElement;
+                if (scrollContainer) {
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const columnRect = currentMonthColumn.getBoundingClientRect();
+                    const scrollLeft = scrollContainer.scrollLeft + (columnRect.left - containerRect.left) - (containerRect.width / 2) + (columnRect.width / 2);
+                    scrollContainer.scrollTo({
+                        left: scrollLeft,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    currentMonthColumn.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest',
+                        inline: 'center'
+                    });
+                }
+            }
+        }, 100);
+    }
 }
 
 // Créer une cellule de jour pour la matrice de présence

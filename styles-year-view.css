@@ -82,6 +82,26 @@
     z-index: 10;
 }
 
+.year-presence-month-header.current-month-header {
+    background: #ff9800;
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+    animation: pulse-month 2s ease-in-out infinite;
+}
+
+@keyframes pulse-month {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 152, 0, 0.8);
+    }
+}
+
+.year-presence-month-column.current-month {
+    border-left: 3px solid #ff9800;
+    border-right: 3px solid #ff9800;
+}
+
 .year-presence-days-container {
     display: grid;
     grid-template-columns: repeat(31, 1fr);
