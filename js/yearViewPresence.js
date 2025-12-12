@@ -322,27 +322,66 @@ function createPresenceDayCell(date, user) {
     };
     
     if (leaveInfo.full || leaveInfo.morning || leaveInfo.afternoon) {
-        const leaveType = leaveInfo.full || leaveInfo.morning || leaveInfo.afternoon;
-        const leaveConfig = this.getLeaveTypeConfig(leaveType);
-        
-        if (leaveConfig) {
-            cell.style.backgroundColor = leaveConfig.color;
-            cell.style.color = 'white';
-            cell.classList.add('has-leave');
+        // Si on a matin ET après-midi (et qu'ils sont différents), créer une division diagonale
+        if (leaveInfo.morning && leaveInfo.afternoon && leaveInfo.morning !== leaveInfo.afternoon) {
+            const morningConfig = this.getLeaveTypeConfig(leaveInfo.morning);
+            const afternoonConfig = this.getLeaveTypeConfig(leaveInfo.afternoon);
             
-            // Indicateur pour demi-journée
-            if (!leaveInfo.full) {
-                if (leaveInfo.morning) {
-                    cell.style.borderTopWidth = '3px';
-                    cell.style.borderTopColor = 'white';
-                }
-                if (leaveInfo.afternoon) {
-                    cell.style.borderBottomWidth = '3px';
-                    cell.style.borderBottomColor = 'white';
-                }
+            if (morningConfig && afternoonConfig) {
+                cell.classList.add('has-leave', 'has-split');
+                cell.style.position = 'relative';
+                cell.style.overflow = 'hidden';
+                
+                // Moitié supérieure gauche (matin)
+                const morningHalf = document.createElement('div');
+                morningHalf.className = 'presence-cell-half presence-cell-morning';
+                morningHalf.style.position = 'absolute';
+                morningHalf.style.top = '0';
+                morningHalf.style.left = '0';
+                morningHalf.style.width = '50%';
+                morningHalf.style.height = '50%';
+                morningHalf.style.backgroundColor = morningConfig.color;
+                morningHalf.style.clipPath = 'polygon(0 0, 100% 0, 0 100%)';
+                cell.appendChild(morningHalf);
+                
+                // Moitié inférieure droite (après-midi)
+                const afternoonHalf = document.createElement('div');
+                afternoonHalf.className = 'presence-cell-half presence-cell-afternoon';
+                afternoonHalf.style.position = 'absolute';
+                afternoonHalf.style.bottom = '0';
+                afternoonHalf.style.right = '0';
+                afternoonHalf.style.width = '50%';
+                afternoonHalf.style.height = '50%';
+                afternoonHalf.style.backgroundColor = afternoonConfig.color;
+                afternoonHalf.style.clipPath = 'polygon(100% 0, 100% 100%, 0 100%)';
+                cell.appendChild(afternoonHalf);
+                
+                cell.title = `${user.name} - Matin: ${morningConfig.name}, Après-midi: ${afternoonConfig.name}`;
             }
+        } else {
+            // Cas normal : journée complète ou une seule demi-journée
+            const leaveType = leaveInfo.full || leaveInfo.morning || leaveInfo.afternoon;
+            const leaveConfig = this.getLeaveTypeConfig(leaveType);
             
-            cell.title = `${user.name} - ${leaveConfig.name}`;
+            if (leaveConfig) {
+                cell.style.backgroundColor = leaveConfig.color;
+                cell.style.color = 'white';
+                cell.classList.add('has-leave');
+                
+                // Indicateur pour demi-journée
+                if (!leaveInfo.full) {
+                    if (leaveInfo.morning) {
+                        cell.style.borderTopWidth = '3px';
+                        cell.style.borderTopColor = 'white';
+                    }
+                    if (leaveInfo.afternoon) {
+                        cell.style.borderBottomWidth = '3px';
+                        cell.style.borderBottomColor = 'white';
+                    }
+                }
+                
+                cell.title = `${user.name} - ${leaveConfig.name}`;
+            }
         }
     } else {
         // Présent (pas de congé)
