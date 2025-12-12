@@ -145,6 +145,14 @@ function initIcons() {
     
     console.log('[Icons] Initialisation des icônes...');
     
+    // Utiliser lucide.createIcons() pour initialiser toutes les icônes avec data-lucide
+    if (typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+        console.log('[Icons] Icônes Lucide initialisées avec createIcons()');
+    } else {
+        console.warn('[Icons] lucide.createIcons() n\'est pas disponible');
+    }
+    
     // Remplacer les emojis par des icônes Lucide
     // Header
     const headerTitle = document.querySelector('h1');

@@ -27,14 +27,14 @@
     <div id="authModal" class="modal active" style="display: block;">
         <div class="modal-content auth-modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0;">🔒 Connexion</h3>
-                <button id="themeToggleAuth" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème" style="position: relative; top: 0; right: 0;">☾</button>
+                <h3 style="margin: 0;"><i data-lucide="lock"></i> Connexion</h3>
+                <button id="themeToggleAuth" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème" style="position: relative; top: 0; right: 0;"><i data-lucide="moon"></i></button>
             </div>
             <div id="authError" class="error-message" style="display: none;"></div>
             
             <div class="auth-help-section" style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-size: 0.9em;">
-                <p style="margin: 0 0 8px 0; color: #666;">ℹ Si vous êtes bloqué sur cette page, essayez de nettoyer les données locales :</p>
-                <button id="clearAuthDataBtn" class="clear-data-btn" style="padding: 6px 12px; font-size: 0.85em; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer;">⌧ Nettoyer les données</button>
+                <p style="margin: 0 0 8px 0; color: #666;"><i data-lucide="info" style="display: inline-block; width: 14px; height: 14px; vertical-align: middle;"></i> Si vous êtes bloqué sur cette page, essayez de nettoyer les données locales :</p>
+                <button id="clearAuthDataBtn" class="clear-data-btn" style="padding: 6px 12px; font-size: 0.85em; background: #ff9800; color: white; border: none; border-radius: 4px; cursor: pointer;"><i data-lucide="trash-2"></i> Nettoyer les données</button>
             </div>
             
             <div id="loginForm">
@@ -73,32 +73,32 @@
     <div class="container" id="mainContainer" style="display: none;">
         <header>
             <div class="header-top">
-                <button id="minimizeHeaderBtn" class="minimize-header-btn" title="Masquer/Afficher les éléments du header">⬇</button>
-                <h1>📆 Gestionnaire de Congés</h1>
+                <button id="minimizeHeaderBtn" class="minimize-header-btn" title="Masquer/Afficher les éléments du header"><i data-lucide="chevron-down"></i></button>
+                <h1><i data-lucide="calendar"></i> Gestionnaire de Congés</h1>
                 <div class="header-right">
                     <div class="user-info">
                         <span id="userName" class="user-name"></span>
-                        <span id="invitationsBadge" class="invitations-badge" style="display: none;" title="Vous avez des invitations en attente">✉</span>
+                        <span id="invitationsBadge" class="invitations-badge" style="display: none;" title="Vous avez des invitations en attente"><i data-lucide="mail"></i></span>
                     </div>
-                    <button id="themeToggle" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème">☾</button>
-                    <button id="fullWidthToggle" class="full-width-toggle" title="Largeur pleine écran" aria-label="Largeur pleine écran">⛶</button>
+                    <button id="themeToggle" class="theme-toggle" title="Changer le thème" aria-label="Changer le thème"><i data-lucide="moon"></i></button>
+                    <button id="fullWidthToggle" class="full-width-toggle" title="Largeur pleine écran" aria-label="Largeur pleine écran"><i data-lucide="maximize"></i></button>
                     <div class="menu-dropdown">
-                        <button id="menuBtn" class="menu-btn" title="Menu">☰</button>
+                        <button id="menuBtn" class="menu-btn" title="Menu"><i data-lucide="menu"></i></button>
                         <div id="menuDropdown" class="menu-dropdown-content">
-                            <button class="menu-item" data-action="config">⚙ Configuration</button>
-                            <button class="menu-item" data-action="teams" style="display: none;">👥 Gérer les équipes</button>
-                            <button class="menu-item" data-action="help">? Aide</button>
-                            <button class="menu-item" data-action="admin" style="display: none;">⚙ Administration</button>
+                            <button class="menu-item" data-action="config"><i data-lucide="settings"></i> Configuration</button>
+                            <button class="menu-item" data-action="teams" style="display: none;"><i data-lucide="users"></i> Gérer les équipes</button>
+                            <button class="menu-item" data-action="help"><i data-lucide="help-circle"></i> Aide</button>
+                            <button class="menu-item" data-action="admin" style="display: none;"><i data-lucide="shield"></i> Administration</button>
                         </div>
                     </div>
-                    <button id="logoutBtn" class="logout-btn" title="Déconnexion">⏻</button>
+                    <button id="logoutBtn" class="logout-btn" title="Déconnexion"><i data-lucide="log-out"></i></button>
                 </div>
             </div>
             <div class="header-controls">
-                <button id="prevMonth" class="nav-btn">◀</button>
+                <button id="prevMonth" class="nav-btn"><i data-lucide="chevron-left"></i></button>
                 <h2 id="currentMonth"></h2>
-                <button id="nextMonth" class="nav-btn">▶</button>
-                <button id="viewToggle" class="view-toggle-btn" title="Basculer entre vue semestrielle et annuelle">📆</button>
+                <button id="nextMonth" class="nav-btn"><i data-lucide="chevron-right"></i></button>
+                <button id="viewToggle" class="view-toggle-btn" title="Basculer entre vue semestrielle et annuelle"><i data-lucide="calendar"></i></button>
                 <select id="teamSelect" class="team-select" title="Sélectionner une équipe" style="display: none;">
                     <option value="">Mon calendrier</option>
                 </select>
@@ -117,7 +117,7 @@
         </div>
 
         <div class="help-hint" id="helpHint" style="display: none;">
-            ℹ Astuce : Maintenez <strong>Ctrl</strong> (ou <strong>Cmd</strong> sur Mac) et cliquez sur plusieurs jours pour les sélectionner en même temps.
+            <i data-lucide="info" style="display: inline-block; width: 14px; height: 14px; vertical-align: middle;"></i> Astuce : Maintenez <strong>Ctrl</strong> (ou <strong>Cmd</strong> sur Mac) et cliquez sur plusieurs jours pour les sélectionner en même temps.
         </div>
 
         <div id="leaveQuotas" class="leave-quotas"></div>
@@ -132,7 +132,7 @@
         <div id="configModal" class="modal">
             <div class="modal-content config-modal-content">
                 <span class="close config-close">&times;</span>
-                <h3>⚙ Configuration des Congés</h3>
+                <h3><i data-lucide="settings"></i> Configuration des Congés</h3>
 
                 <div class="config-section">
                     <h4>Quotas de Congés par Année</h4>
@@ -182,7 +182,7 @@
         <div id="teamsModal" class="modal">
             <div class="modal-content teams-modal-content">
                 <span class="close teams-close">&times;</span>
-                <h3>👥 Gestion des Équipes</h3>
+                <h3><i data-lucide="users"></i> Gestion des Équipes</h3>
                 
                 <div class="teams-section">
                     <h4>Mes équipes</h4>
@@ -225,7 +225,7 @@
         <div id="invitationsModal" class="modal">
             <div class="modal-content invitations-modal-content">
                 <span class="close invitations-close">&times;</span>
-                <h3>✉ Invitations en attente</h3>
+                <h3><i data-lucide="mail"></i> Invitations en attente</h3>
                 
                 <div id="invitationsList" class="invitations-list">
                     <p class="no-invitations">Chargement...</p>
@@ -241,14 +241,14 @@
         <div id="adminModal" class="modal">
             <div class="modal-content admin-modal-content">
                 <span class="close admin-close">&times;</span>
-                <h3>⚙ Administration</h3>
+                <h3><i data-lucide="shield"></i> Administration</h3>
                 
                 <!-- Onglets -->
                 <div class="admin-tabs">
-                    <button class="admin-tab active" data-tab="users">👥 Utilisateurs</button>
-                    <button class="admin-tab" data-tab="teams">🏢 Groupes</button>
-                    <button class="admin-tab" data-tab="settings">⚙ Paramètres</button>
-                    <button class="admin-tab" data-tab="stats">📊 Statistiques</button>
+                    <button class="admin-tab active" data-tab="users"><i data-lucide="users"></i> Utilisateurs</button>
+                    <button class="admin-tab" data-tab="teams"><i data-lucide="building"></i> Groupes</button>
+                    <button class="admin-tab" data-tab="settings"><i data-lucide="settings"></i> Paramètres</button>
+                    <button class="admin-tab" data-tab="stats"><i data-lucide="bar-chart-2"></i> Statistiques</button>
                     <button class="admin-tab" data-tab="audit">📋 Logs d'audit</button>
                 </div>
                 
@@ -318,7 +318,7 @@
                 <h3>? Aide - Guide d'utilisation</h3>
                 
                 <div class="help-section">
-                    <h4>📆 Utilisation du calendrier</h4>
+                    <h4><i data-lucide="calendar"></i> Utilisation du calendrier</h4>
                     <ul class="help-list">
                         <li><strong>Ajouter un congé :</strong> Cliquez sur un jour dans le calendrier, choisissez la période (journée complète, matin ou après-midi) et sélectionnez le type de congé.</li>
                         <li><strong>Sélection multiple :</strong> Maintenez <strong>Ctrl</strong> (ou <strong>Cmd</strong> sur Mac) et cliquez sur plusieurs jours pour les sélectionner, puis appliquez un congé à tous en une fois.</li>
@@ -332,7 +332,7 @@
                     <ul class="help-list">
                         <li>Chaque type de congé peut avoir un <strong>quota</strong> (nombre de jours maximum par an).</li>
                         <li>Les types <strong>sans quota</strong> ou avec <strong>quota = 0</strong> ne sont <strong>pas comptabilisés</strong> dans les statistiques.</li>
-                        <li>Vous pouvez personnaliser les types de congés via la configuration (⚙).</li>
+                        <li>Vous pouvez personnaliser les types de congés via la configuration (<i data-lucide="settings" style="display: inline-block; width: 14px; height: 14px; vertical-align: middle;"></i>).</li>
                         <li>Les types par défaut sont : Congé Payé, RTT, Jours Hiver, Maladie, Télétravail, Formation, Grève.</li>
                     </ul>
                 </div>
@@ -357,7 +357,7 @@
                 </div>
 
                 <div class="help-section">
-                    <h4>⚙ Configuration</h4>
+                    <h4><i data-lucide="settings"></i> Configuration</h4>
                     <ul class="help-list">
                         <li><strong>Types de congés :</strong> Ajoutez, modifiez ou supprimez des types de congés. Personnalisez les noms, labels et couleurs.</li>
                         <li><strong>Quotas :</strong> Configurez les quotas par type et par année. Laissez vide pour un quota illimité.</li>
@@ -366,11 +366,11 @@
                 </div>
 
                 <div class="help-section">
-                    <h4>🔒 Compte utilisateur</h4>
+                    <h4><i data-lucide="lock"></i> Compte utilisateur</h4>
                     <ul class="help-list">
                         <li>Chaque utilisateur a son propre compte et ses propres données.</li>
                         <li>Vos données sont sauvegardées automatiquement dans le cloud (Supabase).</li>
-                        <li>Vous pouvez vous déconnecter (⏻) ou supprimer votre compte depuis la configuration.</li>
+                        <li>Vous pouvez vous déconnecter (<i data-lucide="log-out" style="display: inline-block; width: 14px; height: 14px; vertical-align: middle;"></i>) ou supprimer votre compte depuis la configuration.</li>
                     </ul>
                 </div>
 
