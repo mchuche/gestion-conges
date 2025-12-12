@@ -14,8 +14,8 @@
 
 .year-presence-vertical-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 20px;
     align-items: start;
     width: 100%;
     max-width: 100%;
@@ -29,10 +29,10 @@
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 10px;
+    padding: 15px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 100%;
-    min-width: 480px;
+    min-width: 550px;
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
@@ -84,14 +84,14 @@
 }
 
 .year-presence-vertical-user-label {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
-    padding: 6px 4px;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
+    padding: 10px 8px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     font-weight: 600;
-    font-size: 0.8em;
+    font-size: 0.9em;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -100,10 +100,10 @@
 }
 
 .year-presence-vertical-user-name {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
-    padding: 6px 4px;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
+    padding: 10px 8px;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     display: flex;
@@ -112,15 +112,15 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.8em;
+    font-size: 0.9em;
     box-sizing: border-box;
     flex-shrink: 0;
 }
 
 .year-presence-vertical-days-container {
     display: grid;
-    grid-template-columns: repeat(31, minmax(14px, 1fr));
-    gap: 2px;
+    grid-template-columns: repeat(31, minmax(20px, 1fr));
+    gap: 3px;
     flex: 1 1 0;
     min-width: 0;
     width: 100%;
@@ -129,17 +129,17 @@
 
 .year-presence-vertical-day-header {
     aspect-ratio: 1;
-    min-width: 20px;
-    min-height: 20px;
+    min-width: 24px;
+    min-height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7em;
+    font-size: 0.8em;
     font-weight: 600;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
-    border-radius: 2px;
-    padding: 2px;
+    border-radius: 3px;
+    padding: 3px;
 }
 
 .year-presence-vertical-day-header.weekend {
@@ -156,17 +156,18 @@
 /* Réutiliser les styles de la vue présence normale pour les cellules */
 .year-presence-vertical-view .year-presence-day-cell {
     aspect-ratio: 1;
-    min-width: 20px;
-    min-height: 20px;
+    min-width: 24px;
+    min-height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-color);
-    border-radius: 2px;
+    border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s ease;
     background: var(--bg-color);
     position: relative;
+    font-size: 0.75em;
 }
 
 .year-presence-vertical-view .year-presence-day-cell:hover {
@@ -213,40 +214,40 @@
 /* Réutiliser les styles de la vue présence normale pour les cellules de stats */
 .year-presence-vertical-view .year-presence-stats-cell {
     aspect-ratio: 1;
-    min-width: 20px;
-    min-height: 20px;
+    min-width: 24px;
+    min-height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7em;
+    font-size: 0.8em;
     font-weight: bold;
     color: white;
     border: 1px solid var(--border-color);
-    border-radius: 2px;
+    border-radius: 3px;
     cursor: help;
 }
 
 /* Responsive pour Matrice de Présence Verticale */
 /* Forcer plusieurs colonnes dès qu'il y a assez de place */
-@media (min-width: 1100px) {
+@media (min-width: 1300px) {
     .year-presence-vertical-container {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (min-width: 1600px) {
+@media (min-width: 1900px) {
     .year-presence-vertical-container {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
-@media (min-width: 2200px) {
+@media (min-width: 2500px) {
     .year-presence-vertical-container {
         grid-template-columns: repeat(4, 1fr);
     }
 }
 
-@media (max-width: 1099px) {
+@media (max-width: 1299px) {
     .year-presence-vertical-container {
         grid-template-columns: 1fr; /* Une seule colonne sur petits écrans */
     }
