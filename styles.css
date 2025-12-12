@@ -454,6 +454,14 @@ body.minimal-header .header-controls #minimizeHeaderBtn {
     line-height: 1.2;
 }
 
+/* Réduire drastiquement la taille et l'espace en mode minimal-header */
+body.minimal-header #currentMonth {
+    font-size: 1.3em;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+}
+
 .stats {
     display: flex;
     gap: 20px;
