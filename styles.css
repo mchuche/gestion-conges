@@ -80,8 +80,8 @@ body.full-width {
 
 header {
     text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 2px solid var(--border-color);
 }
 
@@ -273,7 +273,7 @@ header h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 15px;
 }
 
 .minimize-header-btn {
@@ -335,7 +335,7 @@ body.minimal-header #leaveQuotas {
 }
 
 body.minimal-header .header-controls {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     justify-content: space-between;
     position: relative;
 }
@@ -344,7 +344,7 @@ body.minimal-header .header-controls {
 body.minimal-header .header-controls .nav-center-group {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -418,10 +418,11 @@ body.minimal-header .header-controls .full-width-toggle {
 }
 
 #currentMonth {
-    font-size: 1.8em;
+    font-size: 1.6em;
     font-weight: 600;
     min-width: 250px;
     color: var(--text-color);
+    line-height: 1.2;
 }
 
 .stats {
@@ -1932,7 +1933,7 @@ body.minimal-header .header-controls .full-width-toggle {
         display: grid;
         grid-template-columns: auto 1fr auto;
         grid-template-rows: auto auto auto;
-        gap: 10px;
+        gap: 5px;
         align-items: center;
     }
     
@@ -1963,7 +1964,7 @@ body.minimal-header .header-controls .full-width-toggle {
         grid-column: 1 / -1;
         grid-row: 2;
         width: 100%;
-        margin: 5px 0;
+        margin: 2px 0;
         display: block !important; /* Forcer l'affichage sur mobile */
     }
     
@@ -1972,7 +1973,7 @@ body.minimal-header .header-controls .full-width-toggle {
         grid-column: 1 / -1;
         grid-row: 3;
         width: 100%;
-        margin: 5px 0;
+        margin: 2px 0;
         display: block !important; /* Forcer l'affichage sur mobile */
     }
     
