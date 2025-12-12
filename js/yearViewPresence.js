@@ -244,25 +244,41 @@ async function renderYearViewPresence() {
         setTimeout(() => {
             const currentMonthColumn = document.getElementById('current-month-column');
             if (currentMonthColumn) {
-                // Trouver le conteneur scrollable
-                const scrollContainer = semesterCalendar.closest('.semester-view') || semesterCalendar.parentElement;
+                console.log('[YearViewPresence] Mois courant trouvé, scroll automatique...');
+                
+                // Le conteneur scrollable est semesterCalendar lui-même (qui a overflow-x: auto)
+                const scrollContainer = semesterCalendar;
+                
                 if (scrollContainer) {
+                    // Calculer la position de scroll pour centrer le mois courant
                     const containerRect = scrollContainer.getBoundingClientRect();
                     const columnRect = currentMonthColumn.getBoundingClientRect();
-                    const scrollLeft = scrollContainer.scrollLeft + (columnRect.left - containerRect.left) - (containerRect.width / 2) + (columnRect.width / 2);
+                    
+                    // Position relative de la colonne par rapport au conteneur
+                    const relativeLeft = columnRect.left - containerRect.left;
+                    
+                    // Calculer le scroll pour centrer la colonne
+                    const scrollLeft = scrollContainer.scrollLeft + relativeLeft - (containerRect.width / 2) + (columnRect.width / 2);
+                    
+                    console.log('[YearViewPresence] Scroll vers:', scrollLeft);
+                    
                     scrollContainer.scrollTo({
-                        left: scrollLeft,
+                        left: Math.max(0, scrollLeft),
                         behavior: 'smooth'
                     });
                 } else {
+                    // Fallback: utiliser scrollIntoView
+                    console.log('[YearViewPresence] Utilisation de scrollIntoView comme fallback');
                     currentMonthColumn.scrollIntoView({ 
                         behavior: 'smooth', 
                         block: 'nearest',
                         inline: 'center'
                     });
                 }
+            } else {
+                console.warn('[YearViewPresence] Mois courant non trouvé (current-month-column)');
             }
-        }, 100);
+        }, 300); // Augmenter le délai pour s'assurer que le DOM est complètement rendu
     }
 }
 
