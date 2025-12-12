@@ -1,5 +1,11 @@
 # 📅 Gestionnaire de Congés
 
+## 🎯 L'origine du projet
+
+Ce projet est né d'une idée que j'avais en tête depuis longtemps, mais sur laquelle je n'avais jamais vraiment avancé. Depuis 2015, j'utilise Google Sheets avec des tags pour gérer mes congés, et je me suis dit que c'était l'occasion parfaite de tester l'intelligence artificielle pour enfin concrétiser cette idée. Je dois avouer que je suis bluffé par le résultat ! 🤖✨
+
+---
+
 Une application web moderne et responsive pour gérer vos jours de congé avec un calendrier interactif. **Multi-utilisateurs avec authentification Supabase**.
 
 ## ✨ Fonctionnalités
