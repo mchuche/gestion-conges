@@ -62,7 +62,18 @@ function updateThemeToggleButton(theme) {
     
     toggleButtons.forEach(toggleButton => {
         if (toggleButton) {
-            toggleButton.textContent = theme === 'dark' ? '☀' : '☾';
+            // Utiliser Lucide Icons si disponible, sinon fallback sur emoji
+            if (typeof lucide !== 'undefined') {
+                toggleButton.innerHTML = '';
+                const iconName = theme === 'dark' ? 'sun' : 'moon';
+                const icon = lucide[iconName]({
+                    size: 18,
+                    strokeWidth: 2
+                });
+                toggleButton.appendChild(icon);
+            } else {
+                toggleButton.textContent = theme === 'dark' ? '☀' : '☾';
+            }
             toggleButton.setAttribute('title', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
             toggleButton.setAttribute('aria-label', theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre');
         }

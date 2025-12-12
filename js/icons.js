@@ -93,14 +93,8 @@ function initIcons() {
         viewToggle.appendChild(createIcon('calendar', { size: 18 }));
     }
     
-    // Bouton thème
-    const themeToggles = document.querySelectorAll('.theme-toggle');
-    themeToggles.forEach(btn => {
-        if (btn.textContent.includes('☾')) {
-            btn.innerHTML = '';
-            btn.appendChild(createIcon('moon', { size: 18 }));
-        }
-    });
+    // Bouton thème - sera mis à jour dynamiquement par updateThemeToggleButton
+    // On ne le modifie pas ici car il change selon le thème actif
     
     // Bouton plein écran
     const fullWidthToggle = document.getElementById('fullWidthToggle');
