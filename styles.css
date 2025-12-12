@@ -335,7 +335,8 @@ body.minimal-header #leaveQuotas {
 }
 
 body.minimal-header .header-controls {
-    margin-bottom: 5px;
+    margin-bottom: 0;
+    padding: 0;
     justify-content: space-between;
     position: relative;
 }
@@ -344,7 +345,7 @@ body.minimal-header .header-controls {
 body.minimal-header .header-controls .nav-center-group {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -361,7 +362,7 @@ body.minimal-header .header-controls .nav-center-group {
         display: flex !important;
         order: 0;
         align-self: flex-start;
-        margin-bottom: 5px;
+        margin-bottom: 2px;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
@@ -373,6 +374,7 @@ body.minimal-header .header-controls .nav-center-group {
         order: 1;
         width: 100%;
         justify-content: center;
+        gap: 8px;
     }
     
     body.minimal-header .header-controls .full-width-toggle {
@@ -385,6 +387,11 @@ body.minimal-header .header-controls .nav-center-group {
         justify-content: center;
         flex-shrink: 0;
     }
+    
+    /* Réduire drastiquement le gap du grid en mode minimal-header sur mobile */
+    body.minimal-header .header-controls {
+        gap: 2px !important;
+    }
 }
 
 /* Positionner le bouton full-width à droite en mode minimal */
@@ -393,6 +400,28 @@ body.minimal-header .header-controls .full-width-toggle {
     order: 999;
     position: relative;
     z-index: 1;
+}
+
+/* Réduire drastiquement la taille des boutons en mode minimal-header */
+body.minimal-header .header-controls .nav-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 1em;
+    padding: 0;
+}
+
+body.minimal-header .header-controls .full-width-toggle {
+    width: 35px;
+    height: 35px;
+    font-size: 1em;
+    padding: 0;
+}
+
+body.minimal-header .header-controls #minimizeHeaderBtn {
+    width: 35px;
+    height: 35px;
+    font-size: 1em;
+    padding: 0;
 }
 
 .nav-btn {
