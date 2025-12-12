@@ -7,16 +7,19 @@
     padding: 20px;
     background: var(--bg-color) !important;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    min-width: 0;
 }
 
 .year-presence-vertical-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     gap: 15px;
     align-items: start;
     width: 100%;
     max-width: 100%;
+    min-width: 0;
 }
 
 .year-presence-vertical-month-block {
@@ -29,7 +32,7 @@
     padding: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 100%;
-    min-width: 530px;
+    min-width: 480px;
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
@@ -224,27 +227,26 @@
 }
 
 /* Responsive pour Matrice de Présence Verticale */
-@media (min-width: 1400px) {
+/* Forcer plusieurs colonnes dès qu'il y a assez de place */
+@media (min-width: 1100px) {
     .year-presence-vertical-container {
-        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    }
-    
-    .year-presence-vertical-month-block {
-        min-width: 480px;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (min-width: 1800px) {
+@media (min-width: 1600px) {
     .year-presence-vertical-container {
-        grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-    }
-    
-    .year-presence-vertical-month-block {
-        min-width: 460px;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
-@media (max-width: 1200px) {
+@media (min-width: 2200px) {
+    .year-presence-vertical-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 1099px) {
     .year-presence-vertical-container {
         grid-template-columns: 1fr; /* Une seule colonne sur petits écrans */
     }
