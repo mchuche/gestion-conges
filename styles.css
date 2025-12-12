@@ -2407,7 +2407,7 @@ body.minimal-header .header-controls .full-width-toggle {
 }
 
 .team-select {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: var(--card-bg);
@@ -2416,6 +2416,7 @@ body.minimal-header .header-controls .full-width-toggle {
     cursor: pointer;
     margin-left: 10px;
     min-width: 150px;
+    line-height: 1.3;
 }
 
 .team-select:focus {
