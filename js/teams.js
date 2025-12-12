@@ -387,13 +387,11 @@ async function loadUserPendingInvitations() {
                 email,
                 status,
                 created_at,
+                invited_by,
                 teams:team_id (
                     id,
                     name,
                     description
-                ),
-                inviter:invited_by (
-                    email
                 )
             `)
             .eq('email', userEmail)
@@ -407,15 +405,40 @@ async function loadUserPendingInvitations() {
 
         logger.debug('[loadUserPendingInvitations] Invitations trouvées:', data?.length || 0);
 
-        return (data || []).map(invitation => ({
-            id: invitation.id,
-            teamId: invitation.team_id,
-            email: invitation.email,
-            status: invitation.status,
-            createdAt: invitation.created_at,
-            team: invitation.teams,
-            inviterEmail: invitation.inviter?.email || 'Utilisateur inconnu'
+        // Récupérer les emails des invités si nécessaire
+        const invitationsWithInviter = await Promise.all((data || []).map(async (invitation) => {
+            let inviterEmail = 'Utilisateur inconnu';
+            
+            if (invitation.invited_by) {
+                try {
+                    // Récupérer l'email depuis auth.users via une fonction Supabase ou directement
+                    // Note: On ne peut pas faire de join direct avec auth.users, donc on utilise user_emails si disponible
+                    const { data: userEmailData } = await supabase
+                        .from('user_emails')
+                        .select('email')
+                        .eq('user_id', invitation.invited_by)
+                        .single();
+                    
+                    if (userEmailData) {
+                        inviterEmail = userEmailData.email;
+                    }
+                } catch (e) {
+                    logger.warn('[loadUserPendingInvitations] Impossible de récupérer l\'email de l\'inviteur:', e);
+                }
+            }
+            
+            return {
+                id: invitation.id,
+                teamId: invitation.team_id,
+                email: invitation.email,
+                status: invitation.status,
+                createdAt: invitation.created_at,
+                team: invitation.teams,
+                inviterEmail: inviterEmail
+            };
         }));
+
+        return invitationsWithInviter;
     } catch (e) {
         logger.error('Erreur lors du chargement des invitations en attente:', e);
         return [];
