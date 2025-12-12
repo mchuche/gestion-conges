@@ -10,10 +10,10 @@
 
 .year-presence-vertical-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(850px, 1fr));
     gap: 30px;
-    min-width: max-content;
     align-items: start;
+    width: 100%;
 }
 
 .year-presence-vertical-month-block {
@@ -213,15 +213,15 @@
 }
 
 /* Responsive pour Matrice de Présence Verticale */
-@media (min-width: 1400px) {
+@media (min-width: 1800px) {
     .year-presence-vertical-container {
-        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(800px, 1fr));
     }
 }
 
-@media (min-width: 1800px) {
+@media (min-width: 2400px) {
     .year-presence-vertical-container {
-        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(750px, 1fr));
     }
 }
 
