@@ -9,10 +9,11 @@
 }
 
 .year-presence-vertical-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
     gap: 30px;
     min-width: max-content;
+    align-items: start;
 }
 
 .year-presence-vertical-month-block {
@@ -24,6 +25,9 @@
     border-radius: 8px;
     padding: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .year-presence-vertical-month-header {
