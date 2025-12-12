@@ -201,6 +201,15 @@
     border-width: 2px;
 }
 
+/* Cellule avec division diagonale (matin + après-midi différents) */
+.year-presence-vertical-view .year-presence-day-cell.has-split {
+    background: transparent !important;
+}
+
+.year-presence-vertical-view .presence-cell-half {
+    z-index: 1;
+}
+
 .year-presence-vertical-view .year-presence-day-cell.selected {
     outline: 3px solid var(--primary-color);
     outline-offset: 2px;
