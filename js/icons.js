@@ -16,7 +16,27 @@ function createIcon(iconName, options = {}) {
     } = options;
     
     // Vérifier que Lucide est disponible
-    if (typeof lucide === 'undefined' || !lucide[iconName]) {
+    if (typeof lucide === 'undefined') {
+        console.warn(`[Icons] Lucide n'est pas disponible`);
+        // Retourner un span vide en fallback
+        const span = document.createElement('span');
+        span.className = className;
+        return span;
+    }
+    
+    // Lucide via CDN expose les icônes via lucide.icons ou directement
+    let IconComponent = null;
+    
+    // Essayer différentes façons d'accéder aux icônes
+    if (lucide.icons && lucide.icons[iconName]) {
+        IconComponent = lucide.icons[iconName];
+    } else if (lucide[iconName]) {
+        IconComponent = lucide[iconName];
+    } else if (window.lucide && window.lucide[iconName]) {
+        IconComponent = window.lucide[iconName];
+    }
+    
+    if (!IconComponent) {
         console.warn(`[Icons] Icône "${iconName}" non trouvée dans Lucide`);
         // Retourner un span vide en fallback
         const span = document.createElement('span');
@@ -25,11 +45,20 @@ function createIcon(iconName, options = {}) {
     }
     
     // Créer l'icône avec Lucide
-    const icon = lucide[iconName]({
+    // Lucide via CDN UMD retourne un élément SVG directement
+    const icon = IconComponent({
         size: size,
         color: color,
         strokeWidth: strokeWidth
     });
+    
+    // S'assurer que c'est un élément SVG
+    if (!icon || !(icon instanceof SVGElement)) {
+        console.warn(`[Icons] L'icône "${iconName}" n'a pas retourné un SVG valide`);
+        const span = document.createElement('span');
+        span.className = className;
+        return span;
+    }
     
     // Ajouter la classe si fournie
     if (className) {
