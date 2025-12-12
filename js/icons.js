@@ -64,31 +64,43 @@ function replaceWithIcon(element, iconName, options = {}) {
  * Initialise les icônes dans l'interface
  */
 function initIcons() {
+    // Vérifier que Lucide est disponible
+    if (typeof lucide === 'undefined') {
+        console.warn('[Icons] Lucide Icons non disponible, réessai dans 100ms...');
+        setTimeout(initIcons, 100);
+        return;
+    }
+    
+    console.log('[Icons] Initialisation des icônes...');
+    
     // Remplacer les emojis par des icônes Lucide
     // Header
     const headerTitle = document.querySelector('h1');
-    if (headerTitle && headerTitle.textContent.includes('📆')) {
-        headerTitle.innerHTML = '';
-        const icon = createIcon('calendar', { size: 24, class: 'header-icon' });
-        headerTitle.appendChild(icon);
-        headerTitle.appendChild(document.createTextNode(' Gestionnaire de Congés'));
+    if (headerTitle) {
+        const text = headerTitle.textContent || headerTitle.innerText || '';
+        if (text.includes('📆') || (!headerTitle.querySelector('svg') && text.includes('Gestionnaire'))) {
+            headerTitle.innerHTML = '';
+            const icon = createIcon('calendar', { size: 24, class: 'header-icon' });
+            headerTitle.appendChild(icon);
+            headerTitle.appendChild(document.createTextNode(' Gestionnaire de Congés'));
+        }
     }
     
     // Boutons de navigation
     const prevBtn = document.getElementById('prevMonth');
     const nextBtn = document.getElementById('nextMonth');
-    if (prevBtn && prevBtn.textContent === '◀') {
+    if (prevBtn && (prevBtn.textContent.includes('◀') || !prevBtn.querySelector('svg'))) {
         prevBtn.innerHTML = '';
         prevBtn.appendChild(createIcon('chevron-left', { size: 20 }));
     }
-    if (nextBtn && nextBtn.textContent === '▶') {
+    if (nextBtn && (nextBtn.textContent.includes('▶') || !nextBtn.querySelector('svg'))) {
         nextBtn.innerHTML = '';
         nextBtn.appendChild(createIcon('chevron-right', { size: 20 }));
     }
     
     // Bouton de vue
     const viewToggle = document.getElementById('viewToggle');
-    if (viewToggle && viewToggle.textContent.includes('📆')) {
+    if (viewToggle && (viewToggle.textContent.includes('📆') || !viewToggle.querySelector('svg'))) {
         viewToggle.innerHTML = '';
         viewToggle.appendChild(createIcon('calendar', { size: 18 }));
     }
@@ -98,63 +110,63 @@ function initIcons() {
     
     // Bouton plein écran
     const fullWidthToggle = document.getElementById('fullWidthToggle');
-    if (fullWidthToggle && fullWidthToggle.textContent.includes('⛶')) {
+    if (fullWidthToggle && (fullWidthToggle.textContent.includes('⛶') || !fullWidthToggle.querySelector('svg'))) {
         fullWidthToggle.innerHTML = '';
         fullWidthToggle.appendChild(createIcon('maximize', { size: 18 }));
     }
     
     // Bouton menu
     const menuBtn = document.getElementById('menuBtn');
-    if (menuBtn && menuBtn.textContent.includes('☰')) {
+    if (menuBtn && (menuBtn.textContent.includes('☰') || !menuBtn.querySelector('svg'))) {
         menuBtn.innerHTML = '';
         menuBtn.appendChild(createIcon('menu', { size: 18 }));
     }
     
     // Bouton déconnexion
     const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn && logoutBtn.textContent.includes('⏻')) {
+    if (logoutBtn && (logoutBtn.textContent.includes('⏻') || !logoutBtn.querySelector('svg'))) {
         logoutBtn.innerHTML = '';
         logoutBtn.appendChild(createIcon('log-out', { size: 18 }));
     }
     
     // Badge invitations
     const invitationsBadge = document.getElementById('invitationsBadge');
-    if (invitationsBadge && invitationsBadge.textContent.includes('✉')) {
+    if (invitationsBadge && (invitationsBadge.textContent.includes('✉') || !invitationsBadge.querySelector('svg'))) {
         invitationsBadge.innerHTML = '';
         invitationsBadge.appendChild(createIcon('mail', { size: 16 }));
     }
     
     // Bouton minimiser
     const minimizeBtn = document.getElementById('minimizeHeaderBtn');
-    if (minimizeBtn && minimizeBtn.textContent.includes('⬇')) {
+    if (minimizeBtn && (minimizeBtn.textContent.includes('⬇') || !minimizeBtn.querySelector('svg'))) {
         minimizeBtn.innerHTML = '';
         minimizeBtn.appendChild(createIcon('chevron-down', { size: 18 }));
     }
     
     // Menu items
     const configMenu = document.querySelector('[data-action="config"]');
-    if (configMenu && configMenu.textContent.includes('⚙')) {
+    if (configMenu && (configMenu.textContent.includes('⚙') || !configMenu.querySelector('svg'))) {
         configMenu.innerHTML = '';
         configMenu.appendChild(createIcon('settings', { size: 16 }));
         configMenu.appendChild(document.createTextNode(' Configuration'));
     }
     
     const teamsMenu = document.querySelector('[data-action="teams"]');
-    if (teamsMenu && teamsMenu.textContent.includes('👥')) {
+    if (teamsMenu && (teamsMenu.textContent.includes('👥') || !teamsMenu.querySelector('svg'))) {
         teamsMenu.innerHTML = '';
         teamsMenu.appendChild(createIcon('users', { size: 16 }));
         teamsMenu.appendChild(document.createTextNode(' Gérer les équipes'));
     }
     
     const helpMenu = document.querySelector('[data-action="help"]');
-    if (helpMenu && helpMenu.textContent.includes('?')) {
+    if (helpMenu && (helpMenu.textContent.includes('?') || !helpMenu.querySelector('svg'))) {
         helpMenu.innerHTML = '';
         helpMenu.appendChild(createIcon('help-circle', { size: 16 }));
         helpMenu.appendChild(document.createTextNode(' Aide'));
     }
     
     const adminMenu = document.querySelector('[data-action="admin"]');
-    if (adminMenu && adminMenu.textContent.includes('⚙')) {
+    if (adminMenu && (adminMenu.textContent.includes('⚙') || !adminMenu.querySelector('svg'))) {
         adminMenu.innerHTML = '';
         adminMenu.appendChild(createIcon('shield', { size: 16 }));
         adminMenu.appendChild(document.createTextNode(' Administration'));
@@ -162,28 +174,28 @@ function initIcons() {
     
     // Modales
     const authModalTitle = document.querySelector('#authModal h3');
-    if (authModalTitle && authModalTitle.textContent.includes('🔒')) {
+    if (authModalTitle && (authModalTitle.textContent.includes('🔒') || !authModalTitle.querySelector('svg'))) {
         authModalTitle.innerHTML = '';
         authModalTitle.appendChild(createIcon('lock', { size: 20 }));
         authModalTitle.appendChild(document.createTextNode(' Connexion'));
     }
     
     const configModalTitle = document.querySelector('#configModal h3');
-    if (configModalTitle && configModalTitle.textContent.includes('⚙')) {
+    if (configModalTitle && (configModalTitle.textContent.includes('⚙') || !configModalTitle.querySelector('svg'))) {
         configModalTitle.innerHTML = '';
         configModalTitle.appendChild(createIcon('settings', { size: 20 }));
         configModalTitle.appendChild(document.createTextNode(' Configuration des Congés'));
     }
     
     const teamsModalTitle = document.querySelector('#teamsModal h3');
-    if (teamsModalTitle && teamsModalTitle.textContent.includes('👥')) {
+    if (teamsModalTitle && (teamsModalTitle.textContent.includes('👥') || !teamsModalTitle.querySelector('svg'))) {
         teamsModalTitle.innerHTML = '';
         teamsModalTitle.appendChild(createIcon('users', { size: 20 }));
         teamsModalTitle.appendChild(document.createTextNode(' Gestion des Équipes'));
     }
     
     const adminModalTitle = document.querySelector('#adminModal h3');
-    if (adminModalTitle && adminModalTitle.textContent.includes('⚙')) {
+    if (adminModalTitle && (adminModalTitle.textContent.includes('⚙') || !adminModalTitle.querySelector('svg'))) {
         adminModalTitle.innerHTML = '';
         adminModalTitle.appendChild(createIcon('shield', { size: 20 }));
         adminModalTitle.appendChild(document.createTextNode(' Administration'));
@@ -191,7 +203,7 @@ function initIcons() {
     
     // Bouton nettoyer les données
     const clearDataBtn = document.getElementById('clearAuthDataBtn');
-    if (clearDataBtn && clearDataBtn.textContent.includes('⌧')) {
+    if (clearDataBtn && (clearDataBtn.textContent.includes('⌧') || !clearDataBtn.querySelector('svg'))) {
         clearDataBtn.innerHTML = '';
         clearDataBtn.appendChild(createIcon('trash-2', { size: 14 }));
         clearDataBtn.appendChild(document.createTextNode(' Nettoyer les données'));
@@ -200,40 +212,52 @@ function initIcons() {
     // Admin tabs
     const adminTabs = document.querySelectorAll('.admin-tab');
     adminTabs.forEach(tab => {
-        if (tab.textContent.includes('👥')) {
+        const hasIcon = tab.querySelector('svg');
+        if (tab.textContent.includes('👥') || (!hasIcon && tab.getAttribute('data-tab') === 'users')) {
             tab.innerHTML = '';
             tab.appendChild(createIcon('users', { size: 16 }));
             tab.appendChild(document.createTextNode(' Utilisateurs'));
-        } else if (tab.textContent.includes('⚙')) {
+        } else if (tab.textContent.includes('⚙') || (!hasIcon && (tab.getAttribute('data-tab') === 'settings' || tab.getAttribute('data-tab') === 'audit'))) {
             const isSettings = tab.getAttribute('data-tab') === 'settings';
+            const isAudit = tab.getAttribute('data-tab') === 'audit';
             tab.innerHTML = '';
-            tab.appendChild(createIcon('settings', { size: 16 }));
-            tab.appendChild(document.createTextNode(isSettings ? ' Paramètres' : ' Administration'));
+            if (isAudit) {
+                tab.appendChild(createIcon('file-text', { size: 16 }));
+                tab.appendChild(document.createTextNode(' Logs d\'audit'));
+            } else {
+                tab.appendChild(createIcon('settings', { size: 16 }));
+                tab.appendChild(document.createTextNode(isSettings ? ' Paramètres' : ' Administration'));
+            }
         }
     });
     
     // Aide - sections
     const helpSections = document.querySelectorAll('.help-section h4');
     helpSections.forEach(section => {
-        if (section.textContent.includes('📆')) {
-            section.innerHTML = '';
-            section.appendChild(createIcon('calendar', { size: 18 }));
-            section.appendChild(document.createTextNode(' Utilisation du calendrier'));
-        } else if (section.textContent.includes('⚙')) {
-            section.innerHTML = '';
-            section.appendChild(createIcon('settings', { size: 18 }));
-            section.appendChild(document.createTextNode(' Configuration'));
+        if (!section.querySelector('svg')) {
+            if (section.textContent.includes('📆') || section.textContent.includes('Utilisation du calendrier')) {
+                section.innerHTML = '';
+                section.appendChild(createIcon('calendar', { size: 18 }));
+                section.appendChild(document.createTextNode(' Utilisation du calendrier'));
+            } else if (section.textContent.includes('⚙') || section.textContent.includes('Configuration')) {
+                section.innerHTML = '';
+                section.appendChild(createIcon('settings', { size: 18 }));
+                section.appendChild(document.createTextNode(' Configuration'));
+            }
         }
     });
     
     // Info hint
     const helpHint = document.getElementById('helpHint');
-    if (helpHint && helpHint.textContent.includes('ℹ')) {
+    if (helpHint && (!helpHint.querySelector('svg') || helpHint.textContent.includes('ℹ'))) {
+        const existingText = helpHint.textContent.replace('ℹ', '').trim();
         helpHint.innerHTML = '';
         const icon = createIcon('info', { size: 16, class: 'help-hint-icon' });
-        helpHint.insertBefore(icon, helpHint.firstChild);
-        helpHint.insertBefore(document.createTextNode(' Astuce : '), helpHint.childNodes[1]);
+        helpHint.appendChild(icon);
+        helpHint.appendChild(document.createTextNode(' ' + existingText));
     }
+    
+    console.log('[Icons] Initialisation des icônes terminée');
 }
 
 // Attendre que le DOM soit chargé
