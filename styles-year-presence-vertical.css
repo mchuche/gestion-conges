@@ -40,6 +40,27 @@
     z-index: 10;
 }
 
+.year-presence-vertical-month-header.current-month-header-vertical {
+    background: #ff9800;
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+    animation: pulse-month-vertical 2s ease-in-out infinite;
+}
+
+@keyframes pulse-month-vertical {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 152, 0, 0.8);
+    }
+}
+
+.year-presence-vertical-month-block.current-month-vertical {
+    border-left: 3px solid #ff9800;
+    border-right: 3px solid #ff9800;
+    border-radius: 8px;
+}
+
 .year-presence-vertical-days-header-row,
 .year-presence-vertical-user-row,
 .year-presence-vertical-stats-row {

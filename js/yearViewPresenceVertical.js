@@ -23,6 +23,11 @@ async function renderYearViewPresenceVertical() {
     this.currentYear = year;
     logger.debug('[YearViewPresenceVertical] Rendu de la vue présence verticale pour l\'année', year);
     
+    // Obtenir le mois courant pour le scroll automatique
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const isCurrentYear = year === currentYear;
+    
     const monthNames = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -65,10 +70,19 @@ async function renderYearViewPresenceVertical() {
         const monthBlock = document.createElement('div');
         monthBlock.className = 'year-presence-vertical-month-block';
         
+        // Ajouter un identifiant pour le mois courant
+        if (isCurrentYear && month === currentMonth) {
+            monthBlock.id = 'current-month-block-vertical';
+            monthBlock.classList.add('current-month-vertical');
+        }
+        
         // En-tête du mois
         const monthHeader = document.createElement('div');
         monthHeader.className = 'year-presence-vertical-month-header';
         monthHeader.textContent = monthNames[month];
+        if (isCurrentYear && month === currentMonth) {
+            monthHeader.classList.add('current-month-header-vertical');
+        }
         monthBlock.appendChild(monthHeader);
         
         // Conteneur pour les jours (en-tête)
@@ -208,5 +222,47 @@ async function renderYearViewPresenceVertical() {
     }
     
     semesterCalendar.appendChild(presenceContainer);
+    
+    // Faire défiler automatiquement vers le mois courant si c'est l'année en cours
+    if (isCurrentYear) {
+        setTimeout(() => {
+            const currentMonthBlock = document.getElementById('current-month-block-vertical');
+            if (currentMonthBlock) {
+                console.log('[YearViewPresenceVertical] Mois courant trouvé, scroll automatique...');
+                
+                // Le conteneur scrollable est semesterCalendar lui-même (qui a overflow-y: auto)
+                const scrollContainer = semesterCalendar;
+                
+                if (scrollContainer) {
+                    // Calculer la position de scroll pour centrer le mois courant verticalement
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const blockRect = currentMonthBlock.getBoundingClientRect();
+                    
+                    // Position relative du bloc par rapport au conteneur
+                    const relativeTop = blockRect.top - containerRect.top;
+                    
+                    // Calculer le scroll pour centrer le bloc
+                    const scrollTop = scrollContainer.scrollTop + relativeTop - (containerRect.height / 2) + (blockRect.height / 2);
+                    
+                    console.log('[YearViewPresenceVertical] Scroll vers:', scrollTop);
+                    
+                    scrollContainer.scrollTo({
+                        top: Math.max(0, scrollTop),
+                        behavior: 'smooth'
+                    });
+                } else {
+                    // Fallback: utiliser scrollIntoView
+                    console.log('[YearViewPresenceVertical] Utilisation de scrollIntoView comme fallback');
+                    currentMonthBlock.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }
+            } else {
+                console.warn('[YearViewPresenceVertical] Mois courant non trouvé (current-month-block-vertical)');
+            }
+        }, 300); // Délai pour s'assurer que le DOM est complètement rendu
+    }
 }
 
