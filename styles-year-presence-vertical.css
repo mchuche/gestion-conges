@@ -14,7 +14,7 @@
 
 .year-presence-vertical-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(850px, 1fr));
     gap: 20px;
     align-items: start;
     width: 100%;
@@ -29,10 +29,10 @@
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 12px;
+    padding: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 100%;
-    min-width: 550px;
+    min-width: 820px;
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
@@ -84,14 +84,13 @@
 }
 
 .year-presence-vertical-user-label {
-    width: 130px;
-    min-width: 130px;
-    max-width: 130px;
-    padding: 10px 8px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    padding: 10px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     font-weight: 600;
-    font-size: 0.9em;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -100,10 +99,10 @@
 }
 
 .year-presence-vertical-user-name {
-    width: 130px;
-    min-width: 130px;
-    max-width: 130px;
-    padding: 10px 8px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    padding: 10px;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     display: flex;
@@ -112,14 +111,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.9em;
     box-sizing: border-box;
     flex-shrink: 0;
 }
 
 .year-presence-vertical-days-container {
     display: grid;
-    grid-template-columns: repeat(31, minmax(16px, 1fr));
+    grid-template-columns: repeat(31, 1fr);
     gap: 2px;
     flex: 1 1 0;
     min-width: 0;
@@ -129,12 +127,12 @@
 
 .year-presence-vertical-day-header {
     aspect-ratio: 1;
-    min-width: 18px;
-    min-height: 18px;
+    min-width: 20px;
+    min-height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75em;
+    font-size: 0.7em;
     font-weight: 600;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
@@ -156,8 +154,8 @@
 /* Réutiliser les styles de la vue présence normale pour les cellules */
 .year-presence-vertical-view .year-presence-day-cell {
     aspect-ratio: 1;
-    min-width: 18px;
-    min-height: 18px;
+    min-width: 20px;
+    min-height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -167,7 +165,6 @@
     transition: all 0.2s ease;
     background: var(--bg-color);
     position: relative;
-    font-size: 0.7em;
 }
 
 .year-presence-vertical-view .year-presence-day-cell:hover {
@@ -214,8 +211,8 @@
 /* Réutiliser les styles de la vue présence normale pour les cellules de stats */
 .year-presence-vertical-view .year-presence-stats-cell {
     aspect-ratio: 1;
-    min-width: 18px;
-    min-height: 18px;
+    min-width: 20px;
+    min-height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -229,25 +226,19 @@
 
 /* Responsive pour Matrice de Présence Verticale */
 /* Forcer plusieurs colonnes dès qu'il y a assez de place */
-@media (min-width: 1300px) {
+@media (min-width: 1800px) {
     .year-presence-vertical-container {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (min-width: 1900px) {
+@media (min-width: 2700px) {
     .year-presence-vertical-container {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
-@media (min-width: 2500px) {
-    .year-presence-vertical-container {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 1299px) {
+@media (max-width: 1799px) {
     .year-presence-vertical-container {
         grid-template-columns: 1fr; /* Une seule colonne sur petits écrans */
     }
