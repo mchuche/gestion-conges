@@ -301,6 +301,11 @@ function showMainApp() {
         if (typeof this.populateTeamSelector === 'function') {
             this.populateTeamSelector();
         }
+        
+        // Réinitialiser les icônes après le chargement de l'app
+        if (typeof window.reinitIcons === 'function') {
+            window.reinitIcons();
+        }
     }, 200);
 }
 

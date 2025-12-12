@@ -3286,3 +3286,39 @@ body.minimal-header #currentMonth {
     background: #4a90e2 !important;
 }
 
+/* Styles pour les icônes Lucide */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.icon svg {
+    display: block;
+}
+
+.header-icon {
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.help-hint-icon {
+    margin-right: 6px;
+    vertical-align: middle;
+    opacity: 0.8;
+}
+
+/* Alignement des icônes dans les boutons */
+button .icon,
+button svg {
+    vertical-align: middle;
+}
+
+/* Espacement pour les icônes avec texte */
+button .icon + span,
+button svg + span,
+.icon + span {
+    margin-left: 6px;
+}
+
