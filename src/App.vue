@@ -11,6 +11,8 @@
         <LeaveModal />
         <ConfigModal />
         <HelpModal />
+        <TeamsModal />
+        <AdminModal />
       </div>
     </div>
   </div>
@@ -26,6 +28,8 @@ import Calendar from './components/calendar/Calendar.vue'
 import LeaveModal from './components/modals/LeaveModal.vue'
 import ConfigModal from './components/modals/ConfigModal.vue'
 import HelpModal from './components/modals/HelpModal.vue'
+import TeamsModal from './components/modals/TeamsModal.vue'
+import AdminModal from './components/modals/AdminModal.vue'
 
 const authStore = useAuthStore()
 const uiStore = useUIStore()
