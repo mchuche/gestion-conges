@@ -105,28 +105,45 @@ export async function loadTeamMembers(teamId) {
   }
 
   try {
-    const { data, error } = await supabase
+    // Charger les membres
+    const { data: membersData, error: membersError } = await supabase
       .from('team_members')
-      .select(`
-        user_id,
-        role,
-        invited_by,
-        profiles!team_members_user_id_fkey (
-          email,
-          name
-        )
-      `)
+      .select('user_id, role, invited_by')
       .eq('team_id', teamId)
 
-    if (error) {
-      logger.error('[loadTeamMembers] Erreur:', error)
+    if (membersError) {
+      logger.error('[loadTeamMembers] Erreur:', membersError)
       return []
     }
 
-    return (data || []).map(member => ({
+    if (!membersData || membersData.length === 0) {
+      return []
+    }
+
+    // Récupérer les emails depuis user_emails pour chaque membre
+    const userIds = membersData.map(m => m.user_id)
+    const { data: emailsData, error: emailsError } = await supabase
+      .from('user_emails')
+      .select('user_id, email')
+      .in('user_id', userIds)
+
+    if (emailsError) {
+      logger.warn('[loadTeamMembers] Erreur lors du chargement des emails:', emailsError)
+    }
+
+    // Créer un map pour accéder rapidement aux emails
+    const emailMap = {}
+    if (emailsData) {
+      emailsData.forEach(item => {
+        emailMap[item.user_id] = item.email
+      })
+    }
+
+    // Mapper les membres avec leurs emails
+    return membersData.map(member => ({
       userId: member.user_id,
-      email: member.profiles?.email || 'Email inconnu',
-      name: member.profiles?.name || 'Nom inconnu',
+      email: emailMap[member.user_id] || 'Email inconnu',
+      name: emailMap[member.user_id] || 'Nom inconnu', // Utiliser l'email comme nom par défaut
       role: member.role
     }))
   } catch (e) {
@@ -144,23 +161,25 @@ export async function inviteTeamMember(teamId, inviterId, email) {
   }
 
   try {
-    // Vérifier si l'utilisateur existe
-    const { data: user, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
+    // Vérifier si l'utilisateur existe dans user_emails
+    const { data: userEmail, error: userError } = await supabase
+      .from('user_emails')
+      .select('user_id')
+      .eq('email', email.toLowerCase().trim())
       .single()
 
-    if (userError || !user) {
+    if (userError || !userEmail) {
       throw new Error('Utilisateur non trouvé')
     }
+
+    const userId = userEmail.user_id
 
     // Créer l'invitation
     const { data, error } = await supabase
       .from('team_invitations')
       .insert({
         team_id: teamId,
-        user_id: user.id,
+        user_id: userId,
         invited_by: inviterId,
         status: 'pending'
       })
@@ -185,28 +204,45 @@ export async function loadTeamInvitations(teamId) {
   }
 
   try {
-    const { data, error } = await supabase
+    // Charger les invitations
+    const { data: invitationsData, error: invitationsError } = await supabase
       .from('team_invitations')
-      .select(`
-        id,
-        user_id,
-        status,
-        invited_by,
-        profiles!team_invitations_user_id_fkey (
-          email
-        )
-      `)
+      .select('id, user_id, status, invited_by')
       .eq('team_id', teamId)
 
-    if (error) {
-      logger.error('[loadTeamInvitations] Erreur:', error)
+    if (invitationsError) {
+      logger.error('[loadTeamInvitations] Erreur:', invitationsError)
       return []
     }
 
-    return (data || []).map(inv => ({
+    if (!invitationsData || invitationsData.length === 0) {
+      return []
+    }
+
+    // Récupérer les emails depuis user_emails pour chaque invitation
+    const userIds = invitationsData.map(inv => inv.user_id)
+    const { data: emailsData, error: emailsError } = await supabase
+      .from('user_emails')
+      .select('user_id, email')
+      .in('user_id', userIds)
+
+    if (emailsError) {
+      logger.warn('[loadTeamInvitations] Erreur lors du chargement des emails:', emailsError)
+    }
+
+    // Créer un map pour accéder rapidement aux emails
+    const emailMap = {}
+    if (emailsData) {
+      emailsData.forEach(item => {
+        emailMap[item.user_id] = item.email
+      })
+    }
+
+    // Mapper les invitations avec leurs emails
+    return invitationsData.map(inv => ({
       id: inv.id,
       userId: inv.user_id,
-      email: inv.profiles?.email || 'Email inconnu',
+      email: emailMap[inv.user_id] || 'Email inconnu',
       status: inv.status
     }))
   } catch (e) {
