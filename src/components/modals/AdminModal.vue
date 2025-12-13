@@ -22,9 +22,9 @@
 
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
-        <!-- Debug: activeTab = {{ activeTab }} -->
         <!-- Onglet Utilisateurs -->
         <div v-if="activeTab === 'users'" class="admin-tab-panel">
+          <!-- Debug: activeTab={{ activeTab }}, users.length={{ users.length }}, loadingUsers={{ loadingUsers }} -->
           <div class="admin-search">
             <input
               v-model="userSearch"
@@ -276,9 +276,9 @@ async function loadStats() {
     ])
 
     stats.value = {
-      totalUsers: usersCount.count || 0,
-      totalTeams: teamsCount.count || 0,
-      totalLeaves: leavesCount.count || 0
+      totalUsers: usersResult.count || 0,
+      totalTeams: teamsResult.count || 0,
+      totalLeaves: leavesResult.count || 0
     }
     console.log('[AdminModal] Statistiques chargées:', stats.value)
   } catch (err) {
@@ -432,6 +432,8 @@ onMounted(() => {
 
 .admin-tab-panel {
   padding: 20px 0;
+  min-height: 200px;
+  display: block;
 }
 
 .admin-search {
