@@ -1,0 +1,160 @@
+<template>
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <div class="header-controls">
+        <button class="nav-btn" @click="previousYear" title="Année précédente">
+          ◀
+        </button>
+        <h2 id="currentMonth">{{ currentYearTitle }}</h2>
+        <button class="nav-btn" @click="nextYear" title="Année suivante">
+          ▶
+        </button>
+      </div>
+    </div>
+
+    <div id="semesterCalendar" class="semester-calendar">
+      <YearViewSemester
+        v-if="yearViewFormat === 'semester'"
+        @day-click="handleDayClick"
+        @day-mousedown="handleDayMouseDown"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed, onMounted } from 'vue'
+import { useUIStore } from '../../stores/ui'
+import { useLeavesStore } from '../../stores/leaves'
+import { useLeaveTypesStore } from '../../stores/leaveTypes'
+import { useQuotasStore } from '../../stores/quotas'
+import { useAuthStore } from '../../stores/auth'
+import YearViewSemester from './YearViewSemester.vue'
+import { getYear, addYears } from '../../services/dateUtils'
+
+const uiStore = useUIStore()
+const leavesStore = useLeavesStore()
+const leaveTypesStore = useLeaveTypesStore()
+const quotasStore = useQuotasStore()
+const authStore = useAuthStore()
+
+const yearViewFormat = computed(() => uiStore.yearViewFormat)
+const currentYear = computed(() => getYear(uiStore.currentDate))
+const currentYearTitle = computed(() => `Année ${currentYear.value}`)
+
+async function loadAllData() {
+  try {
+    // Charger toutes les données en parallèle
+    await Promise.all([
+      leavesStore.loadLeaves(),
+      leaveTypesStore.loadLeaveTypes(),
+      quotasStore.loadQuotas(),
+      uiStore.loadSelectedCountry(),
+      uiStore.loadTheme(),
+      uiStore.loadFullWidth()
+    ])
+    console.log('Toutes les données chargées')
+  } catch (err) {
+    console.error('Erreur lors du chargement des données:', err)
+  }
+}
+
+function previousYear() {
+  const newDate = addYears(uiStore.currentDate, -1)
+  uiStore.setCurrentDate(newDate)
+}
+
+function nextYear() {
+  const newDate = addYears(uiStore.currentDate, 1)
+  uiStore.setCurrentDate(newDate)
+}
+
+function handleDayClick(date, event) {
+  // Ouvrir la modale pour sélectionner le type de congé
+  uiStore.setSelectedDate(date)
+  uiStore.openModal()
+}
+
+function handleDayMouseDown(date, event) {
+  // Gérer la sélection multiple avec Ctrl/Cmd
+  if (event.ctrlKey || event.metaKey) {
+    uiStore.setMultiSelectMode(true)
+    if (uiStore.selectedDates.find(d => getDateKey(d) === getDateKey(date))) {
+      uiStore.removeSelectedDate(date)
+    } else {
+      uiStore.addSelectedDate(date)
+    }
+  } else {
+    // Clic simple : sélectionner ce jour uniquement
+    uiStore.setSelectedDate(date)
+    uiStore.clearSelectedDates()
+    uiStore.setMultiSelectMode(false)
+  }
+}
+
+function getDateKey(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+onMounted(async () => {
+  await loadAllData()
+})
+</script>
+
+<style scoped>
+.calendar-container {
+  width: 100%;
+  padding: 20px;
+}
+
+.calendar-header {
+  margin-bottom: 20px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.nav-btn {
+  background: var(--primary-color, #4a90e2);
+  color: white;
+  border: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 4px;
+  font-size: 1.3em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+.nav-btn:hover {
+  background: #357abd;
+  transform: scale(1.1);
+}
+
+.nav-btn:active {
+  transform: scale(0.95);
+}
+
+#currentMonth {
+  font-size: 1.6em;
+  font-weight: 600;
+  min-width: 250px;
+  color: var(--text-color, #2c3e50);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.semester-calendar {
+  width: 100%;
+}
+</style>
+
