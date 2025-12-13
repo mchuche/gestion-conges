@@ -275,20 +275,63 @@
                     <div class="admin-settings-form">
                         <div class="admin-setting-item">
                             <label>Types de congés par défaut (JSON) :</label>
-                            <textarea id="defaultLeaveTypes" rows="10" placeholder='[{"id": "congé-payé", "name": "Congé Payé", "label": "CP", "color": "#4a90e2"}, ...]'></textarea>
+                            <textarea id="defaultLeaveTypes" rows="12" placeholder='[
+  {
+    "id": "congé-payé",
+    "name": "Congé Payé",
+    "label": "CP",
+    "color": "#4a90e2",
+    "category": "leave"
+  },
+  {
+    "id": "rtt",
+    "name": "RTT",
+    "label": "RTT",
+    "color": "#50c878",
+    "category": "leave"
+  },
+  {
+    "id": "jours-hiver",
+    "name": "Jours Hiver",
+    "label": "JH",
+    "color": "#87ceeb",
+    "category": "leave"
+  },
+  {
+    "id": "maladie",
+    "name": "Maladie",
+    "label": "Mal",
+    "color": "#ff6b6b",
+    "category": "event"
+  },
+  {
+    "id": "télétravail",
+    "name": "Télétravail",
+    "label": "TT",
+    "color": "#9b59b6",
+    "category": "event"
+  },
+  {
+    "id": "formation",
+    "name": "Formation",
+    "label": "Form",
+    "color": "#f39c12",
+    "category": "event"
+  },
+  {
+    "id": "grève",
+    "name": "Grève",
+    "label": "Grève",
+    "color": "#e74c3c",
+    "category": "event"
+  }
+]'></textarea>
+                            <small class="admin-hint">La propriété "category" doit être "leave" (congé avec quota) ou "event" (événement sans quota)</small>
                         </div>
                         <div class="admin-setting-item">
                             <label>Quotas par défaut (JSON) :</label>
                             <textarea id="defaultQuotas" rows="5" placeholder='{"congé-payé": 25, "rtt": 22, ...}'></textarea>
-                        </div>
-                        <div class="admin-setting-item">
-                            <label>Pays par défaut :</label>
-                            <select id="defaultCountry">
-                                <option value="FR">France</option>
-                                <option value="BE">Belgique</option>
-                                <option value="CH">Suisse</option>
-                                <option value="CA">Canada</option>
-                            </select>
+                            <small class="admin-hint">Seuls les types avec category="leave" peuvent avoir un quota</small>
                         </div>
                         <button id="saveDefaultSettingsBtn" class="save-btn">Enregistrer</button>
                     </div>

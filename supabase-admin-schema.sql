@@ -73,16 +73,15 @@ CREATE POLICY "Admins can insert settings" ON app_settings
 -- Insérer les paramètres par défaut
 INSERT INTO app_settings (key, value, description) VALUES
     ('default_leave_types', '[
-        {"id": "congé-payé", "name": "Congé Payé", "label": "CP", "color": "#4a90e2"},
-        {"id": "rtt", "name": "RTT", "label": "RTT", "color": "#50c878"},
-        {"id": "jours-hiver", "name": "Jours Hiver", "label": "JH", "color": "#87ceeb"},
-        {"id": "maladie", "name": "Maladie", "label": "Mal", "color": "#ff6b6b"},
-        {"id": "télétravail", "name": "Télétravail", "label": "TT", "color": "#9b59b6"},
-        {"id": "formation", "name": "Formation", "label": "Form", "color": "#f39c12"},
-        {"id": "grève", "name": "Grève", "label": "Grève", "color": "#e74c3c"}
+        {"id": "congé-payé", "name": "Congé Payé", "label": "CP", "color": "#4a90e2", "category": "leave"},
+        {"id": "rtt", "name": "RTT", "label": "RTT", "color": "#50c878", "category": "leave"},
+        {"id": "jours-hiver", "name": "Jours Hiver", "label": "JH", "color": "#87ceeb", "category": "leave"},
+        {"id": "maladie", "name": "Maladie", "label": "Mal", "color": "#ff6b6b", "category": "event"},
+        {"id": "télétravail", "name": "Télétravail", "label": "TT", "color": "#9b59b6", "category": "event"},
+        {"id": "formation", "name": "Formation", "label": "Form", "color": "#f39c12", "category": "event"},
+        {"id": "grève", "name": "Grève", "label": "Grève", "color": "#e74c3c", "category": "event"}
     ]'::jsonb, 'Types de congés par défaut pour les nouveaux utilisateurs'),
-    ('default_quotas', '{"congé-payé": 25, "rtt": 22, "jours-hiver": 2}'::jsonb, 'Quotas par défaut pour les nouveaux utilisateurs'),
-    ('default_country', '"FR"'::jsonb, 'Pays par défaut pour les nouveaux utilisateurs')
+    ('default_quotas', '{"congé-payé": 25, "rtt": 22, "jours-hiver": 2}'::jsonb, 'Quotas par défaut pour les nouveaux utilisateurs')
 ON CONFLICT (key) DO NOTHING;
 
 -- ===== TABLE AUDIT LOGS =====

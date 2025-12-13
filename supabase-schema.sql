@@ -183,8 +183,7 @@ INSERT INTO app_settings (key, value, description) VALUES
         {"id": "formation", "name": "Formation", "label": "Form", "color": "#f39c12", "category": "event"},
         {"id": "grève", "name": "Grève", "label": "Grève", "color": "#e74c3c", "category": "event"}
     ]'::jsonb, 'Types de congés par défaut pour les nouveaux utilisateurs'),
-    ('default_quotas', '{"congé-payé": 25, "rtt": 22, "jours-hiver": 2}'::jsonb, 'Quotas par défaut pour les nouveaux utilisateurs'),
-    ('default_country', '"FR"'::jsonb, 'Pays par défaut pour les nouveaux utilisateurs')
+    ('default_quotas', '{"congé-payé": 25, "rtt": 22, "jours-hiver": 2}'::jsonb, 'Quotas par défaut pour les nouveaux utilisateurs')
 ON CONFLICT (key) DO NOTHING;
 
 -- Activer Row Level Security (RLS)

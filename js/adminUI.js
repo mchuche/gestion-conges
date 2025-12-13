@@ -291,23 +291,46 @@ async function handleDeleteTeamAsAdmin(teamId, teamName) {
 async function renderAdminSettings() {
     const defaultLeaveTypes = document.getElementById('defaultLeaveTypes');
     const defaultQuotas = document.getElementById('defaultQuotas');
-    const defaultCountry = document.getElementById('defaultCountry');
 
-    if (!defaultLeaveTypes || !defaultQuotas || !defaultCountry) return;
+    if (!defaultLeaveTypes || !defaultQuotas) return;
 
     try {
         const settings = await this.loadDefaultSettings();
 
         if (settings.default_leave_types) {
-            defaultLeaveTypes.value = JSON.stringify(settings.default_leave_types.value, null, 2);
+            // S'assurer que tous les types ont une catégorie
+            let leaveTypes = Array.isArray(settings.default_leave_types.value) 
+                ? settings.default_leave_types.value 
+                : [];
+            
+            // Si les types n'ont pas de catégorie, les classer automatiquement
+            leaveTypes = leaveTypes.map(type => {
+                if (!type.category) {
+                    // Classer automatiquement selon l'ID connu
+                    const eventTypes = ['télétravail', 'formation', 'grève', 'maladie'];
+                    type.category = eventTypes.includes(type.id) ? 'event' : 'leave';
+                }
+                return type;
+            });
+            
+            defaultLeaveTypes.value = JSON.stringify(leaveTypes, null, 2);
+        } else {
+            // Si aucun paramètre n'existe, utiliser les types par défaut avec catégories
+            if (typeof getDefaultLeaveTypes === 'function') {
+                const defaultTypes = getDefaultLeaveTypes();
+                defaultLeaveTypes.value = JSON.stringify(defaultTypes, null, 2);
+            }
         }
 
         if (settings.default_quotas) {
             defaultQuotas.value = JSON.stringify(settings.default_quotas.value, null, 2);
-        }
-
-        if (settings.default_country) {
-            defaultCountry.value = settings.default_country.value;
+        } else {
+            // Si aucun quota n'existe, utiliser les quotas par défaut
+            defaultQuotas.value = JSON.stringify({
+                'congé-payé': 25,
+                'rtt': 22,
+                'jours-hiver': 2
+            }, null, 2);
         }
     } catch (error) {
         logger.error('[renderAdminSettings] Erreur:', error);
@@ -322,19 +345,27 @@ async function renderAdminSettings() {
 async function handleSaveDefaultSettings() {
     const defaultLeaveTypes = document.getElementById('defaultLeaveTypes');
     const defaultQuotas = document.getElementById('defaultQuotas');
-    const defaultCountry = document.getElementById('defaultCountry');
 
-    if (!defaultLeaveTypes || !defaultQuotas || !defaultCountry) return;
+    if (!defaultLeaveTypes || !defaultQuotas) return;
 
     try {
         // Valider le JSON
         const leaveTypes = JSON.parse(defaultLeaveTypes.value);
         const quotas = JSON.parse(defaultQuotas.value);
 
+        // Valider que chaque type a une catégorie valide
+        const validCategories = ['leave', 'event'];
+        for (const type of leaveTypes) {
+            if (!type.category) {
+                type.category = 'leave'; // Par défaut si manquant
+            } else if (!validCategories.includes(type.category)) {
+                throw new Error(`Catégorie invalide pour "${type.name}": "${type.category}". Doit être "leave" ou "event".`);
+            }
+        }
+
         const settings = {
             default_leave_types: leaveTypes,
-            default_quotas: quotas,
-            default_country: defaultCountry.value
+            default_quotas: quotas
         };
 
         await this.saveDefaultSettings(settings);
