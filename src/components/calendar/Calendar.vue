@@ -2,6 +2,16 @@
   <div class="calendar-container">
     <div class="calendar-header">
       <div class="header-controls">
+        <button
+          v-if="minimizeHeader"
+          id="minimizeHeaderBtn"
+          class="minimize-header-btn"
+          :class="{ active: minimizeHeader }"
+          @click="toggleMinimizeHeader"
+          :title="minimizeHeader ? 'Afficher les éléments du header' : 'Masquer les éléments du header'"
+        >
+          <Icon :name="minimizeHeader ? 'chevrons-down' : 'chevrons-up'" />
+        </button>
         <button class="nav-btn" @click="previousYear" title="Année précédente">
           ◀
         </button>
@@ -49,6 +59,7 @@ import YearViewPresenceVertical from './YearViewPresenceVertical.vue'
 import ViewFormatSelector from './ViewFormatSelector.vue'
 import Stats from '../stats/Stats.vue'
 import Quotas from '../stats/Quotas.vue'
+import Icon from '../common/Icon.vue'
 import { getYear, addYears } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 
@@ -59,6 +70,7 @@ const quotasStore = useQuotasStore()
 const authStore = useAuthStore()
 
 const yearViewFormat = computed(() => uiStore.yearViewFormat)
+const minimizeHeader = computed(() => uiStore.minimizeHeader)
 const currentYear = computed(() => {
   if (!uiStore.currentDate) return new Date().getFullYear()
   return getYear(uiStore.currentDate)
@@ -108,6 +120,10 @@ function previousYear() {
 function nextYear() {
   const newDate = addYears(uiStore.currentDate, 1)
   uiStore.setCurrentDate(newDate)
+}
+
+function toggleMinimizeHeader() {
+  uiStore.toggleMinimizeHeader()
 }
 
 function handleDayClick(date, event) {
