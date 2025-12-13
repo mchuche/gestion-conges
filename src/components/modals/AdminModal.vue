@@ -20,8 +20,14 @@
     
     <div v-else class="admin-content" style="background: lightgreen !important; padding: 10px !important;">
       <p style="background: darkgreen !important; color: white !important; padding: 10px !important;">VOUS ÊTES ADMIN - CONTENU ADMIN</p>
+      
+      <!-- TEST ONGLETS -->
+      <div style="background: purple !important; color: white !important; padding: 10px !important; margin: 10px 0;">
+        <p>AVANT LES ONGLETS - tabs.length = {{ tabs.length }}</p>
+      </div>
+      
       <!-- Onglets -->
-      <div class="admin-tabs">
+      <div class="admin-tabs" style="background: cyan !important; padding: 10px !important; border: 3px solid blue !important;">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -32,6 +38,11 @@
         </button>
       </div>
 
+      <!-- TEST AVANT CONTENU ONGLETS -->
+      <div style="background: magenta !important; color: white !important; padding: 10px !important; margin: 10px 0;">
+        <p>AVANT CONTENU ONGLETS - activeTab = {{ activeTab }}</p>
+      </div>
+      
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
         <!-- DEBUG VISUEL - TOUJOURS VISIBLE -->
