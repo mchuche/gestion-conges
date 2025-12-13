@@ -478,6 +478,7 @@ async function renderAuditLogs() {
             const actionColors = {
                 'user_deleted': { icon: '⌧', color: '#e74c3c', label: 'Utilisateur supprimé' },
                 'team_deleted': { icon: '⌧', color: '#e74c3c', label: 'Groupe supprimé' },
+                'team_ownership_transferred': { icon: '👑', color: '#f39c12', label: 'Propriété transférée' },
                 'settings_updated': { icon: '⚙', color: '#3498db', label: 'Paramètres modifiés' },
                 'team_created': { icon: '➕', color: '#2ecc71', label: 'Groupe créé' },
                 'user_created': { icon: '➕', color: '#2ecc71', label: 'Utilisateur créé' },

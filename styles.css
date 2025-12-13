@@ -2599,6 +2599,12 @@ body.minimal-header #currentMonth {
     opacity: 0.7;
 }
 
+.member-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .remove-member-btn {
     padding: 6px 12px;
     background: var(--danger-color);
@@ -2612,6 +2618,22 @@ body.minimal-header #currentMonth {
 
 .remove-member-btn:hover {
     background: #c0392b;
+}
+
+.transfer-ownership-btn {
+    padding: 6px 12px;
+    background: var(--warning-color, #f39c12);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.transfer-ownership-btn:hover {
+    background: #e67e22;
 }
 
 .team-actions {

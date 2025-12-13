@@ -226,15 +226,26 @@ async function showTeamDetails(teamId) {
             const memberCard = document.createElement('div');
             memberCard.className = 'member-card';
             const isOwner = team.createdBy === member.userId;
+            const isCurrentUserOwner = team.createdBy === this.user.id && team.role === 'owner';
             const canRemove = (team.role === 'owner' || team.role === 'admin') && !isOwner;
+            const canTransfer = isCurrentUserOwner && !isOwner; // Le propriétaire peut transférer à n'importe quel autre membre
             
             memberCard.innerHTML = `
                 <div class="member-info">
                     <span class="member-email">${member.email}</span>
                     <span class="member-role">${member.role === 'owner' ? '👑 Propriétaire' : member.role === 'admin' ? '⚙ Admin' : '👤 Membre'}</span>
                 </div>
-                ${canRemove ? `<button class="remove-member-btn" data-user-id="${member.userId}">Retirer</button>` : ''}
+                <div class="member-actions">
+                    ${canTransfer ? `<button class="transfer-ownership-btn" data-user-id="${member.userId}" data-user-email="${member.email}" title="Transférer la propriété de l'équipe">👑 Transférer</button>` : ''}
+                    ${canRemove ? `<button class="remove-member-btn" data-user-id="${member.userId}">Retirer</button>` : ''}
+                </div>
             `;
+            
+            if (canTransfer) {
+                memberCard.querySelector('.transfer-ownership-btn').addEventListener('click', () => {
+                    this.handleTransferOwnership(teamId, member.userId, member.email);
+                });
+            }
             
             if (canRemove) {
                 memberCard.querySelector('.remove-member-btn').addEventListener('click', () => {
@@ -462,6 +473,47 @@ async function handleDeleteInvitation(invitationId, teamId) {
     } catch (error) {
         console.error('Erreur lors de la suppression de l\'invitation:', error);
         await swalError('❌ Erreur', 'Erreur lors de la suppression de l\'invitation: ' + (error.message || error));
+    }
+}
+
+// Transférer la propriété d'une équipe
+async function handleTransferOwnership(teamId, newOwnerId, newOwnerEmail) {
+    // Récupérer le nom de l'équipe pour l'afficher dans la confirmation
+    const team = this.userTeams?.find(t => t.id === teamId);
+    const teamName = team?.name || 'cette équipe';
+    
+    const confirmed = await swalConfirmHTML(
+        '👑 Transférer la propriété ?',
+        `Vous allez transférer la propriété de l'équipe <strong>"${teamName}"</strong> à <strong>${newOwnerEmail}</strong>.<br><br>
+         <ul style="text-align: left; margin: 10px 0;">
+            <li>${newOwnerEmail} deviendra le nouveau propriétaire</li>
+            <li>Vous deviendrez administrateur de l'équipe</li>
+            <li>Vous pourrez toujours gérer l'équipe, mais ne pourrez plus la supprimer</li>
+         </ul>
+         <span style="color: var(--warning-color);">⚠️ Cette action est irréversible</span>`,
+        'Oui, transférer',
+        'Annuler'
+    );
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    try {
+        const result = await this.transferTeamOwnership(teamId, newOwnerId);
+        await swalSuccess(
+            '✅ Propriété transférée',
+            result.message || `La propriété de l'équipe a été transférée à ${newOwnerEmail} avec succès.`,
+            3000
+        );
+        
+        // Recharger les détails de l'équipe pour mettre à jour les rôles
+        await this.showTeamDetails(teamId);
+        // Recharger la liste des équipes pour mettre à jour les rôles
+        this.renderTeamsList();
+    } catch (error) {
+        console.error('Erreur lors du transfert de propriété:', error);
+        await swalError('❌ Erreur', 'Erreur lors du transfert de propriété: ' + (error.message || error));
     }
 }
 

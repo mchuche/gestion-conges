@@ -736,6 +736,93 @@ async function loadTeamLeaveTypes(teamId) {
     }
 }
 
+// Transférer la propriété d'une équipe
+async function transferTeamOwnership(teamId, newOwnerId) {
+    if (!this.user || !supabase || !teamId || !newOwnerId) {
+        throw new Error('Paramètres manquants');
+    }
+
+    try {
+        // Vérifier que l'utilisateur actuel est le propriétaire
+        const userTeam = this.userTeams.find(t => t.id === teamId);
+        if (!userTeam || userTeam.createdBy !== this.user.id || userTeam.role !== 'owner') {
+            throw new Error('Seul le propriétaire peut transférer la propriété de l\'équipe');
+        }
+
+        // Vérifier que le nouveau propriétaire n'est pas le propriétaire actuel
+        if (newOwnerId === this.user.id) {
+            throw new Error('Vous êtes déjà le propriétaire de cette équipe');
+        }
+
+        // Vérifier que le nouveau propriétaire est membre de l'équipe
+        const teamMembers = await this.loadTeamMembers(teamId);
+        const newOwner = teamMembers.find(m => m.userId === newOwnerId);
+        if (!newOwner) {
+            throw new Error('Le nouveau propriétaire doit être membre de l\'équipe');
+        }
+
+        // Mettre à jour le created_by dans la table teams
+        const { error: updateTeamError } = await supabase
+            .from('teams')
+            .update({
+                created_by: newOwnerId,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', teamId);
+
+        if (updateTeamError) throw updateTeamError;
+
+        // Changer le rôle de l'ancien propriétaire (de 'owner' à 'admin')
+        const { error: oldOwnerError } = await supabase
+            .from('team_members')
+            .update({
+                role: 'admin'
+            })
+            .eq('team_id', teamId)
+            .eq('user_id', this.user.id);
+
+        if (oldOwnerError) throw oldOwnerError;
+
+        // Changer le rôle du nouveau propriétaire à 'owner'
+        const { error: newOwnerError } = await supabase
+            .from('team_members')
+            .update({
+                role: 'owner'
+            })
+            .eq('team_id', teamId)
+            .eq('user_id', newOwnerId);
+
+        if (newOwnerError) throw newOwnerError;
+
+        // Enregistrer le log d'audit si disponible
+        if (typeof this.logAuditEvent === 'function') {
+            try {
+                await this.logAuditEvent('team_ownership_transferred', 'team', teamId, {
+                    old_owner_id: this.user.id,
+                    old_owner_email: this.user.email,
+                    new_owner_id: newOwnerId,
+                    new_owner_email: newOwner.email,
+                    transferred_by: this.user.email
+                });
+            } catch (auditError) {
+                logger.warn('Erreur lors de l\'enregistrement du log d\'audit:', auditError);
+            }
+        }
+
+        // Recharger les équipes pour mettre à jour les rôles
+        await this.loadUserTeams();
+
+        logger.debug('Propriété de l\'équipe transférée avec succès');
+        return {
+            success: true,
+            message: `La propriété de l'équipe a été transférée à ${newOwner.email || newOwner.name}`
+        };
+    } catch (e) {
+        logger.error('Erreur lors du transfert de propriété:', e);
+        throw e;
+    }
+}
+
 // Supprimer une équipe
 async function deleteTeam(teamId) {
     if (!this.user || !supabase || !teamId) {
