@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
 import { useUIStore } from './stores/ui'
 import AuthModal from './components/auth/AuthModal.vue'
@@ -43,8 +43,42 @@ watch(fullWidth, (value) => {
   }
 }, { immediate: true })
 
+// Suivre l'état de la touche Ctrl/Cmd pour la sélection multiple
+function setupCtrlTracking() {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Control' || e.key === 'Meta') {
+      uiStore.setCtrlKeyPressed(true)
+    }
+  }
+
+  const handleKeyUp = (e) => {
+    if (e.key === 'Control' || e.key === 'Meta') {
+      uiStore.setCtrlKeyPressed(false)
+    }
+  }
+
+  const handleBlur = () => {
+    uiStore.setCtrlKeyPressed(false)
+  }
+
+  document.addEventListener('keydown', handleKeyDown)
+  document.addEventListener('keyup', handleKeyUp)
+  window.addEventListener('blur', handleBlur)
+
+  // Nettoyage au démontage
+  onUnmounted(() => {
+    document.removeEventListener('keydown', handleKeyDown)
+    document.removeEventListener('keyup', handleKeyUp)
+    window.removeEventListener('blur', handleBlur)
+  })
+}
+
 onMounted(async () => {
   console.log('App.vue monté, vérification de la session...')
+  
+  // Configurer le suivi de Ctrl/Cmd
+  setupCtrlTracking()
+  
   try {
     await authStore.checkSession()
     console.log('Session vérifiée:', authStore.user)

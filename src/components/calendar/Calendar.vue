@@ -72,6 +72,12 @@ const leaveTypesStore = useLeaveTypesStore()
 const quotasStore = useQuotasStore()
 const authStore = useAuthStore()
 
+// Watcher pour mettre à jour l'affichage visuel des sélections
+watch(() => uiStore.selectedDates, () => {
+  // La mise à jour visuelle se fait automatiquement via les classes CSS
+  // Les composants CalendarDay réagissent aux changements de selectedDates
+}, { deep: true })
+
 const yearViewFormat = computed(() => uiStore.yearViewFormat)
 const minimizeHeader = computed(() => uiStore.minimizeHeader)
 const currentYear = computed(() => {
