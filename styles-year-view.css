@@ -216,6 +216,11 @@
     z-index: 1;
 }
 
+.presence-cell-diagonal {
+    z-index: 2;
+    pointer-events: none;
+}
+
 .year-presence-day-cell.selected {
     outline: 3px solid var(--primary-color);
     outline-offset: 2px;

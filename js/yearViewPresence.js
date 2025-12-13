@@ -331,6 +331,7 @@ function createPresenceDayCell(date, user) {
                 cell.classList.add('has-leave', 'has-split');
                 cell.style.position = 'relative';
                 cell.style.overflow = 'hidden';
+                cell.style.background = 'transparent';
                 
                 // Moitié supérieure gauche (matin)
                 const morningHalf = document.createElement('div');
@@ -338,8 +339,8 @@ function createPresenceDayCell(date, user) {
                 morningHalf.style.position = 'absolute';
                 morningHalf.style.top = '0';
                 morningHalf.style.left = '0';
-                morningHalf.style.width = '50%';
-                morningHalf.style.height = '50%';
+                morningHalf.style.width = '100%';
+                morningHalf.style.height = '100%';
                 morningHalf.style.backgroundColor = morningConfig.color;
                 morningHalf.style.clipPath = 'polygon(0 0, 100% 0, 0 100%)';
                 cell.appendChild(morningHalf);
@@ -348,13 +349,33 @@ function createPresenceDayCell(date, user) {
                 const afternoonHalf = document.createElement('div');
                 afternoonHalf.className = 'presence-cell-half presence-cell-afternoon';
                 afternoonHalf.style.position = 'absolute';
-                afternoonHalf.style.bottom = '0';
-                afternoonHalf.style.right = '0';
-                afternoonHalf.style.width = '50%';
-                afternoonHalf.style.height = '50%';
+                afternoonHalf.style.top = '0';
+                afternoonHalf.style.left = '0';
+                afternoonHalf.style.width = '100%';
+                afternoonHalf.style.height = '100%';
                 afternoonHalf.style.backgroundColor = afternoonConfig.color;
                 afternoonHalf.style.clipPath = 'polygon(100% 0, 100% 100%, 0 100%)';
                 cell.appendChild(afternoonHalf);
+                
+                // Ligne diagonale discrète
+                const diagonalLine = document.createElement('div');
+                diagonalLine.className = 'presence-cell-diagonal';
+                diagonalLine.style.position = 'absolute';
+                diagonalLine.style.top = '0';
+                diagonalLine.style.left = '0';
+                diagonalLine.style.width = '100%';
+                diagonalLine.style.height = '100%';
+                diagonalLine.style.borderTop = '1px solid rgba(255, 255, 255, 0.4)';
+                diagonalLine.style.borderRight = 'none';
+                diagonalLine.style.borderBottom = 'none';
+                diagonalLine.style.borderLeft = '1px solid rgba(255, 255, 255, 0.4)';
+                diagonalLine.style.transform = 'rotate(45deg)';
+                diagonalLine.style.transformOrigin = 'top left';
+                diagonalLine.style.width = '141.42%'; // √2 * 100% pour couvrir la diagonale
+                diagonalLine.style.height = '1px';
+                diagonalLine.style.top = '50%';
+                diagonalLine.style.left = '0';
+                cell.appendChild(diagonalLine);
                 
                 cell.title = `${user.name} - Matin: ${morningConfig.name}, Après-midi: ${afternoonConfig.name}`;
             }
