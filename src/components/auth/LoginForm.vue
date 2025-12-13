@@ -44,8 +44,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { swalError } from '@/services/swalHelper'
+import { useAuthStore } from '../../stores/auth'
+import { swalError } from '../../services/swalHelper'
 
 const emit = defineEmits(['switch-to-signup'])
 

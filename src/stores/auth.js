@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/services/supabase'
-import logger from '@/services/logger'
+import { supabase } from '../services/supabase'
+import logger from '../services/logger'
 
 export const useAuthStore = defineStore('auth', () => {
   // State

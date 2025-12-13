@@ -57,8 +57,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { swalError, swalSuccess } from '@/services/swalHelper'
+import { useAuthStore } from '../../stores/auth'
+import { swalError, swalSuccess } from '../../services/swalHelper'
 
 const emit = defineEmits(['switch-to-login'])
 
