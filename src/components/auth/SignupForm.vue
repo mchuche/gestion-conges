@@ -50,23 +50,25 @@
     
     <p class="auth-switch">
       Déjà un compte ? 
-      <a href="javascript:void(0)" @click="$emit('switch-to-login')">Se connecter</a>
+      <a href="javascript:void(0)" @click="handleSwitch">Se connecter</a>
     </p>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useAuthStore } from '../../stores/auth'
 
 const emit = defineEmits(['switch-to-login'])
 
-const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
 const name = ref('')
 const loading = ref(false)
 const error = ref(null)
+
+function handleSwitch() {
+  emit('switch-to-login')
+}
 
 async function handleSignup() {
   if (!email.value || !password.value || !name.value) {
@@ -83,6 +85,10 @@ async function handleSignup() {
   error.value = null
   
   try {
+    // Import dynamique pour éviter les erreurs de compilation
+    const { useAuthStore } = await import('../../stores/auth')
+    const authStore = useAuthStore()
+    
     console.log('Tentative d\'inscription...')
     const result = await authStore.signUp(email.value, password.value, name.value)
     console.log('Résultat inscription:', result)
