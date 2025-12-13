@@ -23,9 +23,15 @@
 
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
-        <!-- DEBUG VISUEL -->
-        <div style="background: yellow !important; padding: 10px !important; margin-bottom: 10px !important; border: 2px solid orange !important; display: block !important; visibility: visible !important; opacity: 1 !important; z-index: 9999 !important; position: relative !important;">
-          <strong>DEBUG:</strong> activeTab = "{{ activeTab }}", users.length = {{ users.length }}, loadingUsers = {{ loadingUsers }}, teams.length = {{ teams.length }}, loadingTeams = {{ loadingTeams }}
+        <!-- DEBUG VISUEL - TOUJOURS VISIBLE -->
+        <div style="background: yellow !important; padding: 10px !important; margin-bottom: 10px !important; border: 2px solid orange !important; display: block !important; visibility: visible !important; opacity: 1 !important; z-index: 9999 !important; position: relative !important; color: black !important; font-size: 14px !important;">
+          <strong>DEBUG TOUJOURS VISIBLE:</strong> activeTab = "{{ activeTab }}", users.length = {{ users.length }}, loadingUsers = {{ loadingUsers }}, teams.length = {{ teams.length }}, loadingTeams = {{ loadingTeams }}
+        </div>
+        
+        <!-- TEST SIMPLE SANS CONDITIONS -->
+        <div style="background: pink; padding: 20px; border: 3px solid red; margin: 10px 0;">
+          <h3>TEST SIMPLE - DOIT ÊTRE VISIBLE</h3>
+          <p>Si vous voyez ce texte, le problème vient des conditions v-if</p>
         </div>
         
         <!-- Onglet Utilisateurs -->
