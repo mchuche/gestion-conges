@@ -33,8 +33,12 @@ export const useUIStore = defineStore('ui', () => {
 
   // Actions
   function setCurrentDate(date) {
-    currentDate.value = date
-    currentYear.value = date.getFullYear()
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      currentDate.value = new Date()
+    } else {
+      currentDate.value = date
+    }
+    // currentYear est maintenant un computed, pas besoin de le mettre à jour
   }
 
   function setSelectedDate(date) {
