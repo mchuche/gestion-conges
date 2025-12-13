@@ -16,9 +16,19 @@
     <Stats />
     <Quotas />
     
-    <div id="semesterCalendar">
+    <div id="semesterCalendar" :class="calendarViewClass">
       <YearViewSemester
         v-if="yearViewFormat === 'semester'"
+        @day-click="handleDayClick"
+        @day-mousedown="handleDayMouseDown"
+      />
+      <YearViewPresence
+        v-if="yearViewFormat === 'presence'"
+        @day-click="handleDayClick"
+        @day-mousedown="handleDayMouseDown"
+      />
+      <YearViewPresenceVertical
+        v-if="yearViewFormat === 'presence-vertical'"
         @day-click="handleDayClick"
         @day-mousedown="handleDayMouseDown"
       />
@@ -34,6 +44,8 @@ import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useAuthStore } from '../../stores/auth'
 import YearViewSemester from './YearViewSemester.vue'
+import YearViewPresence from './YearViewPresence.vue'
+import YearViewPresenceVertical from './YearViewPresenceVertical.vue'
 import ViewFormatSelector from './ViewFormatSelector.vue'
 import Stats from '../stats/Stats.vue'
 import Quotas from '../stats/Quotas.vue'
@@ -49,6 +61,15 @@ const authStore = useAuthStore()
 const yearViewFormat = computed(() => uiStore.yearViewFormat)
 const currentYear = computed(() => getYear(uiStore.currentDate))
 const currentYearTitle = computed(() => `Année ${currentYear.value}`)
+
+const calendarViewClass = computed(() => {
+  if (yearViewFormat.value === 'presence') {
+    return 'year-presence-view'
+  } else if (yearViewFormat.value === 'presence-vertical') {
+    return 'year-presence-vertical-view'
+  }
+  return ''
+})
 
 async function loadAllData() {
   try {

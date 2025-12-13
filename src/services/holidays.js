@@ -1,6 +1,6 @@
 // Jours fériés - Calcul des jours fériés par pays et année
 
-import { getDateKey } from './utils'
+import { formatDateKey } from './dateUtils'
 
 // Obtenir les jours fériés pour un pays et une année
 export function getPublicHolidays(country, year) {
@@ -34,161 +34,23 @@ export function getPublicHolidays(country, year) {
   whitMonday.setDate(whitMonday.getDate() + 50)
 
   // Jours fériés fixes et variables selon le pays
-  const countryHolidays = {
-    'FR': [
-      { month: 0, day: 1, name: 'Jour de l\'an' },
-      { month: 4, day: 1, name: 'Fête du Travail' },
-      { month: 4, day: 8, name: 'Victoire 1945' },
-      { month: 6, day: 14, name: 'Fête Nationale' },
-      { month: 7, day: 15, name: 'Assomption' },
-      { month: 10, day: 1, name: 'Toussaint' },
-      { month: 10, day: 11, name: 'Armistice 1918' },
-      { month: 11, day: 25, name: 'Noël' },
-      { date: easter, name: 'Pâques' },
-      { date: easterMonday, name: 'Lundi de Pâques' },
-      { date: ascension, name: 'Ascension' },
-      { date: whitMonday, name: 'Lundi de Pentecôte' }
-    ],
-    'BE': [
-      { month: 0, day: 1, name: 'Jour de l\'an' },
-      { month: 4, day: 1, name: 'Fête du Travail' },
-      { month: 6, day: 21, name: 'Fête Nationale' },
-      { month: 7, day: 15, name: 'Assomption' },
-      { month: 10, day: 1, name: 'Toussaint' },
-      { month: 10, day: 11, name: 'Armistice' },
-      { month: 11, day: 25, name: 'Noël' },
-      { date: easter, name: 'Pâques' },
-      { date: easterMonday, name: 'Lundi de Pâques' },
-      { date: ascension, name: 'Ascension' },
-      { date: whitMonday, name: 'Lundi de Pentecôte' }
-    ],
-    'CH': [
-      { month: 0, day: 1, name: 'Jour de l\'an' },
-      { month: 4, day: 1, name: 'Fête du Travail' },
-      { month: 7, day: 1, name: 'Fête Nationale' },
-      { month: 11, day: 25, name: 'Noël' },
-      { month: 11, day: 26, name: 'Saint-Étienne' },
-      { date: easter, name: 'Pâques' },
-      { date: easterMonday, name: 'Lundi de Pâques' },
-      { date: ascension, name: 'Ascension' },
-      { date: whitMonday, name: 'Lundi de Pentecôte' }
-    ],
-    'CA': [
-      { month: 0, day: 1, name: 'Jour de l\'an' },
-      { month: 6, day: 1, name: 'Fête du Canada' },
-      { month: 10, day: 11, name: 'Jour du Souvenir' },
-      { month: 11, day: 25, name: 'Noël' },
-      { month: 11, day: 26, name: 'Boxing Day' }
-    ],
-    'US': [
-      { month: 0, day: 1, name: 'New Year\'s Day' },
-      { month: 6, day: 4, name: 'Independence Day' },
-      { month: 10, day: 11, name: 'Veterans Day' },
-      { month: 11, day: 25, name: 'Christmas' }
-    ],
-    'GB': [
-      { month: 0, day: 1, name: 'New Year\'s Day' },
-      { month: 4, day: 1, name: 'May Day' },
-      { month: 4, day: 31, name: 'Spring Bank Holiday' },
-      { month: 7, day: 31, name: 'Summer Bank Holiday' },
-      { month: 11, day: 25, name: 'Christmas' },
-      { month: 11, day: 26, name: 'Boxing Day' },
-      { date: easter, name: 'Easter' },
-      { date: easterMonday, name: 'Easter Monday' }
-    ],
-    'DE': [
-      { month: 0, day: 1, name: 'Neujahr' },
-      { month: 4, day: 1, name: 'Tag der Arbeit' },
-      { month: 9, day: 3, name: 'Tag der Deutschen Einheit' },
-      { month: 11, day: 25, name: 'Weihnachten' },
-      { month: 11, day: 26, name: '2. Weihnachtstag' },
-      { date: easter, name: 'Ostern' },
-      { date: easterMonday, name: 'Ostermontag' },
-      { date: ascension, name: 'Christi Himmelfahrt' },
-      { date: whitMonday, name: 'Pfingstmontag' }
-    ],
-    'ES': [
-      { month: 0, day: 1, name: 'Año Nuevo' },
-      { month: 0, day: 6, name: 'Epifanía' },
-      { month: 4, day: 1, name: 'Día del Trabajador' },
-      { month: 9, day: 12, name: 'Fiesta Nacional' },
-      { month: 10, day: 1, name: 'Todos los Santos' },
-      { month: 11, day: 6, name: 'Día de la Constitución' },
-      { month: 11, day: 8, name: 'Inmaculada Concepción' },
-      { month: 11, day: 25, name: 'Navidad' },
-      { date: easter, name: 'Pascua' }
-    ],
-    'IT': [
-      { month: 0, day: 1, name: 'Capodanno' },
-      { month: 0, day: 6, name: 'Epifania' },
-      { month: 3, day: 25, name: 'Liberazione' },
-      { month: 4, day: 1, name: 'Festa del Lavoro' },
-      { month: 5, day: 2, name: 'Festa della Repubblica' },
-      { month: 7, day: 15, name: 'Ferragosto' },
-      { month: 10, day: 1, name: 'Ognissanti' },
-      { month: 11, day: 8, name: 'Immacolata' },
-      { month: 11, day: 25, name: 'Natale' },
-      { month: 11, day: 26, name: 'Santo Stefano' },
-      { date: easter, name: 'Pasqua' },
-      { date: easterMonday, name: 'Pasquetta' }
-    ],
-    'NL': [
-      { month: 0, day: 1, name: 'Nieuwjaar' },
-      { month: 3, day: 27, name: 'Koningsdag' },
-      { month: 4, day: 4, name: 'Dodenherdenking' },
-      { month: 4, day: 5, name: 'Bevrijdingsdag' },
-      { month: 11, day: 25, name: 'Kerstmis' },
-      { month: 11, day: 26, name: 'Tweede Kerstdag' },
-      { date: easter, name: 'Pasen' },
-      { date: easterMonday, name: 'Tweede Paasdag' },
-      { date: ascension, name: 'Hemelvaart' },
-      { date: whitMonday, name: 'Tweede Pinksterdag' }
-    ],
-    'LU': [
-      { month: 0, day: 1, name: 'Jour de l\'an' },
-      { month: 5, day: 23, name: 'Fête Nationale' },
-      { month: 7, day: 15, name: 'Assomption' },
-      { month: 10, day: 1, name: 'Toussaint' },
-      { month: 11, day: 25, name: 'Noël' },
-      { month: 11, day: 26, name: 'Saint-Étienne' },
-      { date: easter, name: 'Pâques' },
-      { date: easterMonday, name: 'Lundi de Pâques' },
-      { date: ascension, name: 'Ascension' },
-      { date: whitMonday, name: 'Lundi de Pentecôte' }
-    ]
+  if (country === 'FR') {
+    // Jours fériés fixes
+    holidays[formatDateKey(new Date(year, 0, 1))] = 'Jour de l\'An'
+    holidays[formatDateKey(new Date(year, 4, 1))] = 'Fête du Travail'
+    holidays[formatDateKey(new Date(year, 4, 8))] = 'Victoire 1945'
+    holidays[formatDateKey(new Date(year, 6, 14))] = 'Fête Nationale'
+    holidays[formatDateKey(new Date(year, 7, 15))] = 'Assomption'
+    holidays[formatDateKey(new Date(year, 10, 1))] = 'Toussaint'
+    holidays[formatDateKey(new Date(year, 10, 11))] = 'Armistice 1918'
+    holidays[formatDateKey(new Date(year, 11, 25))] = 'Noël'
+    
+    // Jours fériés variables (basés sur Pâques)
+    holidays[formatDateKey(easter)] = 'Pâques'
+    holidays[formatDateKey(easterMonday)] = 'Lundi de Pâques'
+    holidays[formatDateKey(ascension)] = 'Ascension'
+    holidays[formatDateKey(whitMonday)] = 'Lundi de Pentecôte'
   }
-
-  const countryList = countryHolidays[country] || countryHolidays['FR']
   
-  countryList.forEach(holiday => {
-    let date
-    if (holiday.date) {
-      // Si holiday.date est déjà une Date, l'utiliser directement
-      // Sinon, créer une nouvelle Date
-      date = holiday.date instanceof Date ? holiday.date : new Date(holiday.date)
-    } else if (holiday.month !== undefined && holiday.day !== undefined) {
-      // Créer une date à partir du mois et du jour
-      date = new Date(year, holiday.month, holiday.day)
-    } else {
-      // Ignorer les jours fériés sans date valide
-      console.warn('[Holidays] Jour férié sans date valide:', holiday)
-      return
-    }
-    
-    // Vérifier que la date est valide avant de créer la clé
-    if (isNaN(date.getTime())) {
-      console.warn('[Holidays] Date invalide pour le jour férié:', holiday, 'Date:', date)
-      return
-    }
-    
-    try {
-      const dateKey = getDateKey(date)
-      holidays[dateKey] = holiday.name
-    } catch (error) {
-      console.warn('[Holidays] Erreur lors de la création de la clé de date:', error, 'Holiday:', holiday, 'Date:', date)
-    }
-  })
-
   return holidays
 }
-
