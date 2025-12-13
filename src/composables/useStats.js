@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { useLeavesStore } from '../stores/leaves'
 import { useLeaveTypesStore } from '../stores/leaveTypes'
 import { useQuotasStore } from '../stores/quotas'
@@ -6,6 +6,9 @@ import { useUIStore } from '../stores/ui'
 import { useLeaves } from './useLeaves'
 import { getYear } from '../services/dateUtils'
 import { getDateKey } from '../services/utils'
+
+// Cache pour les dates uniques par année (mémoization)
+const uniqueDatesCache = new Map()
 
 export function useStats() {
   const leavesStore = useLeavesStore()
@@ -37,13 +40,24 @@ export function useStats() {
     // Exclure les types sans quota ou avec quota = 0
     const usedDays = {}
 
-    // Collecter toutes les dates uniques d'abord
-    const uniqueDates = new Set()
-    Object.keys(leavesStore.leaves).forEach(dateKey => {
-      const dateParts = dateKey.split('-')
-      const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
-      uniqueDates.add(baseDateKey)
-    })
+    // Collecter toutes les dates uniques d'abord (avec cache)
+    const cacheKey = `${currentYear}-${Object.keys(leavesStore.leaves).length}`
+    let uniqueDates = uniqueDatesCache.get(cacheKey)
+    
+    if (!uniqueDates) {
+      uniqueDates = new Set()
+      Object.keys(leavesStore.leaves).forEach(dateKey => {
+        const dateParts = dateKey.split('-')
+        const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
+        uniqueDates.add(baseDateKey)
+      })
+      uniqueDatesCache.set(cacheKey, uniqueDates)
+      // Limiter la taille du cache à 5 entrées
+      if (uniqueDatesCache.size > 5) {
+        const firstKey = uniqueDatesCache.keys().next().value
+        uniqueDatesCache.delete(firstKey)
+      }
+    }
 
     // Traiter chaque date unique
     uniqueDates.forEach(baseDateKey => {
@@ -109,13 +123,24 @@ export function useStats() {
     const currentYear = getYear(uiStore.currentDate)
     const usedDays = {}
 
-    // Collecter toutes les dates uniques d'abord
-    const uniqueDatesForQuotas = new Set()
-    Object.keys(leavesStore.leaves).forEach(dateKey => {
-      const dateParts = dateKey.split('-')
-      const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
-      uniqueDatesForQuotas.add(baseDateKey)
-    })
+    // Collecter toutes les dates uniques d'abord (réutiliser le cache de stats)
+    const cacheKey = `${currentYear}-${Object.keys(leavesStore.leaves).length}`
+    let uniqueDatesForQuotas = uniqueDatesCache.get(cacheKey)
+    
+    if (!uniqueDatesForQuotas) {
+      uniqueDatesForQuotas = new Set()
+      Object.keys(leavesStore.leaves).forEach(dateKey => {
+        const dateParts = dateKey.split('-')
+        const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
+        uniqueDatesForQuotas.add(baseDateKey)
+      })
+      uniqueDatesCache.set(cacheKey, uniqueDatesForQuotas)
+      // Limiter la taille du cache à 5 entrées
+      if (uniqueDatesCache.size > 5) {
+        const firstKey = uniqueDatesCache.keys().next().value
+        uniqueDatesCache.delete(firstKey)
+      }
+    }
 
     // Traiter chaque date unique
     uniqueDatesForQuotas.forEach(baseDateKey => {

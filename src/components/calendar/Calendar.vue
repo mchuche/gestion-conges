@@ -55,9 +55,8 @@ import { useLeavesStore } from '../../stores/leaves'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useAuthStore } from '../../stores/auth'
+import { defineAsyncComponent } from 'vue'
 import YearViewSemester from './YearViewSemester.vue'
-import YearViewPresence from './YearViewPresence.vue'
-import YearViewPresenceVertical from './YearViewPresenceVertical.vue'
 import ViewFormatSelector from './ViewFormatSelector.vue'
 import Stats from '../stats/Stats.vue'
 import Quotas from '../stats/Quotas.vue'
@@ -65,6 +64,10 @@ import HelpHint from '../common/HelpHint.vue'
 import Icon from '../common/Icon.vue'
 import { getYear, addYears } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
+
+// Lazy loading des vues de présence (chargées uniquement quand nécessaires)
+const YearViewPresence = defineAsyncComponent(() => import('./YearViewPresence.vue'))
+const YearViewPresenceVertical = defineAsyncComponent(() => import('./YearViewPresenceVertical.vue'))
 
 const uiStore = useUIStore()
 const leavesStore = useLeavesStore()
