@@ -50,7 +50,7 @@
     
     <p class="auth-switch">
       Déjà un compte ? 
-      <a href="javascript:void(0)" @click="handleSwitch">Se connecter</a>
+      <a href="javascript:void(0)" @click="$emit('switch-to-login')">Se connecter</a>
     </p>
   </div>
 </template>
@@ -67,10 +67,6 @@ const password = ref('')
 const name = ref('')
 const loading = ref(false)
 const error = ref(null)
-
-function handleSwitch() {
-  emit('switch-to-login')
-}
 
 async function handleSignup() {
   if (!email.value || !password.value || !name.value) {
