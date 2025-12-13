@@ -49,13 +49,17 @@ onMounted(async () => {
     await authStore.checkSession()
     console.log('Session vérifiée:', authStore.user)
     // Charger le fullWidth au démarrage
-    uiStore.loadFullWidth()
-    // Appliquer immédiatement
-    if (uiStore.fullWidth) {
-      document.body.classList.add('full-width')
+    if (typeof uiStore.loadFullWidth === 'function') {
+      uiStore.loadFullWidth()
+      // Appliquer immédiatement
+      if (uiStore.fullWidth) {
+        document.body.classList.add('full-width')
+      }
     }
     // Charger le minimizeHeader au démarrage
-    uiStore.loadMinimizeHeader()
+    if (typeof uiStore.loadMinimizeHeader === 'function') {
+      uiStore.loadMinimizeHeader()
+    }
   } catch (err) {
     console.error('Erreur lors de la vérification:', err)
   }

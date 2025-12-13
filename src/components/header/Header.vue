@@ -119,7 +119,9 @@ function handleClickOutside(event) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  uiStore.loadMinimizeHeader()
+  if (typeof uiStore.loadMinimizeHeader === 'function') {
+    uiStore.loadMinimizeHeader()
+  }
 })
 
 onUnmounted(() => {
