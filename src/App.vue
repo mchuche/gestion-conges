@@ -8,6 +8,7 @@
       <div class="container">
         <Calendar />
         <LeaveModal />
+        <ConfigModal />
       </div>
     </div>
   </div>
@@ -19,6 +20,7 @@ import { useAuthStore } from './stores/auth'
 import AuthModal from './components/auth/AuthModal.vue'
 import Calendar from './components/calendar/Calendar.vue'
 import LeaveModal from './components/modals/LeaveModal.vue'
+import ConfigModal from './components/modals/ConfigModal.vue'
 
 const authStore = useAuthStore()
 
