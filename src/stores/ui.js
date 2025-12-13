@@ -19,6 +19,7 @@ export const useUIStore = defineStore('ui', () => {
   const ctrlKeyPressed = ref(false)
   const theme = ref('light') // 'light' ou 'dark'
   const fullWidth = ref(false)
+  const minimizeHeader = ref(false) // Mode header minimal
   
   // Modales
   const showModal = ref(false)
@@ -258,6 +259,7 @@ export const useUIStore = defineStore('ui', () => {
     ctrlKeyPressed,
     theme,
     fullWidth,
+    minimizeHeader,
     showModal,
     showConfigModal,
     showHelpModal,
@@ -286,6 +288,8 @@ export const useUIStore = defineStore('ui', () => {
     loadTheme,
     toggleFullWidth,
     loadFullWidth,
+    toggleMinimizeHeader,
+    loadMinimizeHeader,
     openModal,
     closeModal,
     openConfigModal,

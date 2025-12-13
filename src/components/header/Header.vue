@@ -1,6 +1,15 @@
 <template>
   <header class="app-header">
     <div class="header-top">
+      <button
+        id="minimizeHeaderBtn"
+        class="minimize-header-btn"
+        :class="{ active: minimizeHeader }"
+        @click="toggleMinimizeHeader"
+        :title="minimizeHeader ? 'Afficher les éléments du header' : 'Masquer les éléments du header'"
+      >
+        <Icon :name="minimizeHeader ? 'chevrons-down' : 'chevrons-up'" />
+      </button>
       <h1>Gestionnaire de Congés</h1>
       <div class="header-right">
         <button
@@ -44,6 +53,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
+import Icon from '../common/Icon.vue'
 
 const uiStore = useUIStore()
 const authStore = useAuthStore()
@@ -51,6 +61,7 @@ const authStore = useAuthStore()
 const showMenu = ref(false)
 const theme = computed(() => uiStore.theme)
 const fullWidth = computed(() => uiStore.fullWidth)
+const minimizeHeader = computed(() => uiStore.minimizeHeader)
 
 function toggleMenu() {
   showMenu.value = !showMenu.value
@@ -66,6 +77,10 @@ function toggleTheme() {
 
 function toggleFullWidth() {
   uiStore.toggleFullWidth()
+}
+
+function toggleMinimizeHeader() {
+  uiStore.toggleMinimizeHeader()
 }
 
 function openConfig() {
@@ -125,12 +140,40 @@ onUnmounted(() => {
   position: relative;
 }
 
+.minimize-header-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  flex-shrink: 0;
+}
+
+.minimize-header-btn:hover {
+  background: #357abd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+}
+
+.minimize-header-btn.active {
+  background: var(--secondary-color);
+}
+
 .header-top h1 {
   flex: 1;
   text-align: center;
   font-size: 2em;
   color: var(--text-color);
   margin: 0;
+  padding-left: 50px; /* Espace pour le bouton minimize */
 }
 
 .header-right {
