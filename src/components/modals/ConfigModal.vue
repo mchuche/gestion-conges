@@ -309,7 +309,7 @@ function closeModal() {
 <style scoped>
 .config-modal-content {
   padding: 20px;
-  max-width: 800px;
+  max-width: 100%;
 }
 
 .year-selector {
