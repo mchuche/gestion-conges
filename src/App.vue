@@ -54,6 +54,8 @@ onMounted(async () => {
     if (uiStore.fullWidth) {
       document.body.classList.add('full-width')
     }
+    // Charger le minimizeHeader au démarrage
+    uiStore.loadMinimizeHeader()
   } catch (err) {
     console.error('Erreur lors de la vérification:', err)
   }
