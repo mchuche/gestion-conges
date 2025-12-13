@@ -5,7 +5,7 @@
         <button class="nav-btn" @click="previousYear" title="Année précédente">
           ◀
         </button>
-        <h2 id="currentMonth">{{ currentYearTitle }}</h2>
+        <h2 id="currentMonth">{{ calendarTitle }}</h2>
         <button class="nav-btn" @click="nextYear" title="Année suivante">
           ▶
         </button>
@@ -61,6 +61,15 @@ const authStore = useAuthStore()
 const yearViewFormat = computed(() => uiStore.yearViewFormat)
 const currentYear = computed(() => getYear(uiStore.currentDate))
 const currentYearTitle = computed(() => `Année ${currentYear.value}`)
+
+const calendarTitle = computed(() => {
+  if (yearViewFormat.value === 'presence') {
+    return `Matrice de Présence ${currentYear.value}`
+  } else if (yearViewFormat.value === 'presence-vertical') {
+    return `Matrice de Présence ${currentYear.value} (Verticale)`
+  }
+  return currentYearTitle.value
+})
 
 const calendarViewClass = computed(() => {
   if (yearViewFormat.value === 'presence') {
