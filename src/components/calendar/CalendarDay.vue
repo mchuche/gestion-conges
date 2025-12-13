@@ -46,7 +46,8 @@ import { useLeavesStore } from '../../stores/leaves'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useUIStore } from '../../stores/ui'
 import { useLeaves } from '../../composables/useLeaves'
-import { getDateKey, today, isSameDay, isBefore, getDay } from '../../services/dateUtils'
+import { today, isSameDay, isBefore, getDay } from '../../services/dateUtils'
+import { getDateKey } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
 
 const props = defineProps({
