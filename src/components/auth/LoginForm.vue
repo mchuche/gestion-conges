@@ -37,7 +37,7 @@
     
     <p class="auth-switch">
       Pas encore de compte ? 
-      <a href="#" @click.prevent="$emit('switch-to-signup')">S'inscrire</a>
+      <a href="javascript:void(0)" @click="$emit('switch-to-signup')">S'inscrire</a>
     </p>
   </div>
 </template>
@@ -64,17 +64,26 @@ async function handleLogin() {
   error.value = null
   
   try {
+    console.log('Tentative de connexion...')
     const result = await authStore.signIn(email.value, password.value)
+    console.log('Résultat connexion:', result)
     
     if (!result.success) {
       error.value = result.error || 'Erreur lors de la connexion'
       alert('Erreur de connexion: ' + (result.error || 'Email ou mot de passe incorrect'))
+      loading.value = false
+    } else {
+      console.log('Connexion réussie, utilisateur:', authStore.user)
+      // La réactivité devrait mettre à jour l'interface automatiquement
+      // Attendre un peu pour laisser le temps à Vue de mettre à jour
+      setTimeout(() => {
+        console.log('État authentifié après connexion:', authStore.isAuthenticated)
+      }, 100)
     }
   } catch (err) {
     error.value = 'Une erreur est survenue'
     console.error('Erreur connexion:', err)
-    alert('Erreur: ' + err.message)
-  } finally {
+    alert('Erreur: ' + (err.message || err))
     loading.value = false
   }
 }

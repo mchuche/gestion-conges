@@ -20,7 +20,11 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = true
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      if (sessionError) throw sessionError
+      if (sessionError) {
+        logger.warn('Erreur session (non bloquant):', sessionError)
+        user.value = null
+        return
+      }
       
       if (session?.user) {
         await loadUserProfile(session.user.id)
@@ -89,15 +93,24 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = true
       error.value = null
 
+      logger.log('Tentative de connexion pour:', email)
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       })
 
-      if (signInError) throw signInError
+      if (signInError) {
+        logger.error('Erreur Supabase signIn:', signInError)
+        throw signInError
+      }
 
       if (data?.user) {
+        logger.log('Utilisateur connecté, chargement du profil...')
         await loadUserProfile(data.user.id)
+        logger.log('Profil chargé, utilisateur:', user.value)
+      } else {
+        logger.warn('Pas de données utilisateur dans la réponse')
+        throw new Error('Aucune donnée utilisateur reçue')
       }
 
       return { success: true }
