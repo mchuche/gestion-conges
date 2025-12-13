@@ -1,0 +1,113 @@
+import { computed } from 'vue'
+import { useLeavesStore } from '../stores/leaves'
+import { useLeaveTypesStore } from '../stores/leaveTypes'
+import { useUIStore } from '../stores/ui'
+import { getDateKey, getDateKeyWithPeriod, getDateKeys } from '../services/utils'
+import logger from '../services/logger'
+
+export function useLeaves() {
+  const leavesStore = useLeavesStore()
+  const leaveTypesStore = useLeaveTypesStore()
+  const uiStore = useUIStore()
+
+  // Obtenir les informations de congé pour une date
+  function getLeaveForDate(date) {
+    const keys = getDateKeys(date)
+    return {
+      full: leavesStore.leaves[keys.full] || null,
+      morning: leavesStore.leaves[keys.morning] || null,
+      afternoon: leavesStore.leaves[keys.afternoon] || null
+    }
+  }
+
+  // Définir un congé pour une date et une période
+  async function setLeave(date, leaveTypeId, period = 'full') {
+    const dateKey = getDateKeyWithPeriod(date, period)
+    const keys = getDateKeys(date)
+
+    // Si on définit une journée complète, supprimer les demi-journées
+    if (period === 'full') {
+      if (leavesStore.leaves[keys.morning]) {
+        leavesStore.removeLeave(keys.morning)
+      }
+      if (leavesStore.leaves[keys.afternoon]) {
+        leavesStore.removeLeave(keys.afternoon)
+      }
+      leavesStore.setLeave(keys.full, leaveTypeId)
+    } else {
+      // Si on définit une demi-journée, supprimer la journée complète si elle existe
+      if (leavesStore.leaves[keys.full]) {
+        leavesStore.removeLeave(keys.full)
+      }
+      // Supprimer l'autre demi-journée si elle existe
+      const otherPeriod = period === 'morning' ? 'afternoon' : 'morning'
+      if (leavesStore.leaves[keys[otherPeriod]]) {
+        leavesStore.removeLeave(keys[otherPeriod])
+      }
+      leavesStore.setLeave(dateKey, leaveTypeId)
+    }
+
+    // Sauvegarder dans Supabase
+    try {
+      await leavesStore.saveLeaves()
+    } catch (err) {
+      logger.error('Erreur lors de la sauvegarde du congé:', err)
+      throw err
+    }
+  }
+
+  // Supprimer un congé pour une date
+  async function removeLeave(date, period = null) {
+    const keys = getDateKeys(date)
+
+    if (period) {
+      // Supprimer une période spécifique
+      const dateKey = getDateKeyWithPeriod(date, period)
+      leavesStore.removeLeave(dateKey)
+    } else {
+      // Supprimer toutes les périodes pour cette date
+      if (leavesStore.leaves[keys.full]) {
+        leavesStore.removeLeave(keys.full)
+      }
+      if (leavesStore.leaves[keys.morning]) {
+        leavesStore.removeLeave(keys.morning)
+      }
+      if (leavesStore.leaves[keys.afternoon]) {
+        leavesStore.removeLeave(keys.afternoon)
+      }
+    }
+
+    // Sauvegarder dans Supabase
+    try {
+      await leavesStore.saveLeaves()
+    } catch (err) {
+      logger.error('Erreur lors de la suppression du congé:', err)
+      throw err
+    }
+  }
+
+  // Vérifier si un type de congé est utilisé
+  function isLeaveTypeUsed(leaveTypeId) {
+    return Object.values(leavesStore.leaves).includes(leaveTypeId)
+  }
+
+  // Compter l'utilisation d'un type de congé
+  function countLeaveTypeUsage(leaveTypeId) {
+    return Object.values(leavesStore.leaves).filter(id => id === leaveTypeId).length
+  }
+
+  // Obtenir la configuration d'un type de congé
+  function getLeaveTypeConfig(leaveTypeId) {
+    return leaveTypesStore.getLeaveType(leaveTypeId)
+  }
+
+  return {
+    getLeaveForDate,
+    setLeave,
+    removeLeave,
+    isLeaveTypeUsed,
+    countLeaveTypeUsage,
+    getLeaveTypeConfig
+  }
+}
+
