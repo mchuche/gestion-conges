@@ -6,6 +6,7 @@
     <!-- Application principale -->
     <div v-else class="main-container" id="mainContainer">
       <div class="container">
+        <Header />
         <Calendar />
         <LeaveModal />
         <ConfigModal />
@@ -18,6 +19,7 @@
 import { computed, onMounted } from 'vue'
 import { useAuthStore } from './stores/auth'
 import AuthModal from './components/auth/AuthModal.vue'
+import Header from './components/header/Header.vue'
 import Calendar from './components/calendar/Calendar.vue'
 import LeaveModal from './components/modals/LeaveModal.vue'
 import ConfigModal from './components/modals/ConfigModal.vue'
