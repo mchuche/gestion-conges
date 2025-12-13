@@ -28,7 +28,7 @@
         </div>
         
         <!-- Onglet Utilisateurs -->
-        <div v-show="activeTab === 'users'" class="admin-tab-panel" style="border: 2px solid green !important; padding: 10px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+        <div v-if="activeTab === 'users'" class="admin-tab-panel" style="border: 2px solid green !important; padding: 10px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
           <div style="background: lightgreen !important; padding: 5px !important; margin-bottom: 10px !important; color: black !important;">PANEL USERS ACTIF - activeTab = {{ activeTab }}</div>
           <div class="admin-search">
             <input
@@ -70,8 +70,8 @@
         </div>
 
         <!-- Onglet Équipes -->
-        <div v-show="activeTab === 'teams'" class="admin-tab-panel" style="border: 2px solid blue; padding: 10px;">
-          <div style="background: lightblue; padding: 5px; margin-bottom: 10px;">PANEL TEAMS</div>
+        <div v-if="activeTab === 'teams'" class="admin-tab-panel" style="border: 2px solid blue !important; padding: 10px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+          <div style="background: lightblue !important; padding: 5px !important; margin-bottom: 10px !important; color: black !important;">PANEL TEAMS ACTIF - activeTab = {{ activeTab }}</div>
           <div v-if="loadingTeams" class="loading">Chargement...</div>
           <div v-else-if="teams.length === 0" class="no-data">Aucune équipe trouvée</div>
           <div v-else class="admin-list">
@@ -101,8 +101,8 @@
         </div>
 
         <!-- Onglet Statistiques -->
-        <div v-show="activeTab === 'stats'" class="admin-tab-panel" style="border: 2px solid purple; padding: 10px;">
-          <div style="background: lightyellow; padding: 5px; margin-bottom: 10px;">PANEL STATS</div>
+        <div v-if="activeTab === 'stats'" class="admin-tab-panel" style="border: 2px solid purple !important; padding: 10px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+          <div style="background: lightyellow !important; padding: 5px !important; margin-bottom: 10px !important; color: black !important;">PANEL STATS ACTIF - activeTab = {{ activeTab }}</div>
           <div class="admin-stats">
             <div class="stat-item">
               <div class="stat-label">Total utilisateurs</div>
