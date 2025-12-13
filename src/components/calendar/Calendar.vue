@@ -12,6 +12,9 @@
       </div>
     </div>
 
+    <Stats />
+    <Quotas />
+    
     <div id="semesterCalendar">
       <YearViewSemester
         v-if="yearViewFormat === 'semester'"
@@ -30,6 +33,8 @@ import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useAuthStore } from '../../stores/auth'
 import YearViewSemester from './YearViewSemester.vue'
+import Stats from '../stats/Stats.vue'
+import Quotas from '../stats/Quotas.vue'
 import { getYear, addYears } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 

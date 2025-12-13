@@ -3,139 +3,184 @@ import { useLeavesStore } from '../stores/leaves'
 import { useLeaveTypesStore } from '../stores/leaveTypes'
 import { useQuotasStore } from '../stores/quotas'
 import { useUIStore } from '../stores/ui'
+import { useLeaves } from './useLeaves'
 import { getYear } from '../services/dateUtils'
-import { formatNumber } from '../services/utils'
-import logger from '../services/logger'
+import { getDateKey } from '../services/utils'
 
 export function useStats() {
   const leavesStore = useLeavesStore()
   const leaveTypesStore = useLeaveTypesStore()
   const quotasStore = useQuotasStore()
   const uiStore = useUIStore()
+  const { getLeaveForDate, getLeaveTypeConfig } = useLeaves()
 
-  // Obtenir le quota d'un type de congé pour une année donnée
-  function getQuotaForYear(typeId, year) {
-    // Si l'année demandée a des quotas configurés, les utiliser
-    const quota = quotasStore.getQuota(year, typeId)
-    if (quota !== undefined && quota !== null) {
-      return quota
-    }
-    
-    // Sinon, utiliser les quotas de l'année en cours par défaut
-    const currentYear = new Date().getFullYear()
-    const currentQuota = quotasStore.getQuota(currentYear, typeId)
-    if (currentQuota !== undefined && currentQuota !== null) {
-      return currentQuota
-    }
-    
-    return null
-  }
-
-  // Vérifier si un type de congé a un quota valide (> 0)
+  // Vérifier si un type a un quota valide pour une année
   function hasValidQuota(typeId, year) {
-    const quota = getQuotaForYear(typeId, year)
+    const quota = quotasStore.getQuota(year, typeId)
     return quota !== null && quota !== undefined && quota > 0
   }
 
-  // Calculer les statistiques pour une année donnée
-  function calculateStats(year = null) {
-    const targetYear = year || getYear(uiStore.currentDate)
+  // Formater un nombre (gérer les demi-journées)
+  function formatNumber(num) {
+    if (num % 1 === 0) {
+      return num.toString()
+    }
+    return num.toFixed(1)
+  }
+
+  // Calculer les statistiques pour l'année en cours
+  const stats = computed(() => {
+    const currentYear = getYear(uiStore.currentDate)
     
-    // Compter les jours (0.5 pour demi-journée, 1 pour journée complète) pour l'année en cours uniquement
+    // Compter les jours utilisés par type (0.5 pour demi-journée, 1 pour journée complète)
     // Exclure les types sans quota ou avec quota = 0
     const usedDays = {}
-    const processedDatesForQuota = new Set()
+    const processedDates = new Set()
 
     Object.keys(leavesStore.leaves).forEach(dateKey => {
-      const baseDateKey = dateKey.split('-').slice(0, 3).join('-')
-      const date = new Date(baseDateKey)
+      // Extraire la date de base (sans période)
+      const dateParts = dateKey.split('-')
+      const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
       
-      // Filtrer par année
-      if (getYear(date) !== targetYear) {
+      // Éviter de traiter deux fois la même date (matin et après-midi)
+      if (processedDates.has(baseDateKey)) {
         return
       }
       
-      if (!processedDatesForQuota.has(baseDateKey)) {
-        processedDatesForQuota.add(baseDateKey)
-        const leaveInfo = getLeaveForDate(date)
-        
-        // Ne compter que les congés (category: 'leave') avec quota valide (> 0)
-        const fullConfig = leaveInfo.full ? leaveTypesStore.getLeaveType(leaveInfo.full) : null
-        const morningConfig = leaveInfo.morning ? leaveTypesStore.getLeaveType(leaveInfo.morning) : null
-        const afternoonConfig = leaveInfo.afternoon ? leaveTypesStore.getLeaveType(leaveInfo.afternoon) : null
-        
-        if (leaveInfo.full && fullConfig && fullConfig.category === 'leave' && hasValidQuota(leaveInfo.full, targetYear)) {
+      const date = new Date(baseDateKey + 'T00:00:00')
+      
+      // Filtrer par année
+      if (getYear(date) !== currentYear) {
+        return
+      }
+      
+      processedDates.add(baseDateKey)
+      const leaveInfo = getLeaveForDate(date)
+      
+      // Ne compter que les congés (category: 'leave') avec quota valide (> 0)
+      if (leaveInfo.full) {
+        const config = getLeaveTypeConfig(leaveInfo.full)
+        if (config && config.category === 'leave' && hasValidQuota(leaveInfo.full, currentYear)) {
           usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1
-        } else {
-          if (leaveInfo.morning && morningConfig && morningConfig.category === 'leave' && hasValidQuota(leaveInfo.morning, targetYear)) {
+        }
+      } else {
+        if (leaveInfo.morning) {
+          const config = getLeaveTypeConfig(leaveInfo.morning)
+          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.morning, currentYear)) {
             usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5
           }
-          if (leaveInfo.afternoon && afternoonConfig && afternoonConfig.category === 'leave' && hasValidQuota(leaveInfo.afternoon, targetYear)) {
+        }
+        if (leaveInfo.afternoon) {
+          const config = getLeaveTypeConfig(leaveInfo.afternoon)
+          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.afternoon, currentYear)) {
             usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5
           }
         }
       }
     })
 
-    // Calculer les jours restants et le total des quotas pour chaque type avec quota
+    // Calculer les totaux
     let totalQuotas = 0
     let totalUsed = 0
     let totalRemaining = 0
-    const statsByType = []
 
     leaveTypesStore.leaveTypes.forEach(typeConfig => {
-      const quota = getQuotaForYear(typeConfig.id, targetYear)
-      if (quota !== null && quota !== undefined && quota > 0) {
+      const quota = quotasStore.getQuota(currentYear, typeConfig.id)
+      if (quota !== null && quota !== undefined && quota > 0 && typeConfig.category === 'leave') {
         totalQuotas += quota
         const used = usedDays[typeConfig.id] || 0
         totalUsed += used
         const remaining = quota - used
-        totalRemaining += Math.max(0, remaining)
-        
-        statsByType.push({
-          typeId: typeConfig.id,
-          typeName: typeConfig.name,
-          quota,
-          used,
-          remaining: Math.max(0, remaining)
-        })
+        totalRemaining += Math.max(0, remaining) // Ne pas compter les dépassements négatifs
       }
     })
 
     return {
-      year: targetYear,
-      totalQuotas,
       totalUsed,
+      totalQuotas,
       totalRemaining,
-      statsByType
+      usedDays,
+      formatNumber
     }
-  }
+  })
 
-  // Obtenir les informations de congé pour une date
-  function getLeaveForDate(date) {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const baseKey = `${year}-${month}-${day}`
-    
-    return {
-      full: leavesStore.leaves[baseKey] || null,
-      morning: leavesStore.leaves[`${baseKey}-morning`] || null,
-      afternoon: leavesStore.leaves[`${baseKey}-afternoon`] || null
-    }
-  }
+  // Calculer les quotas par type pour l'année en cours
+  const quotasByType = computed(() => {
+    const currentYear = getYear(uiStore.currentDate)
+    const usedDays = {}
+    const processedDates = new Set()
 
-  // Statistiques réactives pour l'année courante
-  const currentYearStats = computed(() => {
-    return calculateStats()
+    // Compter les jours utilisés
+    Object.keys(leavesStore.leaves).forEach(dateKey => {
+      const dateParts = dateKey.split('-')
+      const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
+      
+      if (processedDates.has(baseDateKey)) {
+        return
+      }
+      
+      const date = new Date(baseDateKey + 'T00:00:00')
+      
+      if (getYear(date) !== currentYear) {
+        return
+      }
+      
+      processedDates.add(baseDateKey)
+      const leaveInfo = getLeaveForDate(date)
+      
+      if (leaveInfo.full) {
+        const config = getLeaveTypeConfig(leaveInfo.full)
+        if (config && config.category === 'leave' && hasValidQuota(leaveInfo.full, currentYear)) {
+          usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1
+        }
+      } else {
+        if (leaveInfo.morning) {
+          const config = getLeaveTypeConfig(leaveInfo.morning)
+          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.morning, currentYear)) {
+            usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5
+          }
+        }
+        if (leaveInfo.afternoon) {
+          const config = getLeaveTypeConfig(leaveInfo.afternoon)
+          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.afternoon, currentYear)) {
+            usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5
+          }
+        }
+      }
+    })
+
+    // Créer les données de quotas par type
+    const quotas = []
+    leaveTypesStore.leaveTypes.forEach(typeConfig => {
+      // Ne montrer que les congés (category: 'leave')
+      if (typeConfig.category !== 'leave') {
+        return
+      }
+      
+      const quota = quotasStore.getQuota(currentYear, typeConfig.id)
+      if (quota !== null && quota !== undefined && quota > 0) {
+        const used = usedDays[typeConfig.id] || 0
+        const remaining = quota - used
+        const percentage = quota > 0 ? (used / quota) * 100 : 0
+
+        quotas.push({
+          type: typeConfig,
+          quota,
+          used,
+          remaining,
+          percentage: Math.min(percentage, 100),
+          exceeded: remaining < 0
+        })
+      }
+    })
+
+    return quotas
   })
 
   return {
-    getQuotaForYear,
-    hasValidQuota,
-    calculateStats,
-    getLeaveForDate,
-    currentYearStats
+    stats,
+    quotasByType,
+    formatNumber,
+    hasValidQuota
   }
 }
-
