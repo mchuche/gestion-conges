@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div id="semesterCalendar" class="semester-calendar">
+    <div id="semesterCalendar">
       <YearViewSemester
         v-if="yearViewFormat === 'semester'"
         @day-click="handleDayClick"
@@ -148,7 +148,7 @@ onMounted(async () => {
   text-align: center;
 }
 
-.semester-calendar {
+#semesterCalendar {
   width: 100%;
 }
 </style>

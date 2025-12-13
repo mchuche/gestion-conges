@@ -42,6 +42,7 @@ onMounted(async () => {
 .main-container {
   width: 100%;
   min-height: 100vh;
-  padding: 0;
+  padding: 20px;
+  background: var(--bg-color, #f5f7fa);
 }
 </style>
