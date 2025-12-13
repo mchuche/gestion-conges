@@ -19,8 +19,17 @@
 
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
+        <!-- DEBUG: activeTab = {{ activeTab }} -->
+        <div style="background: yellow; padding: 10px; margin-bottom: 10px; border: 2px solid orange;">
+          <p><strong>DEBUG:</strong> activeTab = "{{ activeTab }}"</p>
+          <p>activeTab === 'users' ? {{ activeTab === 'users' }}</p>
+          <p>activeTab === 'teams' ? {{ activeTab === 'teams' }}</p>
+          <p>activeTab === 'stats' ? {{ activeTab === 'stats' }}</p>
+        </div>
+        
         <!-- Onglet Utilisateurs -->
-        <div v-show="activeTab === 'users'" class="admin-tab-panel">
+        <div v-show="activeTab === 'users'" class="admin-tab-panel" style="border: 2px solid green; padding: 10px;">
+          <div style="background: lightgreen; padding: 5px; margin-bottom: 10px;">PANEL USERS</div>
           <div class="admin-search">
             <input
               v-model="userSearch"
@@ -61,7 +70,8 @@
         </div>
 
         <!-- Onglet Équipes -->
-        <div v-show="activeTab === 'teams'" class="admin-tab-panel">
+        <div v-show="activeTab === 'teams'" class="admin-tab-panel" style="border: 2px solid blue; padding: 10px;">
+          <div style="background: lightblue; padding: 5px; margin-bottom: 10px;">PANEL TEAMS</div>
           <div v-if="loadingTeams" class="loading">Chargement...</div>
           <div v-else-if="teams.length === 0" class="no-data">Aucune équipe trouvée</div>
           <div v-else class="admin-list">
@@ -91,7 +101,8 @@
         </div>
 
         <!-- Onglet Statistiques -->
-        <div v-show="activeTab === 'stats'" class="admin-tab-panel">
+        <div v-show="activeTab === 'stats'" class="admin-tab-panel" style="border: 2px solid purple; padding: 10px;">
+          <div style="background: lightyellow; padding: 5px; margin-bottom: 10px;">PANEL STATS</div>
           <div class="admin-stats">
             <div class="stat-item">
               <div class="stat-label">Total utilisateurs</div>
