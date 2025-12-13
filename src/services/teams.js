@@ -161,25 +161,30 @@ export async function inviteTeamMember(teamId, inviterId, email) {
   }
 
   try {
-    // Vérifier si l'utilisateur existe dans user_emails
-    const { data: userEmail, error: userError } = await supabase
-      .from('user_emails')
-      .select('user_id')
-      .eq('email', email.toLowerCase().trim())
-      .single()
+    const trimmedEmail = email.toLowerCase().trim()
+    
+    // Vérifier qu'il n'y a pas déjà une invitation en attente pour cet email
+    const { data: existingInvitations, error: checkError } = await supabase
+      .from('team_invitations')
+      .select('id, status')
+      .eq('team_id', teamId)
+      .eq('email', trimmedEmail)
+      .eq('status', 'pending')
 
-    if (userError || !userEmail) {
-      throw new Error('Utilisateur non trouvé')
+    if (checkError) {
+      logger.warn('[inviteTeamMember] Erreur lors de la vérification:', checkError)
     }
 
-    const userId = userEmail.user_id
+    if (existingInvitations && existingInvitations.length > 0) {
+      throw new Error('Une invitation est déjà en attente pour cet email')
+    }
 
-    // Créer l'invitation
+    // Créer l'invitation (la table stocke directement l'email, pas le user_id)
     const { data, error } = await supabase
       .from('team_invitations')
       .insert({
         team_id: teamId,
-        user_id: userId,
+        email: trimmedEmail,
         invited_by: inviterId,
         status: 'pending'
       })
@@ -204,46 +209,26 @@ export async function loadTeamInvitations(teamId) {
   }
 
   try {
-    // Charger les invitations
-    const { data: invitationsData, error: invitationsError } = await supabase
+    // Charger les invitations (la table contient directement l'email)
+    const { data, error } = await supabase
       .from('team_invitations')
-      .select('id, user_id, status, invited_by')
+      .select('id, email, status, invited_by, created_at, accepted_at')
       .eq('team_id', teamId)
+      .order('created_at', { ascending: false })
 
-    if (invitationsError) {
-      logger.error('[loadTeamInvitations] Erreur:', invitationsError)
+    if (error) {
+      logger.error('[loadTeamInvitations] Erreur:', error)
       return []
     }
 
-    if (!invitationsData || invitationsData.length === 0) {
-      return []
-    }
-
-    // Récupérer les emails depuis user_emails pour chaque invitation
-    const userIds = invitationsData.map(inv => inv.user_id)
-    const { data: emailsData, error: emailsError } = await supabase
-      .from('user_emails')
-      .select('user_id, email')
-      .in('user_id', userIds)
-
-    if (emailsError) {
-      logger.warn('[loadTeamInvitations] Erreur lors du chargement des emails:', emailsError)
-    }
-
-    // Créer un map pour accéder rapidement aux emails
-    const emailMap = {}
-    if (emailsData) {
-      emailsData.forEach(item => {
-        emailMap[item.user_id] = item.email
-      })
-    }
-
-    // Mapper les invitations avec leurs emails
-    return invitationsData.map(inv => ({
+    // Mapper les invitations (l'email est déjà dans la table)
+    return (data || []).map(inv => ({
       id: inv.id,
-      userId: inv.user_id,
-      email: emailMap[inv.user_id] || 'Email inconnu',
-      status: inv.status
+      userId: null, // Pas de user_id dans team_invitations, seulement email
+      email: inv.email,
+      status: inv.status,
+      createdAt: inv.created_at,
+      acceptedAt: inv.accepted_at
     }))
   } catch (e) {
     logger.error('[loadTeamInvitations] Erreur:', e)
