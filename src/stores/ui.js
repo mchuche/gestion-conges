@@ -182,6 +182,30 @@ export const useUIStore = defineStore('ui', () => {
     }
   }
 
+  function toggleMinimizeHeader() {
+    minimizeHeader.value = !minimizeHeader.value
+    localStorage.setItem('minimizeHeader', minimizeHeader.value.toString())
+    // Appliquer immédiatement la classe au body
+    if (minimizeHeader.value) {
+      document.body.classList.add('minimal-header')
+    } else {
+      document.body.classList.remove('minimal-header')
+    }
+  }
+
+  function loadMinimizeHeader() {
+    const saved = localStorage.getItem('minimizeHeader')
+    if (saved !== null) {
+      minimizeHeader.value = saved === 'true'
+      // Appliquer immédiatement la classe au body
+      if (minimizeHeader.value) {
+        document.body.classList.add('minimal-header')
+      } else {
+        document.body.classList.remove('minimal-header')
+      }
+    }
+  }
+
   // Modales
   function openModal() {
     showModal.value = true
