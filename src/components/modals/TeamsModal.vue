@@ -395,10 +395,17 @@ onMounted(async () => {
   max-width: 900px;
 }
 
+.teams-main-view {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
 .create-team-section {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 20px;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
 }
 
 .form-group {
