@@ -6,15 +6,18 @@
 
 ## 📝 Pour démarrer le serveur vous-même
 
-### Option 1 : Script PowerShell (recommandé)
+### Commande directe (recommandé)
+```powershell
+npm run dev
+```
+
+### Alternative : Script PowerShell (si politique d'exécution activée)
+Si vous avez activé l'exécution de scripts PowerShell :
 ```powershell
 .\start-dev.ps1
 ```
 
-### Option 2 : Commande directe
-```powershell
-npm run dev
-```
+**Note** : Si vous avez une erreur de politique d'exécution, utilisez directement `npm run dev` ci-dessus.
 
 ## ✅ Le serveur est prêt quand vous voyez :
 
