@@ -190,7 +190,7 @@ async function loadUsers() {
 
     // Enrichir avec des statistiques
     users.value = await Promise.all((data || []).map(async (user) => {
-      const [leavesCount, teamsCount] = await Promise.all([
+      const [leavesResult, teamsResult] = await Promise.all([
         supabase.from('leaves').select('id', { count: 'exact', head: true }).eq('user_id', user.user_id),
         supabase.from('team_members').select('id', { count: 'exact', head: true }).eq('user_id', user.user_id)
       ])
@@ -199,10 +199,12 @@ async function loadUsers() {
         id: user.user_id,
         email: user.email,
         createdAt: user.created_at,
-        leavesCount: leavesCount.count || 0,
-        teamsCount: teamsCount.count || 0
+        leavesCount: leavesResult.count || 0,
+        teamsCount: teamsResult.count || 0
       }
     }))
+    
+    console.log('[AdminModal] Utilisateurs chargés:', users.value.length)
   } catch (err) {
     logger.error('[AdminModal] Erreur lors du chargement des utilisateurs:', err)
     Swal.fire('Erreur', 'Impossible de charger les utilisateurs', 'error')
