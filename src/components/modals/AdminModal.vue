@@ -1,18 +1,25 @@
 <template>
   <Modal :model-value="showModal" @close="closeModal" title="Administration" content-class="admin-modal">
     <!-- TEST ABSOLU - DOIT TOUJOURS ÊTRE VISIBLE -->
-    <div style="background: red !important; color: white !important; padding: 20px !important; border: 5px solid black !important; font-size: 20px !important; z-index: 99999 !important; position: relative !important;">
+    <div style="background: red !important; color: white !important; padding: 20px !important; border: 5px solid black !important; font-size: 20px !important; z-index: 99999 !important; position: relative !important; margin-bottom: 20px;">
       <h1>TEST ABSOLU - SI VOUS VOYEZ ÇA, LE MODAL FONCTIONNE</h1>
+      <p>isAdmin = {{ authStore.isAdmin }}, user = {{ authStore.user ? 'connecté' : 'non connecté' }}</p>
     </div>
     
-    <div v-if="!authStore.isAdmin" class="admin-error">
-      <p>Vous n'avez pas les droits d'administrateur pour accéder à cette page.</p>
+    <!-- TEST AVANT CONDITIONS -->
+    <div style="background: orange !important; padding: 10px !important; margin-bottom: 10px;">
+      <p>AVANT CONDITIONS - isAdmin = {{ authStore.isAdmin }}</p>
+    </div>
+    
+    <div v-if="!authStore.isAdmin" class="admin-error" style="background: pink !important; padding: 20px !important;">
+      <p>VOUS N'ÊTES PAS ADMIN - isAdmin = {{ authStore.isAdmin }}</p>
       <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
         Debug: isAdmin = {{ authStore.isAdmin }}, user = {{ authStore.user ? 'connecté' : 'non connecté' }}
       </p>
     </div>
     
-    <div v-else class="admin-content">
+    <div v-else class="admin-content" style="background: lightgreen !important; padding: 10px !important;">
+      <p style="background: darkgreen !important; color: white !important; padding: 10px !important;">VOUS ÊTES ADMIN - CONTENU ADMIN</p>
       <!-- Onglets -->
       <div class="admin-tabs">
         <button
