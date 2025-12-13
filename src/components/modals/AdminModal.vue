@@ -22,9 +22,14 @@
 
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
+        <!-- DEBUG VISUEL -->
+        <div style="background: yellow; padding: 10px; margin-bottom: 10px; border: 2px solid orange;">
+          <strong>DEBUG:</strong> activeTab = "{{ activeTab }}", users.length = {{ users.length }}, loadingUsers = {{ loadingUsers }}, teams.length = {{ teams.length }}, loadingTeams = {{ loadingTeams }}
+        </div>
+        
         <!-- Onglet Utilisateurs -->
         <div v-if="activeTab === 'users'" class="admin-tab-panel">
-          <!-- Debug: activeTab={{ activeTab }}, users.length={{ users.length }}, loadingUsers={{ loadingUsers }} -->
+          <div style="background: lightblue; padding: 5px; margin-bottom: 10px;">PANEL USERS ACTIF</div>
           <div class="admin-search">
             <input
               v-model="userSearch"
@@ -65,6 +70,7 @@
 
         <!-- Onglet Équipes -->
         <div v-if="activeTab === 'teams'" class="admin-tab-panel">
+          <div style="background: lightgreen; padding: 5px; margin-bottom: 10px;">PANEL TEAMS ACTIF</div>
           <div v-if="loadingTeams" class="loading">Chargement...</div>
           <div v-else-if="teams.length === 0" class="no-data">Aucune équipe trouvée</div>
           <div v-else class="admin-list">
@@ -95,6 +101,7 @@
 
         <!-- Onglet Statistiques -->
         <div v-if="activeTab === 'stats'" class="admin-tab-panel">
+          <div style="background: lightyellow; padding: 5px; margin-bottom: 10px;">PANEL STATS ACTIF</div>
           <div class="admin-stats">
             <div class="stat-item">
               <div class="stat-label">Total utilisateurs</div>
@@ -394,6 +401,9 @@ onMounted(() => {
 
 .admin-content {
   margin-top: 20px;
+  border: 2px solid red; /* DEBUG - À supprimer */
+  padding: 10px; /* DEBUG - À supprimer */
+  background: rgba(255, 0, 0, 0.1); /* DEBUG - À supprimer */
 }
 
 .admin-tabs {
@@ -428,12 +438,17 @@ onMounted(() => {
 .admin-tab-content {
   min-height: 400px;
   padding: 20px 0;
+  border: 2px solid blue; /* DEBUG - À supprimer */
+  background: rgba(0, 0, 255, 0.1); /* DEBUG - À supprimer */
+  position: relative; /* DEBUG - À supprimer */
 }
 
 .admin-tab-panel {
   padding: 20px 0;
   min-height: 200px;
   display: block;
+  border: 2px solid green; /* DEBUG - À supprimer */
+  background: rgba(0, 255, 0, 0.1); /* DEBUG - À supprimer */
 }
 
 .admin-search {
