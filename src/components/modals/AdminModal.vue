@@ -314,14 +314,22 @@ function formatDate(dateString) {
 }
 
 watch(showModal, (isOpen) => {
-  if (isOpen && authStore.isAdmin) {
-    switchTab(activeTab.value)
+  if (isOpen) {
+    console.log('[AdminModal] Modal ouverte, isAdmin:', authStore.isAdmin)
+    if (authStore.isAdmin) {
+      switchTab(activeTab.value)
+    } else {
+      console.warn('[AdminModal] Utilisateur non admin')
+    }
   }
 })
 
 onMounted(() => {
-  if (showModal.value && authStore.isAdmin) {
-    switchTab(activeTab.value)
+  if (showModal.value) {
+    console.log('[AdminModal] Composant monté, isAdmin:', authStore.isAdmin)
+    if (authStore.isAdmin) {
+      switchTab(activeTab.value)
+    }
   }
 })
 </script>

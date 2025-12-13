@@ -359,13 +359,29 @@ async function handleDeleteInvitation(invitation) {
 
 watch(showModal, async (isOpen) => {
   if (isOpen) {
-    await teamsStore.loadUserTeams()
+    console.log('[TeamsModal] Modal ouverte, chargement des équipes...')
+    if (!authStore.user?.id) {
+      console.warn('[TeamsModal] Utilisateur non disponible')
+      return
+    }
+    try {
+      await teamsStore.loadUserTeams()
+      console.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
+    } catch (err) {
+      console.error('[TeamsModal] Erreur lors du chargement:', err)
+    }
   }
 })
 
 onMounted(async () => {
-  if (showModal.value) {
-    await teamsStore.loadUserTeams()
+  if (showModal.value && authStore.user?.id) {
+    console.log('[TeamsModal] Composant monté, chargement des équipes...')
+    try {
+      await teamsStore.loadUserTeams()
+      console.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
+    } catch (err) {
+      console.error('[TeamsModal] Erreur lors du chargement:', err)
+    }
   }
 })
 </script>
