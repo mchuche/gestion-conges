@@ -2,6 +2,9 @@
   <Modal :model-value="showModal" @close="closeModal" title="Administration" content-class="admin-modal">
     <div v-if="!authStore.isAdmin" class="admin-error">
       <p>Vous n'avez pas les droits d'administrateur pour accéder à cette page.</p>
+      <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
+        Debug: isAdmin = {{ authStore.isAdmin }}, user = {{ authStore.user ? 'connecté' : 'non connecté' }}
+      </p>
     </div>
     
     <div v-else class="admin-content">
@@ -233,6 +236,8 @@ async function loadTeams() {
         membersCount: count || 0
       }
     }))
+    
+    console.log('[AdminModal] Équipes chargées:', teams.value.length)
   } catch (err) {
     logger.error('[AdminModal] Erreur lors du chargement des équipes:', err)
     Swal.fire('Erreur', 'Impossible de charger les équipes', 'error')
@@ -323,11 +328,15 @@ function formatDate(dateString) {
 
 watch(showModal, (isOpen) => {
   if (isOpen) {
-    console.log('[AdminModal] Modal ouverte, isAdmin:', authStore.isAdmin)
+    console.log('[AdminModal] Modal ouverte')
+    console.log('[AdminModal] isAdmin:', authStore.isAdmin)
+    console.log('[AdminModal] user:', authStore.user)
+    console.log('[AdminModal] isAuthenticated:', authStore.isAuthenticated)
     if (authStore.isAdmin) {
+      console.log('[AdminModal] Chargement des données pour l\'onglet:', activeTab.value)
       switchTab(activeTab.value)
     } else {
-      console.warn('[AdminModal] Utilisateur non admin')
+      console.warn('[AdminModal] Utilisateur non admin - accès refusé')
     }
   }
 })
