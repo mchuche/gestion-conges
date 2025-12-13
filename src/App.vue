@@ -10,6 +10,7 @@
         <Calendar />
         <LeaveModal />
         <ConfigModal />
+        <HelpModal />
       </div>
     </div>
   </div>
@@ -24,6 +25,7 @@ import Header from './components/header/Header.vue'
 import Calendar from './components/calendar/Calendar.vue'
 import LeaveModal from './components/modals/LeaveModal.vue'
 import ConfigModal from './components/modals/ConfigModal.vue'
+import HelpModal from './components/modals/HelpModal.vue'
 
 const authStore = useAuthStore()
 const uiStore = useUIStore()
