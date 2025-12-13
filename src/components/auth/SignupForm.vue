@@ -59,7 +59,7 @@
 import { ref } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 
-const emit = defineEmits(['switch-to-login'])
+defineEmits(['switch-to-login'])
 
 const authStore = useAuthStore()
 const email = ref('')
