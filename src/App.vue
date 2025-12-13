@@ -45,4 +45,15 @@ onMounted(async () => {
   padding: 20px;
   background: var(--bg-color, #f5f7fa);
 }
+
+/* S'assurer que le body a le bon style */
+:global(body) {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, var(--gradient-start, #667eea) 0%, var(--gradient-end, #764ba2) 100%);
+  min-height: 100vh;
+  padding: 20px;
+  color: var(--text-color, #2c3e50);
+  transition: background 0.3s ease, color 0.3s ease;
+  margin: 0;
+}
 </style>
