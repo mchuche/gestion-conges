@@ -22,21 +22,91 @@ export const useAuthStore = defineStore('auth', () => {
       
       if (sessionError) {
         logger.warn('Erreur session (non bloquant):', sessionError)
+        await clearInvalidSession()
         user.value = null
         return
       }
       
       if (session?.user) {
-        await loadUserProfile(session.user.id)
+        // Valider la session en testant une requête à la base de données
+        const isValid = await validateSession(session)
+        if (isValid) {
+          await loadUserProfile(session.user.id)
+        } else {
+          // Session invalide, nettoyer
+          logger.warn('Session invalide détectée, nettoyage...')
+          await clearInvalidSession()
+          user.value = null
+        }
       } else {
         user.value = null
       }
     } catch (err) {
       logger.error('Erreur lors de la vérification de session:', err)
       error.value = err.message
+      await clearInvalidSession()
       user.value = null
     } finally {
       loading.value = false
+    }
+  }
+
+  // Valider qu'une session Supabase est vraiment fonctionnelle
+  async function validateSession(session) {
+    if (!session || !session.user) return false
+    
+    try {
+      // Tester une requête simple pour vérifier que la session est valide
+      const { error } = await supabase
+        .from('leaves')
+        .select('id')
+        .limit(1)
+        .maybeSingle()
+      
+      if (error) {
+        const errorCode = error.code || ''
+        const errorMessage = error.message || ''
+        // Seulement considérer comme invalide si c'est vraiment une erreur d'auth
+        if (errorCode === 'PGRST301' || 
+            errorCode === '42501' || // Permission denied
+            errorMessage.includes('JWT') || 
+            errorMessage.includes('token') || 
+            errorMessage.includes('session') ||
+            errorMessage.includes('authentication')) {
+          logger.warn('Session invalide détectée:', error)
+          return false
+        }
+        // Pour les autres erreurs (réseau, table inexistante, etc.), 
+        // considérer la session comme valide car l'erreur n'est pas liée à l'auth
+        logger.debug('Erreur lors de la validation de session (non bloquante):', error)
+        return true
+      }
+      return true
+    } catch (error) {
+      // En cas d'exception, ne pas bloquer la connexion
+      // La session pourrait être valide malgré l'erreur
+      logger.warn('Exception lors de la validation de session (non bloquante):', error)
+      return true // Donner le bénéfice du doute
+    }
+  }
+
+  // Nettoyer une session invalide ou expirée
+  async function clearInvalidSession() {
+    try {
+      // Déconnecter proprement de Supabase
+      await supabase.auth.signOut()
+    } catch (error) {
+      // Ignorer les erreurs de déconnexion (peut échouer si pas de session)
+      logger.warn('Erreur lors du nettoyage de session:', error)
+    }
+    
+    // Nettoyer le localStorage de Supabase
+    try {
+      const supabaseKeys = Object.keys(localStorage).filter(key => key.startsWith('sb-'))
+      supabaseKeys.forEach(key => localStorage.removeItem(key))
+      logger.log('LocalStorage Supabase nettoyé')
+    } catch (e) {
+      logger.warn('Impossible de nettoyer le localStorage:', e)
     }
   }
 
@@ -181,8 +251,21 @@ export const useAuthStore = defineStore('auth', () => {
     logger.debug('Changement d\'état auth:', event, session?.user?.id)
     
     if (event === 'SIGNED_IN' && session?.user) {
-      await loadUserProfile(session.user.id)
+      // Valider la session avant de charger le profil
+      const isValid = await validateSession(session)
+      if (isValid) {
+        await loadUserProfile(session.user.id)
+      } else {
+        logger.warn('Session invalide lors de SIGNED_IN, nettoyage...')
+        await clearInvalidSession()
+        user.value = null
+      }
     } else if (event === 'SIGNED_OUT') {
+      user.value = null
+    } else if (event === 'TOKEN_REFRESHED' && !session) {
+      // Token refresh a échoué, nettoyer
+      logger.warn('Token refresh échoué, nettoyage...')
+      await clearInvalidSession()
       user.value = null
     }
   })
