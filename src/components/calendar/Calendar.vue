@@ -187,6 +187,18 @@ onMounted(async () => {
 
 #semesterCalendar {
   width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+#semesterCalendar.year-presence-view {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+#semesterCalendar.year-presence-vertical-view {
+  overflow-x: auto;
+  overflow-y: auto;
 }
 </style>
 
