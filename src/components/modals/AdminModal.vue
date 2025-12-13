@@ -1,33 +1,12 @@
 <template>
   <Modal :model-value="showModal" @close="closeModal" title="Administration" content-class="admin-modal">
-    <!-- TEST ABSOLU - DOIT TOUJOURS ÊTRE VISIBLE -->
-    <div style="background: red !important; color: white !important; padding: 20px !important; border: 5px solid black !important; font-size: 20px !important; z-index: 99999 !important; position: relative !important; margin-bottom: 20px;">
-      <h1>TEST ABSOLU - SI VOUS VOYEZ ÇA, LE MODAL FONCTIONNE</h1>
-      <p>isAdmin = {{ authStore.isAdmin }}, user = {{ authStore.user ? 'connecté' : 'non connecté' }}</p>
+    <div v-if="!authStore.isAdmin" class="admin-error">
+      <p>Vous n'avez pas les droits d'administrateur pour accéder à cette page.</p>
     </div>
     
-    <!-- TEST AVANT CONDITIONS -->
-    <div style="background: orange !important; padding: 10px !important; margin-bottom: 10px;">
-      <p>AVANT CONDITIONS - isAdmin = {{ authStore.isAdmin }}</p>
-    </div>
-    
-    <div v-if="!authStore.isAdmin" class="admin-error" style="background: pink !important; padding: 20px !important;">
-      <p>VOUS N'ÊTES PAS ADMIN - isAdmin = {{ authStore.isAdmin }}</p>
-      <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
-        Debug: isAdmin = {{ authStore.isAdmin }}, user = {{ authStore.user ? 'connecté' : 'non connecté' }}
-      </p>
-    </div>
-    
-    <div v-else class="admin-content" style="background: lightgreen !important; padding: 10px !important;">
-      <p style="background: darkgreen !important; color: white !important; padding: 10px !important;">VOUS ÊTES ADMIN - CONTENU ADMIN</p>
-      
-      <!-- TEST ONGLETS -->
-      <div style="background: purple !important; color: white !important; padding: 10px !important; margin: 10px 0;">
-        <p>AVANT LES ONGLETS - tabs.length = {{ tabs.length }}</p>
-      </div>
-      
+    <div v-else class="admin-content">
       <!-- Onglets -->
-      <div class="admin-tabs" style="background: cyan !important; padding: 10px !important; border: 3px solid blue !important;">
+      <div class="admin-tabs">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -38,27 +17,11 @@
         </button>
       </div>
 
-      <!-- TEST AVANT CONTENU ONGLETS -->
-      <div style="background: magenta !important; color: white !important; padding: 10px !important; margin: 10px 0;">
-        <p>AVANT CONTENU ONGLETS - activeTab = {{ activeTab }}</p>
-      </div>
-      
       <!-- Contenu des onglets -->
-      <div class="admin-tab-content" style="overflow: visible !important; height: auto !important; max-height: none !important;">
-        <!-- DEBUG VISUEL - TOUJOURS VISIBLE -->
-        <div style="background: yellow !important; padding: 10px !important; margin-bottom: 10px !important; border: 2px solid orange !important; display: block !important; visibility: visible !important; opacity: 1 !important; z-index: 9999 !important; position: relative !important; color: black !important; font-size: 14px !important;">
-          <strong>DEBUG TOUJOURS VISIBLE:</strong> activeTab = "{{ activeTab }}", users.length = {{ users.length }}, loadingUsers = {{ loadingUsers }}, teams.length = {{ teams.length }}, loadingTeams = {{ loadingTeams }}
-        </div>
-        
-        <!-- TEST DIRECT APRÈS DEBUG - SANS DIV ADMIN-TAB-CONTENT -->
-        <div style="background: pink !important; padding: 20px !important; border: 3px solid red !important; margin: 10px 0 !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 9998 !important; color: black !important;">
-          <h3>TEST DIRECT - DOIT ÊTRE VISIBLE</h3>
-          <p>activeTab = "{{ activeTab }}"</p>
-        </div>
+      <div class="admin-tab-content">
         
         <!-- Onglet Utilisateurs -->
         <div v-if="activeTab === 'users'" class="admin-tab-panel">
-          <div style="background: lightblue; padding: 5px; margin-bottom: 10px;">PANEL USERS ACTIF</div>
           <div class="admin-search">
             <input
               v-model="userSearch"
@@ -99,7 +62,6 @@
 
         <!-- Onglet Équipes -->
         <div v-if="activeTab === 'teams'" class="admin-tab-panel">
-          <div style="background: lightgreen; padding: 5px; margin-bottom: 10px;">PANEL TEAMS ACTIF</div>
           <div v-if="loadingTeams" class="loading">Chargement...</div>
           <div v-else-if="teams.length === 0" class="no-data">Aucune équipe trouvée</div>
           <div v-else class="admin-list">
@@ -130,7 +92,6 @@
 
         <!-- Onglet Statistiques -->
         <div v-if="activeTab === 'stats'" class="admin-tab-panel">
-          <div style="background: lightyellow; padding: 5px; margin-bottom: 10px;">PANEL STATS ACTIF</div>
           <div class="admin-stats">
             <div class="stat-item">
               <div class="stat-label">Total utilisateurs</div>
@@ -430,9 +391,6 @@ onMounted(() => {
 
 .admin-content {
   margin-top: 20px;
-  border: 2px solid red; /* DEBUG - À supprimer */
-  padding: 10px; /* DEBUG - À supprimer */
-  background: rgba(255, 0, 0, 0.1); /* DEBUG - À supprimer */
 }
 
 .admin-tabs {
@@ -467,23 +425,14 @@ onMounted(() => {
 .admin-tab-content {
   min-height: 400px;
   padding: 20px 0;
-  border: 2px solid blue; /* DEBUG - À supprimer */
-  background: rgba(0, 0, 255, 0.1); /* DEBUG - À supprimer */
-  position: relative; /* DEBUG - À supprimer */
-  overflow: visible !important; /* DEBUG - S'assurer que le contenu n'est pas masqué */
-  height: auto !important; /* DEBUG - S'assurer que la hauteur n'est pas limitée */
-  max-height: none !important; /* DEBUG - Pas de limite de hauteur */
-  display: block !important; /* DEBUG - Forcer l'affichage */
+  overflow: visible;
+  height: auto;
 }
 
 .admin-tab-panel {
   padding: 20px 0;
   min-height: 200px;
-  display: block !important; /* DEBUG - Forcer l'affichage */
-  border: 2px solid green; /* DEBUG - À supprimer */
-  background: rgba(0, 255, 0, 0.1); /* DEBUG - À supprimer */
-  visibility: visible !important; /* DEBUG - Forcer la visibilité */
-  opacity: 1 !important; /* DEBUG - Forcer l'opacité */
+  display: block;
 }
 
 .admin-search {
