@@ -50,10 +50,16 @@
           <strong>DEBUG TOUJOURS VISIBLE:</strong> activeTab = "{{ activeTab }}", users.length = {{ users.length }}, loadingUsers = {{ loadingUsers }}, teams.length = {{ teams.length }}, loadingTeams = {{ loadingTeams }}
         </div>
         
-        <!-- TEST SIMPLE SANS CONDITIONS -->
-        <div style="background: pink; padding: 20px; border: 3px solid red; margin: 10px 0;">
-          <h3>TEST SIMPLE - DOIT ÊTRE VISIBLE</h3>
-          <p>Si vous voyez ce texte, le problème vient des conditions v-if</p>
+        <!-- TEST SIMPLE SANS CONDITIONS - AVANT LES PANELS -->
+        <div style="background: pink !important; padding: 20px !important; border: 3px solid red !important; margin: 10px 0 !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 9998 !important;">
+          <h3 style="color: black !important;">TEST SIMPLE - DOIT ÊTRE VISIBLE</h3>
+          <p style="color: black !important;">Si vous voyez ce texte, le problème vient des conditions v-if</p>
+          <p style="color: black !important;">activeTab = "{{ activeTab }}"</p>
+        </div>
+        
+        <!-- TEST APRÈS LE ROSE -->
+        <div style="background: lightblue !important; padding: 10px !important; margin: 10px 0 !important;">
+          <p style="color: black !important;">APRÈS LE ROSE - activeTab = {{ activeTab }}</p>
         </div>
         
         <!-- Onglet Utilisateurs -->
