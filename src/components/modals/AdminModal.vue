@@ -19,9 +19,17 @@
 
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
+        <!-- DEBUG: activeTab = {{ activeTab }}, type = {{ typeof activeTab }} -->
+        <div style="background: lightyellow; padding: 10px; margin-bottom: 10px; border: 2px solid orange;">
+          <p><strong>DEBUG:</strong> activeTab = "{{ activeTab }}" (type: {{ typeof activeTab }})</p>
+          <p>activeTab === 'users' ? {{ activeTab === 'users' }}</p>
+          <p>activeTab === 'teams' ? {{ activeTab === 'teams' }}</p>
+          <p>activeTab === 'stats' ? {{ activeTab === 'stats' }}</p>
+        </div>
         
         <!-- Onglet Utilisateurs -->
         <div v-if="activeTab === 'users'" class="admin-tab-panel">
+          <div style="background: lightgreen; padding: 5px; margin-bottom: 10px;">PANEL USERS ACTIF</div>
           <div class="admin-search">
             <input
               v-model="userSearch"
