@@ -7,6 +7,7 @@
     <div v-else class="main-container" id="mainContainer">
       <div class="container">
         <Calendar />
+        <LeaveModal />
       </div>
     </div>
   </div>
@@ -17,6 +18,7 @@ import { computed, onMounted } from 'vue'
 import { useAuthStore } from './stores/auth'
 import AuthModal from './components/auth/AuthModal.vue'
 import Calendar from './components/calendar/Calendar.vue'
+import LeaveModal from './components/modals/LeaveModal.vue'
 
 const authStore = useAuthStore()
 
