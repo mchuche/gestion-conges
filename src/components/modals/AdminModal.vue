@@ -62,6 +62,7 @@
 
         <!-- Onglet Équipes -->
         <div v-if="activeTab === 'teams'" class="admin-tab-panel">
+          <!-- DEBUG: Panel teams actif -->
           <div v-if="loadingTeams" class="loading">Chargement...</div>
           <div v-else-if="teams.length === 0" class="no-data">Aucune équipe trouvée</div>
           <div v-else class="admin-list">
@@ -92,6 +93,7 @@
 
         <!-- Onglet Statistiques -->
         <div v-if="activeTab === 'stats'" class="admin-tab-panel">
+          <!-- DEBUG: Panel stats actif -->
           <div class="admin-stats">
             <div class="stat-item">
               <div class="stat-label">Total utilisateurs</div>
