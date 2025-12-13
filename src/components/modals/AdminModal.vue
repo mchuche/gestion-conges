@@ -19,25 +19,17 @@
 
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
-        <!-- DEBUG: activeTab = {{ activeTab }}, type = {{ typeof activeTab }} -->
-        <div style="background: lightyellow; padding: 10px; margin-bottom: 10px; border: 2px solid orange;">
-          <p><strong>DEBUG:</strong> activeTab = "{{ activeTab }}" (type: {{ typeof activeTab }})</p>
-          <p>activeTab === 'users' ? {{ activeTab === 'users' }}</p>
-          <p>activeTab === 'teams' ? {{ activeTab === 'teams' }}</p>
-          <p>activeTab === 'stats' ? {{ activeTab === 'stats' }}</p>
-        </div>
-        
         <!-- Onglet Utilisateurs -->
-        <div v-if="activeTab === 'users'" class="admin-tab-panel">
-          <div style="background: lightgreen; padding: 5px; margin-bottom: 10px;">PANEL USERS ACTIF</div>
+        <div v-show="activeTab === 'users'" class="admin-tab-panel">
           <div class="admin-search">
             <input
               v-model="userSearch"
               type="text"
               placeholder="Rechercher par email..."
-              @input="loadUsers"
+              @input="debouncedLoadUsers"
             />
           </div>
+          
           <div v-if="loadingUsers" class="loading">Chargement...</div>
           <div v-else-if="users.length === 0" class="no-data">Aucun utilisateur trouvé</div>
           <div v-else class="admin-list">
@@ -69,8 +61,7 @@
         </div>
 
         <!-- Onglet Équipes -->
-        <div v-if="activeTab === 'teams'" class="admin-tab-panel">
-          <!-- DEBUG: Panel teams actif -->
+        <div v-show="activeTab === 'teams'" class="admin-tab-panel">
           <div v-if="loadingTeams" class="loading">Chargement...</div>
           <div v-else-if="teams.length === 0" class="no-data">Aucune équipe trouvée</div>
           <div v-else class="admin-list">
@@ -100,8 +91,7 @@
         </div>
 
         <!-- Onglet Statistiques -->
-        <div v-if="activeTab === 'stats'" class="admin-tab-panel">
-          <!-- DEBUG: Panel stats actif -->
+        <div v-show="activeTab === 'stats'" class="admin-tab-panel">
           <div class="admin-stats">
             <div class="stat-item">
               <div class="stat-label">Total utilisateurs</div>
@@ -123,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
 import { supabase } from '../../services/supabase'
@@ -153,39 +143,42 @@ const stats = ref({
   totalLeaves: 0
 })
 
+// Debounce pour la recherche
+let searchTimeout = null
+function debouncedLoadUsers() {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    loadUsers()
+  }, 300)
+}
+
 function closeModal() {
   uiStore.closeAdminModal()
   activeTab.value = 'users'
   userSearch.value = ''
+  users.value = []
+  teams.value = []
+  stats.value = { totalUsers: 0, totalTeams: 0, totalLeaves: 0 }
 }
 
 function switchTab(tabId) {
-  console.log('[AdminModal] switchTab appelé avec:', tabId)
   activeTab.value = tabId
   if (tabId === 'users') {
-    console.log('[AdminModal] Chargement des utilisateurs...')
     loadUsers()
   } else if (tabId === 'teams') {
-    console.log('[AdminModal] Chargement des équipes...')
     loadTeams()
   } else if (tabId === 'stats') {
-    console.log('[AdminModal] Chargement des statistiques...')
     loadStats()
   }
 }
 
 async function loadUsers() {
-  if (!authStore.isAdmin) {
-    console.warn('[AdminModal] loadUsers: Utilisateur non admin, arrêt')
-    return
-  }
+  if (!authStore.isAdmin) return
 
-  console.log('[AdminModal] loadUsers: Début du chargement')
   try {
     loadingUsers.value = true
     const searchTerm = userSearch.value.trim()
     
-    // Utiliser user_emails (table qui existe dans le schéma)
     let query = supabase
       .from('user_emails')
       .select('user_id, email, created_at')
@@ -197,12 +190,7 @@ async function loadUsers() {
 
     const { data, error } = await query
 
-    if (error) {
-      console.error('[AdminModal] Erreur Supabase:', error)
-      throw error
-    }
-
-    console.log('[AdminModal] Utilisateurs trouvés:', data?.length || 0)
+    if (error) throw error
 
     // Enrichir avec des statistiques
     users.value = await Promise.all((data || []).map(async (user) => {
@@ -219,8 +207,6 @@ async function loadUsers() {
         teamsCount: teamsResult.count || 0
       }
     }))
-    
-    console.log('[AdminModal] Utilisateurs chargés:', users.value.length)
   } catch (err) {
     logger.error('[AdminModal] Erreur lors du chargement des utilisateurs:', err)
     Swal.fire('Erreur', 'Impossible de charger les utilisateurs', 'error')
@@ -230,12 +216,8 @@ async function loadUsers() {
 }
 
 async function loadTeams() {
-  if (!authStore.isAdmin) {
-    console.warn('[AdminModal] loadTeams: Utilisateur non admin, arrêt')
-    return
-  }
+  if (!authStore.isAdmin) return
 
-  console.log('[AdminModal] loadTeams: Début du chargement')
   try {
     loadingTeams.value = true
     const { data, error } = await supabase
@@ -258,8 +240,6 @@ async function loadTeams() {
         membersCount: count || 0
       }
     }))
-    
-    console.log('[AdminModal] Équipes chargées:', teams.value.length)
   } catch (err) {
     logger.error('[AdminModal] Erreur lors du chargement des équipes:', err)
     Swal.fire('Erreur', 'Impossible de charger les équipes', 'error')
@@ -269,12 +249,8 @@ async function loadTeams() {
 }
 
 async function loadStats() {
-  if (!authStore.isAdmin) {
-    console.warn('[AdminModal] loadStats: Utilisateur non admin, arrêt')
-    return
-  }
+  if (!authStore.isAdmin) return
 
-  console.log('[AdminModal] loadStats: Début du chargement')
   try {
     const [usersResult, teamsResult, leavesResult] = await Promise.all([
       supabase.from('user_emails').select('user_id', { count: 'exact', head: true }),
@@ -287,10 +263,8 @@ async function loadStats() {
       totalTeams: teamsResult.count || 0,
       totalLeaves: leavesResult.count || 0
     }
-    console.log('[AdminModal] Statistiques chargées:', stats.value)
   } catch (err) {
     logger.error('[AdminModal] Erreur lors du chargement des statistiques:', err)
-    console.error('[AdminModal] Erreur lors du chargement des statistiques:', err)
   }
 }
 
@@ -308,8 +282,6 @@ async function handleDeleteUser(user) {
 
   if (result.isConfirmed) {
     try {
-      // Note: La suppression dans auth.users nécessite l'Admin API
-      // Ici on supprime juste les données associées
       Swal.fire('Info', 'La suppression du compte doit être faite depuis le dashboard Supabase.', 'info')
       await loadUsers()
     } catch (err) {
@@ -351,37 +323,9 @@ function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString('fr-FR')
 }
 
+// Charger les données quand la modale s'ouvre
 watch(showModal, (isOpen) => {
-  if (isOpen) {
-    console.log('[AdminModal] Modal ouverte')
-    console.log('[AdminModal] isAdmin:', authStore.isAdmin)
-    console.log('[AdminModal] user:', authStore.user)
-    console.log('[AdminModal] isAuthenticated:', authStore.isAuthenticated)
-    console.log('[AdminModal] activeTab initial:', activeTab.value)
-    if (authStore.isAdmin) {
-      // Forcer le chargement des données pour l'onglet actif
-      console.log('[AdminModal] Chargement des données pour l\'onglet:', activeTab.value)
-      // Utiliser nextTick pour s'assurer que le DOM est prêt
-      nextTick(() => {
-        switchTab(activeTab.value)
-      })
-    } else {
-      console.warn('[AdminModal] Utilisateur non admin - accès refusé')
-    }
-  } else {
-    // Réinitialiser les données quand la modale se ferme
-    users.value = []
-    teams.value = []
-    stats.value = { totalUsers: 0, totalTeams: 0, totalLeaves: 0 }
-    loadingUsers.value = false
-    loadingTeams.value = false
-  }
-})
-
-onMounted(() => {
-  console.log('[AdminModal] Composant monté')
-  if (showModal.value && authStore.isAdmin) {
-    console.log('[AdminModal] Chargement initial des données')
+  if (isOpen && authStore.isAdmin) {
     switchTab(activeTab.value)
   }
 })
@@ -435,13 +379,9 @@ onMounted(() => {
 .admin-tab-content {
   min-height: 400px;
   padding: 20px 0;
-  overflow: visible;
-  height: auto;
 }
 
 .admin-tab-panel {
-  padding: 20px 0;
-  min-height: 200px;
   display: block;
 }
 
@@ -455,6 +395,8 @@ onMounted(() => {
   border: 2px solid var(--border-color);
   border-radius: 4px;
   font-size: 1em;
+  background: var(--card-bg);
+  color: var(--text-color);
 }
 
 .admin-list {
@@ -471,6 +413,12 @@ onMounted(() => {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.admin-item-card:hover {
+  background: var(--hover-bg, rgba(0, 0, 0, 0.02));
+  border-color: var(--primary-color);
 }
 
 .admin-item-info {
@@ -504,6 +452,7 @@ onMounted(() => {
   border-radius: 4px;
   cursor: pointer;
   font-size: 1.2em;
+  transition: background 0.2s ease;
 }
 
 .btn-danger:hover {
@@ -522,6 +471,12 @@ onMounted(() => {
   background: var(--bg-color);
   border: 2px solid var(--border-color);
   border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-label {
@@ -545,4 +500,3 @@ onMounted(() => {
   opacity: 0.7;
 }
 </style>
-
