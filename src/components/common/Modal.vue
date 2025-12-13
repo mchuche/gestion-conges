@@ -153,6 +153,8 @@ onUnmounted(() => {
 
 .modal-body {
   color: var(--text-color, #2c3e50);
+  overflow: visible; /* DEBUG - Permettre le débordement pour voir le contenu */
+  min-height: 200px; /* DEBUG - S'assurer qu'il y a de l'espace */
 }
 
 .modal-footer {
