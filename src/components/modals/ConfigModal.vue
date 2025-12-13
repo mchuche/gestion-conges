@@ -101,7 +101,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
@@ -150,9 +150,22 @@ watch([configYear, leaveTypes], async () => {
 watch(showModal, async (isOpen) => {
   if (isOpen) {
     console.log('[ConfigModal] Modal ouverte, chargement des données...')
+    // S'assurer que les types de congés sont chargés
+    if (leaveTypes.value.length === 0) {
+      console.log('[ConfigModal] Chargement des types de congés...')
+      await leaveTypesStore.loadLeaveTypes()
+    }
     console.log('[ConfigModal] LeaveTypes chargés:', leaveTypes.value.length)
     await loadQuotas()
     console.log('[ConfigModal] Quotas chargés:', quotas.value)
+  }
+})
+
+onMounted(async () => {
+  // Charger les types de congés au montage si nécessaire
+  if (leaveTypes.value.length === 0) {
+    console.log('[ConfigModal] Composant monté, chargement des types de congés...')
+    await leaveTypesStore.loadLeaveTypes()
   }
 })
 
