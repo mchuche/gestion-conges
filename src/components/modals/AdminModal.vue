@@ -1,5 +1,10 @@
 <template>
   <Modal :model-value="showModal" @close="closeModal" title="Administration" content-class="admin-modal">
+    <!-- TEST ABSOLU - DOIT TOUJOURS ÊTRE VISIBLE -->
+    <div style="background: red !important; color: white !important; padding: 20px !important; border: 5px solid black !important; font-size: 20px !important; z-index: 99999 !important; position: relative !important;">
+      <h1>TEST ABSOLU - SI VOUS VOYEZ ÇA, LE MODAL FONCTIONNE</h1>
+    </div>
+    
     <div v-if="!authStore.isAdmin" class="admin-error">
       <p>Vous n'avez pas les droits d'administrateur pour accéder à cette page.</p>
       <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
