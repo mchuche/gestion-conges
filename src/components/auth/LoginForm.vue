@@ -45,7 +45,6 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { swalError } from '../../services/swalHelper'
 
 const emit = defineEmits(['switch-to-signup'])
 
@@ -64,14 +63,20 @@ async function handleLogin() {
   loading.value = true
   error.value = null
   
-  const result = await authStore.signIn(email.value, password.value)
-  
-  if (!result.success) {
-    error.value = result.error || 'Erreur lors de la connexion'
-    await swalError('Erreur de connexion', result.error || 'Email ou mot de passe incorrect')
+  try {
+    const result = await authStore.signIn(email.value, password.value)
+    
+    if (!result.success) {
+      error.value = result.error || 'Erreur lors de la connexion'
+      alert('Erreur de connexion: ' + (result.error || 'Email ou mot de passe incorrect'))
+    }
+  } catch (err) {
+    error.value = 'Une erreur est survenue'
+    console.error('Erreur connexion:', err)
+    alert('Erreur: ' + err.message)
+  } finally {
+    loading.value = false
   }
-  
-  loading.value = false
 }
 </script>
 
@@ -122,4 +127,3 @@ async function handleLogin() {
   text-decoration: underline;
 }
 </style>
-

@@ -58,7 +58,6 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { swalError, swalSuccess } from '../../services/swalHelper'
 
 const emit = defineEmits(['switch-to-login'])
 
@@ -83,20 +82,26 @@ async function handleSignup() {
   loading.value = true
   error.value = null
   
-  const result = await authStore.signUp(email.value, password.value, name.value)
-  
-  if (!result.success) {
-    error.value = result.error || 'Erreur lors de l\'inscription'
-    await swalError('Erreur d\'inscription', result.error || 'Une erreur est survenue')
-  } else {
-    if (result.needsConfirmation) {
-      await swalSuccess('Inscription réussie', 'Vérifiez votre email pour confirmer votre compte')
+  try {
+    const result = await authStore.signUp(email.value, password.value, name.value)
+    
+    if (!result.success) {
+      error.value = result.error || 'Erreur lors de l\'inscription'
+      alert('Erreur d\'inscription: ' + (result.error || 'Une erreur est survenue'))
     } else {
-      await swalSuccess('Inscription réussie', 'Vous êtes maintenant connecté')
+      if (result.needsConfirmation) {
+        alert('Inscription réussie ! Vérifiez votre email pour confirmer votre compte.')
+      } else {
+        alert('Inscription réussie ! Vous êtes maintenant connecté.')
+      }
     }
+  } catch (err) {
+    error.value = 'Une erreur est survenue'
+    console.error('Erreur inscription:', err)
+    alert('Erreur: ' + err.message)
+  } finally {
+    loading.value = false
   }
-  
-  loading.value = false
 }
 </script>
 
@@ -154,4 +159,3 @@ async function handleSignup() {
   text-decoration: underline;
 }
 </style>
-
