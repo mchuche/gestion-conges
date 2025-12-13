@@ -152,19 +152,27 @@ function closeModal() {
 }
 
 function switchTab(tabId) {
+  console.log('[AdminModal] switchTab appelé avec:', tabId)
   activeTab.value = tabId
   if (tabId === 'users') {
+    console.log('[AdminModal] Chargement des utilisateurs...')
     loadUsers()
   } else if (tabId === 'teams') {
+    console.log('[AdminModal] Chargement des équipes...')
     loadTeams()
   } else if (tabId === 'stats') {
+    console.log('[AdminModal] Chargement des statistiques...')
     loadStats()
   }
 }
 
 async function loadUsers() {
-  if (!authStore.isAdmin) return
+  if (!authStore.isAdmin) {
+    console.warn('[AdminModal] loadUsers: Utilisateur non admin, arrêt')
+    return
+  }
 
+  console.log('[AdminModal] loadUsers: Début du chargement')
   try {
     loadingUsers.value = true
     const searchTerm = userSearch.value.trim()
@@ -214,8 +222,12 @@ async function loadUsers() {
 }
 
 async function loadTeams() {
-  if (!authStore.isAdmin) return
+  if (!authStore.isAdmin) {
+    console.warn('[AdminModal] loadTeams: Utilisateur non admin, arrêt')
+    return
+  }
 
+  console.log('[AdminModal] loadTeams: Début du chargement')
   try {
     loadingTeams.value = true
     const { data, error } = await supabase
@@ -249,10 +261,13 @@ async function loadTeams() {
 }
 
 async function loadStats() {
-  if (!authStore.isAdmin) return
+  if (!authStore.isAdmin) {
+    console.warn('[AdminModal] loadStats: Utilisateur non admin, arrêt')
+    return
+  }
 
+  console.log('[AdminModal] loadStats: Début du chargement')
   try {
-    console.log('[AdminModal] Chargement des statistiques...')
     const [usersCount, teamsCount, leavesCount] = await Promise.all([
       supabase.from('user_emails').select('id', { count: 'exact', head: true }),
       supabase.from('teams').select('id', { count: 'exact', head: true }),
@@ -334,21 +349,35 @@ watch(showModal, (isOpen) => {
     console.log('[AdminModal] isAdmin:', authStore.isAdmin)
     console.log('[AdminModal] user:', authStore.user)
     console.log('[AdminModal] isAuthenticated:', authStore.isAuthenticated)
+    console.log('[AdminModal] activeTab initial:', activeTab.value)
     if (authStore.isAdmin) {
+      // Forcer le chargement des données pour l'onglet actif
       console.log('[AdminModal] Chargement des données pour l\'onglet:', activeTab.value)
-      switchTab(activeTab.value)
+      // Réinitialiser l'onglet actif pour forcer le chargement
+      const currentTab = activeTab.value
+      activeTab.value = '' // Réinitialiser temporairement
+      setTimeout(() => {
+        activeTab.value = currentTab
+        switchTab(currentTab)
+      }, 0)
     } else {
       console.warn('[AdminModal] Utilisateur non admin - accès refusé')
     }
+  } else {
+    // Réinitialiser les données quand la modale se ferme
+    users.value = []
+    teams.value = []
+    stats.value = { totalUsers: 0, totalTeams: 0, totalLeaves: 0 }
+    loadingUsers.value = false
+    loadingTeams.value = false
   }
 })
 
 onMounted(() => {
-  if (showModal.value) {
-    console.log('[AdminModal] Composant monté, isAdmin:', authStore.isAdmin)
-    if (authStore.isAdmin) {
-      switchTab(activeTab.value)
-    }
+  console.log('[AdminModal] Composant monté')
+  if (showModal.value && authStore.isAdmin) {
+    console.log('[AdminModal] Chargement initial des données')
+    switchTab(activeTab.value)
   }
 })
 </script>
