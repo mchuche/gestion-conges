@@ -45,7 +45,7 @@
       :disabled="loading"
       class="save-btn"
     >
-      {{ loading ? 'Inscription...' : 'S'inscrire' }}
+      {{ loading ? 'Inscription...' : "S'inscrire" }}
     </button>
     
     <p class="auth-switch">
