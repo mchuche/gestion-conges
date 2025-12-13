@@ -28,8 +28,8 @@
         </div>
         
         <!-- Onglet Utilisateurs -->
-        <div v-show="activeTab === 'users'" class="admin-tab-panel" style="border: 2px solid green; padding: 10px;">
-          <div style="background: lightgreen; padding: 5px; margin-bottom: 10px;">PANEL USERS</div>
+        <div v-show="activeTab === 'users'" class="admin-tab-panel" style="border: 2px solid green !important; padding: 10px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+          <div style="background: lightgreen !important; padding: 5px !important; margin-bottom: 10px !important; color: black !important;">PANEL USERS ACTIF - activeTab = {{ activeTab }}</div>
           <div class="admin-search">
             <input
               v-model="userSearch"
@@ -390,10 +390,16 @@ watch(showModal, (isOpen) => {
 .admin-tab-content {
   min-height: 400px;
   padding: 20px 0;
+  overflow: visible !important;
+  height: auto !important;
 }
 
 .admin-tab-panel {
-  display: block;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  min-height: 200px !important;
 }
 
 .admin-search {
