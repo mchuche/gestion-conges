@@ -22,6 +22,7 @@
 
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
+        <!-- Debug: activeTab = {{ activeTab }} -->
         <!-- Onglet Utilisateurs -->
         <div v-if="activeTab === 'users'" class="admin-tab-panel">
           <div class="admin-search">
@@ -429,6 +430,7 @@ onMounted(() => {
 
 .admin-tab-content {
   min-height: 400px;
+  padding: 20px 0;
 }
 
 .admin-tab-panel {
