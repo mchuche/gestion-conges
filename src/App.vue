@@ -12,16 +12,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
-const isAuthenticated = ref(false)
+
+// Utiliser le computed du store pour la réactivité
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 onMounted(async () => {
   // Vérifier l'authentification au chargement
   await authStore.checkSession()
-  isAuthenticated.value = authStore.user !== null
 })
 </script>
 
