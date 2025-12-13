@@ -279,8 +279,6 @@ async function loadStats() {
       totalUsers: usersResult.count || 0,
       totalTeams: teamsResult.count || 0,
       totalLeaves: leavesResult.count || 0
-      totalTeams: teamsResult.count || 0,
-      totalLeaves: leavesResult.count || 0
     }
     console.log('[AdminModal] Statistiques chargées:', stats.value)
   } catch (err) {
