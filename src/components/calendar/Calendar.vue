@@ -26,6 +26,8 @@
     <Stats class="stats" />
     <Quotas class="leave-quotas" />
     
+    <HelpHint />
+    
     <div id="semesterCalendar" :class="calendarViewClass">
       <YearViewSemester
         v-if="yearViewFormat === 'semester'"
@@ -59,6 +61,7 @@ import YearViewPresenceVertical from './YearViewPresenceVertical.vue'
 import ViewFormatSelector from './ViewFormatSelector.vue'
 import Stats from '../stats/Stats.vue'
 import Quotas from '../stats/Quotas.vue'
+import HelpHint from '../common/HelpHint.vue'
 import Icon from '../common/Icon.vue'
 import { getYear, addYears } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
