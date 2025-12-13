@@ -1,45 +1,48 @@
 <template>
   <Modal :model-value="showModal" @close="closeModal" title="Gestion des équipes" content-class="teams-modal">
     <div class="teams-modal-content">
-      <!-- Section création d'équipe -->
-      <div v-if="!selectedTeam" class="create-team-section">
-        <h4>Créer une nouvelle équipe</h4>
-        <div class="form-group">
-          <label>Nom de l'équipe</label>
-          <input v-model="newTeamName" type="text" placeholder="Ex: Équipe Marketing" />
+      <!-- Vue principale : Liste des équipes et création -->
+      <div v-if="!selectedTeam" class="teams-main-view">
+        <!-- Section création d'équipe -->
+        <div class="create-team-section">
+          <h4>Créer une nouvelle équipe</h4>
+          <div class="form-group">
+            <label>Nom de l'équipe</label>
+            <input v-model="newTeamName" type="text" placeholder="Ex: Équipe Marketing" />
+          </div>
+          <div class="form-group">
+            <label>Description (optionnel)</label>
+            <textarea v-model="newTeamDescription" placeholder="Description de l'équipe"></textarea>
+          </div>
+          <button @click="handleCreateTeam" class="btn-primary" :disabled="!newTeamName || creating">
+            {{ creating ? 'Création...' : 'Créer l\'équipe' }}
+          </button>
         </div>
-        <div class="form-group">
-          <label>Description (optionnel)</label>
-          <textarea v-model="newTeamDescription" placeholder="Description de l'équipe"></textarea>
-        </div>
-        <button @click="handleCreateTeam" class="btn-primary" :disabled="!newTeamName || creating">
-          {{ creating ? 'Création...' : 'Créer l\'équipe' }}
-        </button>
-      </div>
 
-      <!-- Liste des équipes -->
-      <div v-if="!selectedTeam" class="teams-list-section">
-        <h4>Mes équipes</h4>
-        <div v-if="teamsStore.loading" class="loading">Chargement...</div>
-        <div v-else-if="teamsStore.userTeams.length === 0" class="no-teams">
-          <p>Aucune équipe. Créez-en une pour commencer !</p>
-        </div>
-        <div v-else class="teams-list">
-          <div
-            v-for="team in teamsStore.userTeams"
-            :key="team.id"
-            class="team-card"
-          >
-            <div class="team-card-header">
-              <h5>{{ team.name }}</h5>
-              <span class="team-role-badge">
-                {{ getRoleLabel(team.role) }}
-              </span>
+        <!-- Liste des équipes -->
+        <div class="teams-list-section">
+          <h4>Mes équipes</h4>
+          <div v-if="teamsStore.loading" class="loading">Chargement...</div>
+          <div v-else-if="teamsStore.userTeams.length === 0" class="no-teams">
+            <p>Aucune équipe. Créez-en une pour commencer !</p>
+          </div>
+          <div v-else class="teams-list">
+            <div
+              v-for="team in teamsStore.userTeams"
+              :key="team.id"
+              class="team-card"
+            >
+              <div class="team-card-header">
+                <h5>{{ team.name }}</h5>
+                <span class="team-role-badge">
+                  {{ getRoleLabel(team.role) }}
+                </span>
+              </div>
+              <p v-if="team.description" class="team-description">{{ team.description }}</p>
+              <button @click="showTeamDetails(team)" class="btn-secondary">
+                Voir les membres
+              </button>
             </div>
-            <p v-if="team.description" class="team-description">{{ team.description }}</p>
-            <button @click="showTeamDetails(team)" class="btn-secondary">
-              Voir les membres
-            </button>
           </div>
         </div>
       </div>
@@ -423,10 +426,15 @@ onMounted(async () => {
   resize: vertical;
 }
 
+.teams-list-section {
+  flex: 1;
+}
+
 .teams-list-section h4,
 .create-team-section h4 {
   margin-bottom: 15px;
   color: var(--primary-color);
+  margin-top: 0;
 }
 
 .no-teams {
