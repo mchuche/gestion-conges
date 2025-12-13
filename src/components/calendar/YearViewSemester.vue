@@ -45,9 +45,9 @@ import {
   getMonth,
   getDay,
   getDaysInMonth,
-  createDate,
-  getDateKey
+  createDate
 } from '../../services/dateUtils'
+import { getDateKey } from '../../services/utils'
 
 const uiStore = useUIStore()
 
