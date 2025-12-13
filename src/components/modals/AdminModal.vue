@@ -269,14 +269,16 @@ async function loadStats() {
 
   console.log('[AdminModal] loadStats: Début du chargement')
   try {
-    const [usersCount, teamsCount, leavesCount] = await Promise.all([
-      supabase.from('user_emails').select('id', { count: 'exact', head: true }),
+    const [usersResult, teamsResult, leavesResult] = await Promise.all([
+      supabase.from('user_emails').select('user_id', { count: 'exact', head: true }),
       supabase.from('teams').select('id', { count: 'exact', head: true }),
       supabase.from('leaves').select('id', { count: 'exact', head: true })
     ])
 
     stats.value = {
       totalUsers: usersResult.count || 0,
+      totalTeams: teamsResult.count || 0,
+      totalLeaves: leavesResult.count || 0
       totalTeams: teamsResult.count || 0,
       totalLeaves: leavesResult.count || 0
     }
