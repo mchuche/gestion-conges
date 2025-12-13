@@ -670,12 +670,24 @@ function renderLeaveTypeButtons() {
         const btn = document.createElement('button');
         btn.className = 'leave-btn';
         btn.dataset.type = typeConfig.id;
-        btn.textContent = typeConfig.name;
+        btn.dataset.category = typeConfig.category || 'leave';
+        
+        // Texte du bouton avec indicateur de catégorie
+        let btnText = typeConfig.name;
         if (typeConfig.label !== typeConfig.name) {
-            btn.textContent += ` (${typeConfig.label})`;
+            btnText += ` (${typeConfig.label})`;
         }
+        // Ajouter un indicateur visuel pour les événements
+        if (typeConfig.category === 'event') {
+            btnText = `📅 ${btnText}`;
+        }
+        btn.textContent = btnText;
+        
         btn.style.borderColor = typeConfig.color;
         btn.style.background = defaultBackground; // Utiliser la couleur selon le thème
+        btn.title = typeConfig.category === 'event' 
+            ? `${typeConfig.name} (Événement - sans quota)` 
+            : `${typeConfig.name} (Congé - avec quota)`;
         container.appendChild(btn);
     });
     
@@ -707,17 +719,111 @@ async function setLeave(date, type) {
     const datesToProcess = this.selectedDates.length > 1 ? this.selectedDates : [date];
     const period = this.selectedPeriod || 'full';
     
+    // Obtenir la catégorie du type sélectionné
+    const typeConfig = this.getLeaveTypeConfig(type);
+    const category = typeConfig ? (typeConfig.category || 'leave') : 'leave';
+    
     datesToProcess.forEach(d => {
         const keys = getDateKeys(d);
         
+        // Récupérer les informations existantes AVANT de supprimer quoi que ce soit
+        const leaveInfo = this.getLeaveForDate(d);
+        
         // Si on pose une journée complète, supprimer les demi-journées
         if (period === 'full') {
+            // Si on pose un congé, supprimer les événements de la journée
+            // Si on pose un événement, supprimer les congés de la journée
+            if (category === 'leave') {
+                // Supprimer tous les événements de cette journée
+                if (leaveInfo.morning) {
+                    const morningConfig = this.getLeaveTypeConfig(leaveInfo.morning);
+                    if (morningConfig && morningConfig.category === 'event') {
+                        delete this.leaves[keys.morning];
+                    }
+                }
+                if (leaveInfo.afternoon) {
+                    const afternoonConfig = this.getLeaveTypeConfig(leaveInfo.afternoon);
+                    if (afternoonConfig && afternoonConfig.category === 'event') {
+                        delete this.leaves[keys.afternoon];
+                    }
+                }
+                // Supprimer aussi la journée complète si c'est un événement
+                if (leaveInfo.full) {
+                    const fullConfig = this.getLeaveTypeConfig(leaveInfo.full);
+                    if (fullConfig && fullConfig.category === 'event') {
+                        delete this.leaves[keys.full];
+                    }
+                }
+            } else {
+                // Supprimer tous les congés de cette journée
+                if (leaveInfo.morning) {
+                    const morningConfig = this.getLeaveTypeConfig(leaveInfo.morning);
+                    if (morningConfig && morningConfig.category === 'leave') {
+                        delete this.leaves[keys.morning];
+                    }
+                }
+                if (leaveInfo.afternoon) {
+                    const afternoonConfig = this.getLeaveTypeConfig(leaveInfo.afternoon);
+                    if (afternoonConfig && afternoonConfig.category === 'leave') {
+                        delete this.leaves[keys.afternoon];
+                    }
+                }
+                // Supprimer aussi la journée complète si c'est un congé
+                if (leaveInfo.full) {
+                    const fullConfig = this.getLeaveTypeConfig(leaveInfo.full);
+                    if (fullConfig && fullConfig.category === 'leave') {
+                        delete this.leaves[keys.full];
+                    }
+                }
+            }
+            
+            // Supprimer les demi-journées restantes et poser la journée complète
             delete this.leaves[keys.morning];
             delete this.leaves[keys.afternoon];
             this.leaves[keys.full] = type;
         } else {
-            // Si on pose une demi-journée, supprimer la journée complète
-            delete this.leaves[keys.full];
+            // Si on pose une demi-journée, supprimer la journée complète si c'est de la même catégorie
+            if (leaveInfo.full) {
+                const fullConfig = this.getLeaveTypeConfig(leaveInfo.full);
+                if (fullConfig && fullConfig.category === category) {
+                    delete this.leaves[keys.full];
+                }
+            }
+            
+            // Si on pose un congé, supprimer l'événement de cette demi-journée
+            // Si on pose un événement, supprimer le congé de cette demi-journée
+            if (category === 'leave') {
+                // Supprimer l'événement de cette demi-journée si présent
+                if (leaveInfo[period]) {
+                    const existingConfig = this.getLeaveTypeConfig(leaveInfo[period]);
+                    if (existingConfig && existingConfig.category === 'event') {
+                        delete this.leaves[keys[period]];
+                    }
+                }
+                // Supprimer aussi la journée complète si c'est un événement
+                if (leaveInfo.full) {
+                    const fullConfig = this.getLeaveTypeConfig(leaveInfo.full);
+                    if (fullConfig && fullConfig.category === 'event') {
+                        delete this.leaves[keys.full];
+                    }
+                }
+            } else {
+                // Supprimer le congé de cette demi-journée si présent
+                if (leaveInfo[period]) {
+                    const existingConfig = this.getLeaveTypeConfig(leaveInfo[period]);
+                    if (existingConfig && existingConfig.category === 'leave') {
+                        delete this.leaves[keys[period]];
+                    }
+                }
+                // Supprimer aussi la journée complète si c'est un congé
+                if (leaveInfo.full) {
+                    const fullConfig = this.getLeaveTypeConfig(leaveInfo.full);
+                    if (fullConfig && fullConfig.category === 'leave') {
+                        delete this.leaves[keys.full];
+                    }
+                }
+            }
+            
             this.leaves[keys[period]] = type;
         }
     });

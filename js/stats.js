@@ -53,14 +53,18 @@ function updateStats() {
             processedDatesForQuota.add(baseDateKey);
             const leaveInfo = this.getLeaveForDate(date);
             
-            // Ne compter que les jours de types avec quota valide (> 0)
-            if (leaveInfo.full && this.hasValidQuota(leaveInfo.full, currentYear)) {
+            // Ne compter que les congés (category: 'leave') avec quota valide (> 0)
+            const fullConfig = leaveInfo.full ? this.getLeaveTypeConfig(leaveInfo.full) : null;
+            const morningConfig = leaveInfo.morning ? this.getLeaveTypeConfig(leaveInfo.morning) : null;
+            const afternoonConfig = leaveInfo.afternoon ? this.getLeaveTypeConfig(leaveInfo.afternoon) : null;
+            
+            if (leaveInfo.full && fullConfig && fullConfig.category === 'leave' && this.hasValidQuota(leaveInfo.full, currentYear)) {
                 usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1;
             } else {
-                if (leaveInfo.morning && this.hasValidQuota(leaveInfo.morning, currentYear)) {
+                if (leaveInfo.morning && morningConfig && morningConfig.category === 'leave' && this.hasValidQuota(leaveInfo.morning, currentYear)) {
                     usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5;
                 }
-                if (leaveInfo.afternoon && this.hasValidQuota(leaveInfo.afternoon, currentYear)) {
+                if (leaveInfo.afternoon && afternoonConfig && afternoonConfig.category === 'leave' && this.hasValidQuota(leaveInfo.afternoon, currentYear)) {
                     usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5;
                 }
             }
@@ -123,14 +127,18 @@ function updateLeaveQuotas() {
             processedDates.add(baseDateKey);
             const leaveInfo = this.getLeaveForDate(date);
             
-            // Ne compter que les jours de types avec quota valide (> 0)
-            if (leaveInfo.full && this.hasValidQuota(leaveInfo.full, currentYear)) {
+            // Ne compter que les congés (category: 'leave') avec quota valide (> 0)
+            const fullConfig = leaveInfo.full ? this.getLeaveTypeConfig(leaveInfo.full) : null;
+            const morningConfig = leaveInfo.morning ? this.getLeaveTypeConfig(leaveInfo.morning) : null;
+            const afternoonConfig = leaveInfo.afternoon ? this.getLeaveTypeConfig(leaveInfo.afternoon) : null;
+            
+            if (leaveInfo.full && fullConfig && fullConfig.category === 'leave' && this.hasValidQuota(leaveInfo.full, currentYear)) {
                 usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1;
             } else {
-                if (leaveInfo.morning && this.hasValidQuota(leaveInfo.morning, currentYear)) {
+                if (leaveInfo.morning && morningConfig && morningConfig.category === 'leave' && this.hasValidQuota(leaveInfo.morning, currentYear)) {
                     usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5;
                 }
-                if (leaveInfo.afternoon && this.hasValidQuota(leaveInfo.afternoon, currentYear)) {
+                if (leaveInfo.afternoon && afternoonConfig && afternoonConfig.category === 'leave' && this.hasValidQuota(leaveInfo.afternoon, currentYear)) {
                     usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5;
                 }
             }
@@ -138,8 +146,12 @@ function updateLeaveQuotas() {
     });
 
     // Créer les cartes de quota (pour l'année en cours)
-    // Exclure les types sans quota ou avec quota = 0
+    // Exclure les événements (category: 'event') et les types sans quota ou avec quota = 0
     this.leaveTypesConfig.forEach(typeConfig => {
+        // Ne montrer que les congés (category: 'leave')
+        if (typeConfig.category !== 'leave') {
+            return;
+        }
         const quota = this.getQuotaForYear(typeConfig.id, currentYear);
         if (quota !== null && quota !== undefined && quota > 0) {
             const used = usedDays[typeConfig.id] || 0;

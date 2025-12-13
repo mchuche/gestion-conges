@@ -102,7 +102,8 @@ async function loadLeaveTypesConfig() {
                 id: t.id,
                 name: t.name,
                 label: t.label,
-                color: t.color
+                color: t.color,
+                category: t.category || 'leave' // Par défaut 'leave' pour compatibilité
             }));
         } else {
             // Si aucun type n'existe, créer les types par défaut
@@ -175,7 +176,8 @@ async function saveLeaveTypesConfig() {
                 .update({
                     name: type.name,
                     label: type.label,
-                    color: type.color
+                    color: type.color,
+                    category: type.category || 'leave'
                 })
                 .eq('id', type.id)
                 .eq('user_id', this.user.id);

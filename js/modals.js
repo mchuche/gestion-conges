@@ -95,6 +95,7 @@ function renderConfigModal() {
         const quota = this.getQuotaForYear(typeConfig.id, selectedYear);
         const item = document.createElement('div');
         item.className = 'leave-type-item';
+        const category = typeConfig.category || 'leave';
         item.innerHTML = `
             <div class="leave-type-inputs">
                 <input type="text" class="leave-type-name" value="${typeConfig.name}" 
@@ -103,12 +104,36 @@ function renderConfigModal() {
                        placeholder="Label (ex: P)" maxlength="10" data-index="${index}">
                 <input type="color" class="leave-type-color" value="${typeConfig.color}" 
                        data-index="${index}">
+                <select class="leave-type-category" data-index="${index}" title="Catégorie : Congé (avec quota) ou Événement (sans quota)">
+                    <option value="leave" ${category === 'leave' ? 'selected' : ''}>Congé</option>
+                    <option value="event" ${category === 'event' ? 'selected' : ''}>Événement</option>
+                </select>
                 <input type="number" class="leave-type-quota" value="${quota !== null && quota !== undefined ? quota : ''}" 
-                       placeholder="Quota (vide = illimité)" min="0" data-index="${index}">
+                       placeholder="Quota (vide = illimité)" min="0" data-index="${index}" 
+                       ${category === 'event' ? 'disabled' : ''} title="${category === 'event' ? 'Les événements n\'ont pas de quota' : 'Quota pour ce congé'}">
                 <button class="delete-type-btn" data-index="${index}" title="Supprimer ce type" aria-label="Supprimer">⌧</button>
             </div>
         `;
         container.appendChild(item);
+        
+        // Ajouter un event listener pour désactiver/activer le quota selon la catégorie
+        const categorySelect = item.querySelector('.leave-type-category');
+        const quotaInput = item.querySelector('.leave-type-quota');
+        
+        if (categorySelect && quotaInput) {
+            // Event listener pour changer la catégorie
+            categorySelect.addEventListener('change', (e) => {
+                const selectedCategory = e.target.value;
+                if (selectedCategory === 'event') {
+                    quotaInput.disabled = true;
+                    quotaInput.value = '';
+                    quotaInput.title = 'Les événements n\'ont pas de quota';
+                } else {
+                    quotaInput.disabled = false;
+                    quotaInput.title = 'Quota pour ce congé';
+                }
+            });
+        }
     });
 
     // Ajouter les événements pour les boutons de suppression de type
@@ -153,7 +178,7 @@ function renderConfigModal() {
                         name: 'Congé',
                         label: 'C',
                         color: '#4a90e2',
-                        quota: null
+                        category: 'leave'
                     });
                 }
                 
@@ -320,7 +345,7 @@ function addLeaveType() {
         name: 'Nouveau Type',
         label: 'NT',
         color: '#4a90e2',
-        quota: null
+        category: 'leave'
     };
     this.leaveTypesConfig.push(newType);
     this.renderConfigModal(); // Re-rendre pour afficher le nouveau type
@@ -354,6 +379,7 @@ async function saveConfig() {
         const name = item.querySelector('.leave-type-name').value.trim();
         const label = item.querySelector('.leave-type-label').value.trim();
         const color = item.querySelector('.leave-type-color').value;
+        const category = item.querySelector('.leave-type-category').value || 'leave';
         const quotaInput = item.querySelector('.leave-type-quota').value;
         const quota = quotaInput === '' ? null : parseInt(quotaInput);
         
@@ -361,11 +387,18 @@ async function saveConfig() {
         // L'ID est important car il lie les congés existants au type
         const typeId = this.leaveTypesConfig[index]?.id;
         
-        // Sauvegarder le quota pour l'année sélectionnée
-        if (quota !== null && !isNaN(quota)) {
-            this.leaveQuotasByYear[selectedYear][typeId] = quota;
+        // Sauvegarder le quota pour l'année sélectionnée (seulement pour les congés)
+        if (category === 'leave') {
+            if (quota !== null && !isNaN(quota)) {
+                this.leaveQuotasByYear[selectedYear][typeId] = quota;
+            } else {
+                // Supprimer le quota si le champ est vide (quota illimité)
+                if (this.leaveQuotasByYear[selectedYear][typeId] !== undefined) {
+                    delete this.leaveQuotasByYear[selectedYear][typeId];
+                }
+            }
         } else {
-            // Supprimer le quota si le champ est vide (quota illimité)
+            // Supprimer le quota pour les événements
             if (this.leaveQuotasByYear[selectedYear][typeId] !== undefined) {
                 delete this.leaveQuotasByYear[selectedYear][typeId];
             }
@@ -378,7 +411,8 @@ async function saveConfig() {
                 id: oldType ? oldType.id : `type-${Date.now()}-${index}`, // Conserver l'ID existant ou en créer un nouveau
                 name: name,
                 label: label,
-                color: color
+                color: color,
+                category: category
             });
         }
     });

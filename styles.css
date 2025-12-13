@@ -1373,6 +1373,18 @@ body.minimal-header #currentMonth {
     font-weight: 500;
     transition: all 0.3s ease;
     color: var(--text-color);
+    position: relative;
+}
+
+/* Style pour distinguer visuellement les événements */
+.leave-btn[data-category="event"] {
+    border-style: dashed;
+    opacity: 0.9;
+}
+
+.leave-btn[data-category="event"]::before {
+    content: '📅';
+    margin-right: 5px;
 }
 
 .leave-btn:hover {
@@ -1517,7 +1529,7 @@ body.minimal-header #currentMonth {
 
 .leave-type-inputs {
     display: grid;
-    grid-template-columns: 2fr 1fr 80px 120px 50px;
+    grid-template-columns: 2fr 1fr 80px 120px 120px 50px;
     gap: 10px;
     align-items: center;
     min-width: 0;
@@ -1533,7 +1545,8 @@ body.minimal-header #currentMonth {
 }
 
 .leave-type-inputs input[type="text"],
-.leave-type-inputs input[type="number"] {
+.leave-type-inputs input[type="number"],
+.leave-type-inputs select {
     padding: 10px;
     border: 2px solid var(--border-color);
     border-radius: 4px;
@@ -1542,7 +1555,8 @@ body.minimal-header #currentMonth {
 }
 
 .leave-type-inputs input[type="text"]:focus,
-.leave-type-inputs input[type="number"]:focus {
+.leave-type-inputs input[type="number"]:focus,
+.leave-type-inputs select:focus {
     outline: none;
     border-color: var(--primary-color);
 }
@@ -1781,7 +1795,7 @@ body.minimal-header #currentMonth {
     }
 
     .leave-type-inputs {
-        grid-template-columns: 1fr 1fr 60px 100px 45px;
+        grid-template-columns: 1fr 1fr 60px 100px 100px 45px;
         gap: 8px;
         overflow-x: visible;
     }
@@ -1928,7 +1942,7 @@ body.minimal-header #currentMonth {
     }
 
     .leave-type-inputs {
-        grid-template-columns: 1fr 1fr 60px 100px 45px;
+        grid-template-columns: 1fr 1fr 60px 100px 100px 45px;
         gap: 8px;
         overflow-x: visible;
     }
