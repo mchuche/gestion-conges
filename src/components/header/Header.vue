@@ -38,6 +38,16 @@
             <button class="menu-item" @click="openHelp">
               ❓ Aide
             </button>
+            <button class="menu-item" @click="openTeams">
+              👥 Équipes
+            </button>
+            <button
+              v-if="authStore.isAdmin"
+              class="menu-item"
+              @click="openAdmin"
+            >
+              ⚙️ Administration
+            </button>
             <div class="menu-divider"></div>
             <button class="menu-item" @click="logout">
               🚪 Déconnexion
@@ -90,6 +100,16 @@ function openConfig() {
 
 function openHelp() {
   uiStore.openHelpModal()
+  closeMenu()
+}
+
+function openTeams() {
+  uiStore.openTeamsModal()
+  closeMenu()
+}
+
+function openAdmin() {
+  uiStore.openAdminModal()
   closeMenu()
 }
 
