@@ -219,5 +219,34 @@ onMounted(async () => {
   overflow-x: auto;
   overflow-y: auto;
 }
+
+/* Styles pour le bouton minimize dans header-controls */
+.header-controls .minimize-header-btn {
+  background: var(--primary-color, #4a90e2);
+  color: white;
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 4px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  flex-shrink: 0;
+  order: 0;
+}
+
+.header-controls .minimize-header-btn:hover {
+  background: #357abd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+}
+
+.header-controls .minimize-header-btn.active {
+  background: var(--secondary-color, #50c878);
+}
 </style>
 
