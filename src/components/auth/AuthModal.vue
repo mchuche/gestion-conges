@@ -12,17 +12,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { createIcons } from 'lucide-vue-next'
+import { ref } from 'vue'
 import LoginForm from './LoginForm.vue'
 import SignupForm from './SignupForm.vue'
 
 const showLogin = ref(true)
-
-onMounted(() => {
-  // Initialiser les icônes Lucide
-  createIcons()
-})
 </script>
 
 <style scoped>
