@@ -141,8 +141,20 @@ const quotas = ref({})
 
 // Charger les quotas pour l'année sélectionnée
 watch([configYear, leaveTypes], async () => {
-  await loadQuotas()
+  if (showModal.value) {
+    await loadQuotas()
+  }
 }, { immediate: true })
+
+// Charger les données quand la modale s'ouvre
+watch(showModal, async (isOpen) => {
+  if (isOpen) {
+    console.log('[ConfigModal] Modal ouverte, chargement des données...')
+    console.log('[ConfigModal] LeaveTypes chargés:', leaveTypes.value.length)
+    await loadQuotas()
+    console.log('[ConfigModal] Quotas chargés:', quotas.value)
+  }
+})
 
 async function loadQuotas() {
   quotas.value = {}

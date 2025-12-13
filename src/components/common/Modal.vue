@@ -7,7 +7,9 @@
         <button v-if="closable" class="close" @click="close">×</button>
       </div>
       <div class="modal-body">
-        <slot></slot>
+        <slot name="body">
+          <slot></slot>
+        </slot>
       </div>
       <div class="modal-footer" v-if="$slots.footer">
         <slot name="footer"></slot>
