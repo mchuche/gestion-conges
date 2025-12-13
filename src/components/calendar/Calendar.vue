@@ -10,11 +10,11 @@
           ▶
         </button>
       </div>
-      <ViewFormatSelector />
+      <ViewFormatSelector id="yearViewFormatSelect" />
     </div>
 
-    <Stats />
-    <Quotas />
+    <Stats class="stats" />
+    <Quotas class="leave-quotas" />
     
     <div id="semesterCalendar" :class="calendarViewClass">
       <YearViewSemester

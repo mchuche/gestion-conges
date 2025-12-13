@@ -322,7 +322,8 @@ body.minimal-header .header-right .menu-dropdown {
     display: none !important;
 }
 
-body.minimal-header .stats {
+body.minimal-header .stats,
+body.minimal-header .leave-quotas {
     display: none;
 }
 
@@ -332,6 +333,11 @@ body.minimal-header .help-hint {
 
 body.minimal-header #leaveQuotas {
     display: none;
+}
+
+/* Cacher le sélecteur de format de vue en mode minimal */
+body.minimal-header .view-format-selector {
+    display: none !important;
 }
 
 body.minimal-header .header-controls {
