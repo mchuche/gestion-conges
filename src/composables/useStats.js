@@ -35,7 +35,6 @@ export function useStats() {
     // Compter les jours utilisés par type (0.5 pour demi-journée, 1 pour journée complète)
     // Exclure les types sans quota ou avec quota = 0
     const usedDays = {}
-    const processedDates = new Set()
 
     // Collecter toutes les dates uniques d'abord
     const uniqueDates = new Set()
@@ -107,7 +106,6 @@ export function useStats() {
   const quotasByType = computed(() => {
     const currentYear = getYear(uiStore.currentDate)
     const usedDays = {}
-    const processedDates = new Set()
 
     // Collecter toutes les dates uniques d'abord
     const uniqueDatesForQuotas = new Set()
