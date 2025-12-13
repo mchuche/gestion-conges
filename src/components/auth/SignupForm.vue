@@ -57,9 +57,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useAuthStore } from '../../stores/auth.js'
 
 const emit = defineEmits(['switch-to-login'])
 
+const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
 const name = ref('')
@@ -85,10 +87,6 @@ async function handleSignup() {
   error.value = null
   
   try {
-    // Import dynamique pour éviter les erreurs de compilation
-    const { useAuthStore } = await import('../../stores/auth')
-    const authStore = useAuthStore()
-    
     console.log('Tentative d\'inscription...')
     const result = await authStore.signUp(email.value, password.value, name.value)
     console.log('Résultat inscription:', result)
