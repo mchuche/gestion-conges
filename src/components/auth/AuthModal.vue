@@ -13,7 +13,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { lucide } from 'lucide-vue-next'
+import { createIcons } from 'lucide-vue-next'
 import LoginForm from './LoginForm.vue'
 import SignupForm from './SignupForm.vue'
 
@@ -21,9 +21,7 @@ const showLogin = ref(true)
 
 onMounted(() => {
   // Initialiser les icônes Lucide
-  if (typeof lucide !== 'undefined' && lucide.createIcons) {
-    lucide.createIcons()
-  }
+  createIcons()
 })
 </script>
 

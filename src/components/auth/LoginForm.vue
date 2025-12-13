@@ -1,6 +1,6 @@
 <template>
   <div class="auth-form">
-    <h3><i data-lucide="lock"></i> Connexion</h3>
+    <h3>🔒 Connexion</h3>
     <div v-if="error" class="error-message">{{ error }}</div>
     
     <div class="auth-input-group">

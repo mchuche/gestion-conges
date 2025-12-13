@@ -1,6 +1,6 @@
 <template>
   <div class="auth-form">
-    <h3><i data-lucide="user-plus"></i> Inscription</h3>
+    <h3>👤 Inscription</h3>
     <div v-if="error" class="error-message">{{ error }}</div>
     
     <div class="auth-input-group">
