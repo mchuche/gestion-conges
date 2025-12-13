@@ -5,7 +5,9 @@
     
     <!-- Application principale -->
     <div v-else class="main-container" id="mainContainer">
-      <Calendar />
+      <div class="container">
+        <Calendar />
+      </div>
     </div>
   </div>
 </template>
@@ -42,18 +44,28 @@ onMounted(async () => {
 .main-container {
   width: 100%;
   min-height: 100vh;
-  padding: 20px;
-  background: var(--bg-color, #f5f7fa);
+  padding: 0;
 }
 
-/* S'assurer que le body a le bon style */
-:global(body) {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: linear-gradient(135deg, var(--gradient-start, #667eea) 0%, var(--gradient-end, #764ba2) 100%);
-  min-height: 100vh;
-  padding: 20px;
-  color: var(--text-color, #2c3e50);
-  transition: background 0.3s ease, color 0.3s ease;
-  margin: 0;
+.main-container .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--card-bg, white);
+  border-radius: 4px;
+  box-shadow: 0 20px 60px var(--shadow-color, rgba(0, 0, 0, 0.3));
+  padding: 30px;
+  animation: fadeIn 0.5s ease-in;
+  transition: background 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
