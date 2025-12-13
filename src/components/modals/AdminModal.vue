@@ -1,7 +1,6 @@
 <template>
   <Modal :model-value="showModal" @close="closeModal" title="Administration" content-class="admin-modal">
-    <template #body>
-      <div v-if="!authStore.isAdmin" class="admin-error">
+    <div v-if="!authStore.isAdmin" class="admin-error">
       <p>Vous n'avez pas les droits d'administrateur pour accéder à cette page.</p>
       <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
         Debug: isAdmin = {{ authStore.isAdmin }}, user = {{ authStore.user ? 'connecté' : 'non connecté' }}
@@ -126,7 +125,6 @@
         </div>
       </div>
     </div>
-    </template>
   </Modal>
 </template>
 
