@@ -44,22 +44,16 @@
       </div>
       
       <!-- Contenu des onglets -->
-      <div class="admin-tab-content">
+      <div class="admin-tab-content" style="overflow: visible !important; height: auto !important; max-height: none !important;">
         <!-- DEBUG VISUEL - TOUJOURS VISIBLE -->
         <div style="background: yellow !important; padding: 10px !important; margin-bottom: 10px !important; border: 2px solid orange !important; display: block !important; visibility: visible !important; opacity: 1 !important; z-index: 9999 !important; position: relative !important; color: black !important; font-size: 14px !important;">
           <strong>DEBUG TOUJOURS VISIBLE:</strong> activeTab = "{{ activeTab }}", users.length = {{ users.length }}, loadingUsers = {{ loadingUsers }}, teams.length = {{ teams.length }}, loadingTeams = {{ loadingTeams }}
         </div>
         
-        <!-- TEST SIMPLE SANS CONDITIONS - AVANT LES PANELS -->
-        <div style="background: pink !important; padding: 20px !important; border: 3px solid red !important; margin: 10px 0 !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 9998 !important;">
-          <h3 style="color: black !important;">TEST SIMPLE - DOIT ÊTRE VISIBLE</h3>
-          <p style="color: black !important;">Si vous voyez ce texte, le problème vient des conditions v-if</p>
-          <p style="color: black !important;">activeTab = "{{ activeTab }}"</p>
-        </div>
-        
-        <!-- TEST APRÈS LE ROSE -->
-        <div style="background: lightblue !important; padding: 10px !important; margin: 10px 0 !important;">
-          <p style="color: black !important;">APRÈS LE ROSE - activeTab = {{ activeTab }}</p>
+        <!-- TEST DIRECT APRÈS DEBUG - SANS DIV ADMIN-TAB-CONTENT -->
+        <div style="background: pink !important; padding: 20px !important; border: 3px solid red !important; margin: 10px 0 !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 9998 !important; color: black !important;">
+          <h3>TEST DIRECT - DOIT ÊTRE VISIBLE</h3>
+          <p>activeTab = "{{ activeTab }}"</p>
         </div>
         
         <!-- Onglet Utilisateurs -->
@@ -476,8 +470,10 @@ onMounted(() => {
   border: 2px solid blue; /* DEBUG - À supprimer */
   background: rgba(0, 0, 255, 0.1); /* DEBUG - À supprimer */
   position: relative; /* DEBUG - À supprimer */
-  overflow: visible; /* DEBUG - S'assurer que le contenu n'est pas masqué */
-  height: auto; /* DEBUG - S'assurer que la hauteur n'est pas limitée */
+  overflow: visible !important; /* DEBUG - S'assurer que le contenu n'est pas masqué */
+  height: auto !important; /* DEBUG - S'assurer que la hauteur n'est pas limitée */
+  max-height: none !important; /* DEBUG - Pas de limite de hauteur */
+  display: block !important; /* DEBUG - Forcer l'affichage */
 }
 
 .admin-tab-panel {
