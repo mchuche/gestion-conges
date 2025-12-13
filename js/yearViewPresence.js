@@ -333,7 +333,7 @@ function createPresenceDayCell(date, user) {
                 cell.style.overflow = 'hidden';
                 cell.style.background = 'transparent';
                 
-                // Moitié supérieure gauche (matin)
+                // Moitié supérieure gauche (matin) - triangle
                 const morningHalf = document.createElement('div');
                 morningHalf.className = 'presence-cell-half presence-cell-morning';
                 morningHalf.style.position = 'absolute';
@@ -345,7 +345,7 @@ function createPresenceDayCell(date, user) {
                 morningHalf.style.clipPath = 'polygon(0 0, 100% 0, 0 100%)';
                 cell.appendChild(morningHalf);
                 
-                // Moitié inférieure droite (après-midi)
+                // Moitié inférieure droite (après-midi) - triangle
                 const afternoonHalf = document.createElement('div');
                 afternoonHalf.className = 'presence-cell-half presence-cell-afternoon';
                 afternoonHalf.style.position = 'absolute';
@@ -357,24 +357,17 @@ function createPresenceDayCell(date, user) {
                 afternoonHalf.style.clipPath = 'polygon(100% 0, 100% 100%, 0 100%)';
                 cell.appendChild(afternoonHalf);
                 
-                // Ligne diagonale discrète
+                // Ligne diagonale discrète pour séparer les deux parties
                 const diagonalLine = document.createElement('div');
                 diagonalLine.className = 'presence-cell-diagonal';
                 diagonalLine.style.position = 'absolute';
                 diagonalLine.style.top = '0';
                 diagonalLine.style.left = '0';
-                diagonalLine.style.width = '100%';
-                diagonalLine.style.height = '100%';
-                diagonalLine.style.borderTop = '1px solid rgba(255, 255, 255, 0.4)';
-                diagonalLine.style.borderRight = 'none';
-                diagonalLine.style.borderBottom = 'none';
-                diagonalLine.style.borderLeft = '1px solid rgba(255, 255, 255, 0.4)';
+                diagonalLine.style.width = '141.42%'; // √2 * 100% pour couvrir la diagonale complète
+                diagonalLine.style.height = '1px';
+                diagonalLine.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
                 diagonalLine.style.transform = 'rotate(45deg)';
                 diagonalLine.style.transformOrigin = 'top left';
-                diagonalLine.style.width = '141.42%'; // √2 * 100% pour couvrir la diagonale
-                diagonalLine.style.height = '1px';
-                diagonalLine.style.top = '50%';
-                diagonalLine.style.left = '0';
                 cell.appendChild(diagonalLine);
                 
                 cell.title = `${user.name} - Matin: ${morningConfig.name}, Après-midi: ${afternoonConfig.name}`;
