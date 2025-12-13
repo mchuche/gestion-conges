@@ -247,14 +247,26 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Écouter les changements d'authentification
+  // Note: Ce listener est appelé automatiquement par Supabase
+  // Il peut être appelé plusieurs fois, donc on vérifie l'état actuel
   supabase.auth.onAuthStateChange(async (event, session) => {
     logger.debug('Changement d\'état auth:', event, session?.user?.id)
+    
+    // Ignorer l'événement INITIAL_SESSION si on a déjà un utilisateur
+    // pour éviter les conflits avec checkSession()
+    if (event === 'INITIAL_SESSION' && user.value) {
+      logger.debug('INITIAL_SESSION ignoré, utilisateur déjà chargé')
+      return
+    }
     
     if (event === 'SIGNED_IN' && session?.user) {
       // Valider la session avant de charger le profil
       const isValid = await validateSession(session)
       if (isValid) {
-        await loadUserProfile(session.user.id)
+        // Ne charger que si l'utilisateur n'est pas déjà chargé
+        if (!user.value || user.value.id !== session.user.id) {
+          await loadUserProfile(session.user.id)
+        }
       } else {
         logger.warn('Session invalide lors de SIGNED_IN, nettoyage...')
         await clearInvalidSession()
