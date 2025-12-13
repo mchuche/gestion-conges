@@ -7,7 +7,7 @@ import { useAuthStore } from './auth'
 export const useUIStore = defineStore('ui', () => {
   // State
   const currentDate = ref(new Date())
-  const currentYear = ref(new Date().getFullYear())
+  const currentYear = computed(() => currentDate.value ? currentDate.value.getFullYear() : new Date().getFullYear())
   const selectedDate = ref(null)
   const selectedDates = ref([]) // Pour la sélection multiple
   const selectedPeriod = ref('full') // 'full', 'morning', 'afternoon'

@@ -59,7 +59,10 @@ const quotasStore = useQuotasStore()
 const authStore = useAuthStore()
 
 const yearViewFormat = computed(() => uiStore.yearViewFormat)
-const currentYear = computed(() => getYear(uiStore.currentDate))
+const currentYear = computed(() => {
+  if (!uiStore.currentDate) return new Date().getFullYear()
+  return getYear(uiStore.currentDate)
+})
 const currentYearTitle = computed(() => `Année ${currentYear.value}`)
 
 const calendarTitle = computed(() => {

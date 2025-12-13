@@ -30,6 +30,7 @@ export function useStats() {
 
   // Calculer les statistiques pour l'année en cours
   const stats = computed(() => {
+    if (!uiStore.currentDate) return { totalUsed: 0, totalQuotas: 0, totalRemaining: 0, usedDays: {}, formatNumber }
     const currentYear = getYear(uiStore.currentDate)
     
     // Compter les jours utilisés par type (0.5 pour demi-journée, 1 pour journée complète)
@@ -104,6 +105,7 @@ export function useStats() {
 
   // Calculer les quotas par type pour l'année en cours
   const quotasByType = computed(() => {
+    if (!uiStore.currentDate) return []
     const currentYear = getYear(uiStore.currentDate)
     const usedDays = {}
 
