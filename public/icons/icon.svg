@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fond -->
+  <rect width="512" height="512" fill="#4a90e2" rx="80"/>
+  
+  <!-- Calendrier -->
+  <rect x="100" y="120" width="312" height="272" fill="white" rx="12"/>
+  
+  <!-- Lignes du calendrier -->
+  <line x1="100" y1="200" x2="412" y2="200" stroke="#4a90e2" stroke-width="4"/>
+  <line x1="206" y1="120" x2="206" y2="392" stroke="#4a90e2" stroke-width="4"/>
+  <line x1="312" y1="120" x2="312" y2="392" stroke="#4a90e2" stroke-width="4"/>
+  
+  <!-- Jours marqués (congés) -->
+  <circle cx="153" cy="260" r="20" fill="#ff6b6b"/>
+  <circle cx="259" cy="300" r="20" fill="#4ecdc4"/>
+  <circle cx="365" cy="260" r="20" fill="#95e1d3"/>
+  
+  <!-- Texte "Congés" -->
+  <text x="256" y="450" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">Congés</text>
+</svg>
+
+
+
