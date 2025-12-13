@@ -357,19 +357,6 @@ function createPresenceDayCell(date, user) {
                 afternoonHalf.style.clipPath = 'polygon(100% 0, 100% 100%, 0 100%)';
                 cell.appendChild(afternoonHalf);
                 
-                // Ligne diagonale discrète pour séparer les deux parties
-                const diagonalLine = document.createElement('div');
-                diagonalLine.className = 'presence-cell-diagonal';
-                diagonalLine.style.position = 'absolute';
-                diagonalLine.style.top = '0';
-                diagonalLine.style.left = '0';
-                diagonalLine.style.width = '141.42%'; // √2 * 100% pour couvrir la diagonale complète
-                diagonalLine.style.height = '1px';
-                diagonalLine.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
-                diagonalLine.style.transform = 'rotate(45deg)';
-                diagonalLine.style.transformOrigin = 'top left';
-                cell.appendChild(diagonalLine);
-                
                 cell.title = `${user.name} - Matin: ${morningConfig.name}, Après-midi: ${afternoonConfig.name}`;
             }
         } else {

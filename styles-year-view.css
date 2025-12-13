@@ -216,12 +216,6 @@
     z-index: 1;
 }
 
-.presence-cell-diagonal {
-    z-index: 2;
-    pointer-events: none;
-    box-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
 .year-presence-day-cell.selected {
     outline: 3px solid var(--primary-color);
     outline-offset: 2px;
