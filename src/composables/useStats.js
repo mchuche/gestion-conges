@@ -37,16 +37,16 @@ export function useStats() {
     const usedDays = {}
     const processedDates = new Set()
 
+    // Collecter toutes les dates uniques d'abord
+    const uniqueDates = new Set()
     Object.keys(leavesStore.leaves).forEach(dateKey => {
-      // Extraire la date de base (sans période)
       const dateParts = dateKey.split('-')
       const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
-      
-      // Éviter de traiter deux fois la même date (matin et après-midi)
-      if (processedDates.has(baseDateKey)) {
-        return
-      }
-      
+      uniqueDates.add(baseDateKey)
+    })
+
+    // Traiter chaque date unique
+    uniqueDates.forEach(baseDateKey => {
       const date = new Date(baseDateKey + 'T00:00:00')
       
       // Filtrer par année
@@ -54,7 +54,6 @@ export function useStats() {
         return
       }
       
-      processedDates.add(baseDateKey)
       const leaveInfo = getLeaveForDate(date)
       
       // Ne compter que les congés (category: 'leave') avec quota valide (> 0)
@@ -110,22 +109,22 @@ export function useStats() {
     const usedDays = {}
     const processedDates = new Set()
 
-    // Compter les jours utilisés
+    // Collecter toutes les dates uniques d'abord
+    const uniqueDatesForQuotas = new Set()
     Object.keys(leavesStore.leaves).forEach(dateKey => {
       const dateParts = dateKey.split('-')
       const baseDateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`
-      
-      if (processedDates.has(baseDateKey)) {
-        return
-      }
-      
+      uniqueDatesForQuotas.add(baseDateKey)
+    })
+
+    // Traiter chaque date unique
+    uniqueDatesForQuotas.forEach(baseDateKey => {
       const date = new Date(baseDateKey + 'T00:00:00')
       
       if (getYear(date) !== currentYear) {
         return
       }
       
-      processedDates.add(baseDateKey)
       const leaveInfo = getLeaveForDate(date)
       
       if (leaveInfo.full) {
