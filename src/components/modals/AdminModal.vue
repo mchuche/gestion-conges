@@ -354,13 +354,10 @@ watch(showModal, (isOpen) => {
     if (authStore.isAdmin) {
       // Forcer le chargement des données pour l'onglet actif
       console.log('[AdminModal] Chargement des données pour l\'onglet:', activeTab.value)
-      // Réinitialiser l'onglet actif pour forcer le chargement
-      const currentTab = activeTab.value
-      activeTab.value = '' // Réinitialiser temporairement
-      setTimeout(() => {
-        activeTab.value = currentTab
-        switchTab(currentTab)
-      }, 0)
+      // Utiliser nextTick pour s'assurer que le DOM est prêt
+      nextTick(() => {
+        switchTab(activeTab.value)
+      })
     } else {
       console.warn('[AdminModal] Utilisateur non admin - accès refusé')
     }
