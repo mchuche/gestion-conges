@@ -166,10 +166,10 @@ async function loadUsers() {
     loadingUsers.value = true
     const searchTerm = userSearch.value.trim()
     
-    // Essayer d'abord avec la fonction SQL optimisée
+    // Utiliser user_emails (table qui existe dans le schéma)
     let query = supabase
-      .from('profiles')
-      .select('id, email, created_at')
+      .from('user_emails')
+      .select('user_id, email, created_at')
       .order('created_at', { ascending: false })
 
     if (searchTerm) {
@@ -178,17 +178,22 @@ async function loadUsers() {
 
     const { data, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error('[AdminModal] Erreur Supabase:', error)
+      throw error
+    }
+
+    console.log('[AdminModal] Utilisateurs trouvés:', data?.length || 0)
 
     // Enrichir avec des statistiques
     users.value = await Promise.all((data || []).map(async (user) => {
       const [leavesCount, teamsCount] = await Promise.all([
-        supabase.from('leaves').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('team_members').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+        supabase.from('leaves').select('id', { count: 'exact', head: true }).eq('user_id', user.user_id),
+        supabase.from('team_members').select('id', { count: 'exact', head: true }).eq('user_id', user.user_id)
       ])
 
       return {
-        id: user.id,
+        id: user.user_id,
         email: user.email,
         createdAt: user.created_at,
         leavesCount: leavesCount.count || 0,
@@ -240,8 +245,9 @@ async function loadStats() {
   if (!authStore.isAdmin) return
 
   try {
+    console.log('[AdminModal] Chargement des statistiques...')
     const [usersCount, teamsCount, leavesCount] = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('user_emails').select('id', { count: 'exact', head: true }),
       supabase.from('teams').select('id', { count: 'exact', head: true }),
       supabase.from('leaves').select('id', { count: 'exact', head: true })
     ])
@@ -251,8 +257,10 @@ async function loadStats() {
       totalTeams: teamsCount.count || 0,
       totalLeaves: leavesCount.count || 0
     }
+    console.log('[AdminModal] Statistiques chargées:', stats.value)
   } catch (err) {
     logger.error('[AdminModal] Erreur lors du chargement des statistiques:', err)
+    console.error('[AdminModal] Erreur lors du chargement des statistiques:', err)
   }
 }
 
