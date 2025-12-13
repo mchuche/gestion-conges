@@ -6,18 +6,19 @@
 
 ## 📝 Pour démarrer le serveur vous-même
 
-### Commande directe (recommandé)
+### Option 1 : Script batch (recommandé - fonctionne toujours)
+Double-cliquez sur `start-dev.bat` ou dans le terminal :
+```cmd
+start-dev.bat
+```
+
+### Option 2 : Commande directe
+Si npm est reconnu dans votre terminal :
 ```powershell
 npm run dev
 ```
 
-### Alternative : Script PowerShell (si politique d'exécution activée)
-Si vous avez activé l'exécution de scripts PowerShell :
-```powershell
-.\start-dev.ps1
-```
-
-**Note** : Si vous avez une erreur de politique d'exécution, utilisez directement `npm run dev` ci-dessus.
+**Note** : Si npm n'est pas reconnu, fermez et rouvrez votre terminal, ou utilisez l'Option 1 (start-dev.bat).
 
 ## ✅ Le serveur est prêt quand vous voyez :
 
