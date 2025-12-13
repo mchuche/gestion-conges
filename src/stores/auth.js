@@ -38,20 +38,43 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loadUserProfile(userId) {
     try {
-      const { data, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single()
+      // Les utilisateurs sont dans auth.users (géré par Supabase Auth)
+      // On récupère les infos depuis la session, pas depuis une table public.users
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.user) {
+        throw new Error('Session utilisateur introuvable')
+      }
 
-      if (profileError) throw profileError
+      // Vérifier si l'utilisateur est admin via app_admins
+      let isAdmin = false
+      let isSuperAdmin = false
+      
+      try {
+        const { data: adminData } = await supabase
+          .from('app_admins')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle()
+        
+        if (adminData) {
+          isAdmin = true
+          isSuperAdmin = adminData.role === 'super_admin'
+        }
+      } catch (adminError) {
+        // Si la table n'existe pas encore ou erreur, on continue sans admin
+        logger.debug('Erreur lors de la vérification admin (non bloquant):', adminError)
+      }
+
+      // Récupérer le nom depuis les metadata de l'utilisateur
+      const name = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Utilisateur'
 
       user.value = {
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        is_admin: data.is_admin || false,
-        is_super_admin: data.is_super_admin || false
+        id: session.user.id,
+        email: session.user.email,
+        name: name,
+        is_admin: isAdmin,
+        is_super_admin: isSuperAdmin
       }
 
       logger.log('Profil utilisateur chargé:', user.value)
