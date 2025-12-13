@@ -57,7 +57,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useAuthStore } from '../../stores/auth.js'
+import { useAuthStore } from '../../stores/auth'
 
 const emit = defineEmits(['switch-to-login'])
 
