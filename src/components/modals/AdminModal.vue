@@ -344,8 +344,8 @@ onMounted(() => {
 
 <style scoped>
 .admin-modal {
-  min-width: 700px;
-  max-width: 900px;
+  min-width: 800px;
+  max-width: 1100px;
 }
 
 .admin-error {

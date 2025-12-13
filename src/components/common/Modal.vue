@@ -104,7 +104,7 @@ onUnmounted(() => {
   background: var(--card-bg, white);
   border-radius: 8px;
   padding: 30px;
-  max-width: 500px;
+  max-width: 700px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;

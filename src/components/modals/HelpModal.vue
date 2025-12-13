@@ -79,7 +79,7 @@ function closeModal() {
 <style scoped>
 .help-modal-content {
   padding: 20px;
-  max-width: 600px;
+  max-width: 100%;
   max-height: 70vh;
   overflow-y: auto;
 }

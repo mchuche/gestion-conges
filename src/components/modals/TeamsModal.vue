@@ -388,8 +388,8 @@ onMounted(async () => {
 
 <style scoped>
 .teams-modal-content {
-  min-width: 500px;
-  max-width: 700px;
+  min-width: 600px;
+  max-width: 900px;
 }
 
 .create-team-section {
