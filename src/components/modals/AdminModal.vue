@@ -24,7 +24,7 @@
       <!-- Contenu des onglets -->
       <div class="admin-tab-content">
         <!-- DEBUG VISUEL -->
-        <div style="background: yellow; padding: 10px; margin-bottom: 10px; border: 2px solid orange;">
+        <div style="background: yellow !important; padding: 10px !important; margin-bottom: 10px !important; border: 2px solid orange !important; display: block !important; visibility: visible !important; opacity: 1 !important; z-index: 9999 !important; position: relative !important;">
           <strong>DEBUG:</strong> activeTab = "{{ activeTab }}", users.length = {{ users.length }}, loadingUsers = {{ loadingUsers }}, teams.length = {{ teams.length }}, loadingTeams = {{ loadingTeams }}
         </div>
         
@@ -443,14 +443,18 @@ onMounted(() => {
   border: 2px solid blue; /* DEBUG - À supprimer */
   background: rgba(0, 0, 255, 0.1); /* DEBUG - À supprimer */
   position: relative; /* DEBUG - À supprimer */
+  overflow: visible; /* DEBUG - S'assurer que le contenu n'est pas masqué */
+  height: auto; /* DEBUG - S'assurer que la hauteur n'est pas limitée */
 }
 
 .admin-tab-panel {
   padding: 20px 0;
   min-height: 200px;
-  display: block;
+  display: block !important; /* DEBUG - Forcer l'affichage */
   border: 2px solid green; /* DEBUG - À supprimer */
   background: rgba(0, 255, 0, 0.1); /* DEBUG - À supprimer */
+  visibility: visible !important; /* DEBUG - Forcer la visibilité */
+  opacity: 1 !important; /* DEBUG - Forcer l'opacité */
 }
 
 .admin-search {
