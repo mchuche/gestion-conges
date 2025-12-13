@@ -160,12 +160,24 @@ export const useUIStore = defineStore('ui', () => {
   function toggleFullWidth() {
     fullWidth.value = !fullWidth.value
     localStorage.setItem('fullWidth', fullWidth.value.toString())
+    // Appliquer immédiatement la classe au body
+    if (fullWidth.value) {
+      document.body.classList.add('full-width')
+    } else {
+      document.body.classList.remove('full-width')
+    }
   }
 
   function loadFullWidth() {
     const saved = localStorage.getItem('fullWidth')
     if (saved !== null) {
       fullWidth.value = saved === 'true'
+      // Appliquer immédiatement la classe au body
+      if (fullWidth.value) {
+        document.body.classList.add('full-width')
+      } else {
+        document.body.classList.remove('full-width')
+      }
     }
   }
 

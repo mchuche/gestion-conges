@@ -79,8 +79,20 @@ function openHelp() {
 }
 
 async function logout() {
-  await authStore.signOut()
-  closeMenu()
+  try {
+    const result = await authStore.signOut()
+    if (result.success) {
+      closeMenu()
+      // La réactivité de Vue devrait automatiquement afficher la modale d'auth
+      // car isAuthenticated devient false
+    } else {
+      console.error('Erreur lors de la déconnexion:', result.error)
+      alert('Erreur lors de la déconnexion: ' + result.error)
+    }
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion:', error)
+    alert('Erreur lors de la déconnexion')
+  }
 }
 
 // Fermer le menu quand on clique ailleurs

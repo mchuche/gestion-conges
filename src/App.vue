@@ -5,7 +5,7 @@
     
     <!-- Application principale -->
     <div v-else class="main-container" id="mainContainer">
-      <div class="container">
+      <div :class="['container', { 'full-width': fullWidth }]">
         <Header />
         <Calendar />
         <LeaveModal />
@@ -16,8 +16,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
+import { useUIStore } from './stores/ui'
 import AuthModal from './components/auth/AuthModal.vue'
 import Header from './components/header/Header.vue'
 import Calendar from './components/calendar/Calendar.vue'
@@ -25,15 +26,32 @@ import LeaveModal from './components/modals/LeaveModal.vue'
 import ConfigModal from './components/modals/ConfigModal.vue'
 
 const authStore = useAuthStore()
+const uiStore = useUIStore()
 
 // Utiliser les computed du store pour la réactivité
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const fullWidth = computed(() => uiStore.fullWidth)
+
+// Appliquer la classe full-width au body
+watch(fullWidth, (value) => {
+  if (value) {
+    document.body.classList.add('full-width')
+  } else {
+    document.body.classList.remove('full-width')
+  }
+}, { immediate: true })
 
 onMounted(async () => {
   console.log('App.vue monté, vérification de la session...')
   try {
     await authStore.checkSession()
     console.log('Session vérifiée:', authStore.user)
+    // Charger le fullWidth au démarrage
+    uiStore.loadFullWidth()
+    // Appliquer immédiatement
+    if (uiStore.fullWidth) {
+      document.body.classList.add('full-width')
+    }
   } catch (err) {
     console.error('Erreur lors de la vérification:', err)
   }
