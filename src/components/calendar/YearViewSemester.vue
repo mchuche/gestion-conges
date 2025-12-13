@@ -104,66 +104,119 @@ const emit = defineEmits(['day-click', 'day-mousedown'])
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(4, 1fr);
   gap: 15px;
-  aspect-ratio: 16/10;
   max-width: 100%;
-  padding: 10px;
+  padding: 15px;
   background: var(--bg-color, #f5f5f5);
   min-height: 600px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .year-month-card {
   background: var(--card-bg, white);
   border: 2px solid var(--border-color, #e0e0e0);
   border-radius: 8px;
-  padding: 8px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   min-height: 0;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .year-month-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .year-month-card-header {
   background: var(--primary-color, #4a90e2);
   color: white;
-  padding: 6px;
+  padding: 8px;
   text-align: center;
   font-weight: 600;
-  font-size: 0.85em;
+  font-size: 0.9em;
   border-radius: 4px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .year-week-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
 }
 
 .year-week-day {
   text-align: center;
-  font-size: 0.7em;
+  font-size: 0.75em;
   font-weight: 600;
   color: var(--text-color, #2c3e50);
-  padding: 2px;
-  opacity: 0.7;
+  padding: 4px 2px;
+  opacity: 0.8;
 }
 
 .year-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 3px;
   flex: 1;
+  min-height: 0;
+  align-content: start;
 }
 
 .year-day-empty {
   /* Cellules vides pour aligner le premier jour */
   background: transparent;
+  aspect-ratio: 1;
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .year-calendar-view {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .year-calendar-view {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 10px;
+  }
+
+  .year-month-card {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 600px) {
+  .year-calendar-view {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .year-month-card {
+    padding: 8px;
+  }
+
+  .year-month-card-header {
+    font-size: 0.85em;
+    padding: 6px;
+  }
+
+  .year-week-day {
+    font-size: 0.7em;
+    padding: 2px;
+  }
+
+  .year-days-grid {
+    gap: 2px;
+  }
 }
 </style>
 
