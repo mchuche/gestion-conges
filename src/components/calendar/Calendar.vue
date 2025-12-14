@@ -1,5 +1,5 @@
 <template>
-  <div class="calendar-container">
+  <div class="calendar-container" :class="{ 'minimized': minimizeHeader }">
     <div class="calendar-header">
       <div class="header-controls-row">
         <div class="header-controls">
@@ -240,6 +240,22 @@ onMounted(async () => {
 .calendar-container {
   width: 100%;
   padding: 20px;
+}
+
+/* Mode minimisé - calendar-container prend tout l'espace de la fenêtre */
+.calendar-container.minimized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+  z-index: 999;
+  background: var(--bg-color, #f5f5f5);
+  overflow: auto;
 }
 
 .calendar-header {

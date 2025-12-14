@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '../services/supabase'
 import logger from '../services/logger'
 import { useAuthStore } from './auth'
+import { getDateKey } from '../services/utils'
 
 export const useUIStore = defineStore('ui', () => {
   // State
@@ -46,13 +47,15 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function addSelectedDate(date) {
-    if (!selectedDates.value.find(d => d.getTime() === date.getTime())) {
+    const dateKey = getDateKey(date)
+    if (!selectedDates.value.find(d => getDateKey(d) === dateKey)) {
       selectedDates.value.push(date)
     }
   }
 
   function removeSelectedDate(date) {
-    selectedDates.value = selectedDates.value.filter(d => d.getTime() !== date.getTime())
+    const dateKey = getDateKey(date)
+    selectedDates.value = selectedDates.value.filter(d => getDateKey(d) !== dateKey)
   }
 
   function clearSelectedDates() {
@@ -336,11 +339,19 @@ export const useUIStore = defineStore('ui', () => {
   function toggleMinimizeHeader() {
     minimizeHeader.value = !minimizeHeader.value
     localStorage.setItem('minimizeHeader', minimizeHeader.value.toString())
-    // Appliquer immédiatement la classe au body
+    // Appliquer immédiatement la classe au body et au mainContainer
     if (minimizeHeader.value) {
       document.body.classList.add('minimal-header')
+      const mainContainer = document.getElementById('mainContainer')
+      if (mainContainer) {
+        mainContainer.classList.add('calendar-minimized')
+      }
     } else {
       document.body.classList.remove('minimal-header')
+      const mainContainer = document.getElementById('mainContainer')
+      if (mainContainer) {
+        mainContainer.classList.remove('calendar-minimized')
+      }
     }
   }
 
@@ -348,11 +359,19 @@ export const useUIStore = defineStore('ui', () => {
     const saved = localStorage.getItem('minimizeHeader')
     if (saved !== null) {
       minimizeHeader.value = saved === 'true'
-      // Appliquer immédiatement la classe au body
+      // Appliquer immédiatement la classe au body et au mainContainer
       if (minimizeHeader.value) {
         document.body.classList.add('minimal-header')
+        const mainContainer = document.getElementById('mainContainer')
+        if (mainContainer) {
+          mainContainer.classList.add('calendar-minimized')
+        }
       } else {
         document.body.classList.remove('minimal-header')
+        const mainContainer = document.getElementById('mainContainer')
+        if (mainContainer) {
+          mainContainer.classList.remove('calendar-minimized')
+        }
       }
     }
   }

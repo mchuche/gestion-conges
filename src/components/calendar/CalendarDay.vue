@@ -136,7 +136,17 @@ const isSelected = computed(() => {
 })
 
 const isInMultiSelect = computed(() => {
-  return uiStore.selectedDates.some(d => getDateKey(d) === dateKey.value)
+  if (!uiStore.selectedDates || uiStore.selectedDates.length === 0) {
+    return false
+  }
+  const currentKey = dateKey.value
+  return uiStore.selectedDates.some(d => {
+    try {
+      return getDateKey(d) === currentKey
+    } catch (e) {
+      return false
+    }
+  })
 })
 
 const dayLetter = computed(() => {
@@ -308,8 +318,18 @@ function handleMouseDown(event) {
 
 .calendar-day.multi-selected,
 .year-view-day.multi-selected {
-  background: var(--primary-color, #4a90e2);
-  color: white;
+  background: var(--primary-color, #4a90e2) !important;
+  color: white !important;
+}
+
+/* S'assurer que la sélection est visible même avec d'autres classes */
+.year-view-day.multi-selected.weekend,
+.year-view-day.multi-selected.public-holiday,
+.year-view-day.multi-selected.has-leave,
+.year-view-day.multi-selected.past-day {
+  background: var(--primary-color, #4a90e2) !important;
+  color: white !important;
+  opacity: 1 !important;
 }
 
 .day-number {

@@ -154,6 +154,20 @@ onMounted(async () => {
   transition: background 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease;
 }
 
+/* Cacher les éléments autour de calendar-container en mode minimisé */
+.main-container.calendar-minimized .container > *:not(.calendar-container) {
+  display: none;
+}
+
+.main-container.calendar-minimized .container {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

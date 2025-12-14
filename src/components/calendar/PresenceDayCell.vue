@@ -123,6 +123,21 @@ const isHoliday = computed(() => {
   return holidays[dateKey.value] !== undefined
 })
 
+const isInMultiSelect = computed(() => {
+  if (!uiStore.selectedDates || uiStore.selectedDates.length === 0) {
+    return false
+  }
+  const currentKey = dateKey.value
+  const isSelected = uiStore.selectedDates.some(d => {
+    try {
+      return getDateKey(d) === currentKey
+    } catch (e) {
+      return false
+    }
+  })
+  return isSelected
+})
+
 const cellClasses = computed(() => {
   const classes = ['year-presence-day-cell']
   
@@ -133,6 +148,7 @@ const cellClasses = computed(() => {
   if (hasLeave.value) classes.push('has-leave')
   if (hasSplit.value) classes.push('has-split')
   if (!hasLeave.value && !isWeekend.value && !isHoliday.value) classes.push('present')
+  if (isInMultiSelect.value) classes.push('multi-selected')
   
   return classes
 })
@@ -265,7 +281,28 @@ function handleMouseDown(event) {
 .presence-cell-afternoon {
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
+
+.year-presence-day-cell.multi-selected {
+  border: 3px solid var(--primary-color, #4a90e2) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
+  z-index: 10 !important;
+  position: relative;
+  background: rgba(74, 144, 226, 0.2) !important;
+}
+
+/* Assurer que la sélection multiple reste visible même avec des couleurs de congé */
+.year-presence-day-cell.multi-selected .presence-cell-half {
+  opacity: 0.6 !important;
+  mix-blend-mode: multiply;
+}
+
+/* Assurer que la sélection est visible même sur les cellules avec présence */
+.year-presence-day-cell.multi-selected.present {
+  background: rgba(74, 144, 226, 0.3) !important;
+  border-color: var(--primary-color, #4a90e2) !important;
+}
 </style>
+
 
 
 
