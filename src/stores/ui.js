@@ -13,11 +13,12 @@ export const useUIStore = defineStore('ui', () => {
   const selectedPeriod = ref('full') // 'full', 'morning', 'afternoon'
   const multiSelectMode = ref(false)
   const viewMode = ref('year') // 'year', 'month', etc.
-  const yearViewFormat = ref('semester') // 'semester', 'presence', 'presence-vertical'
+  const yearViewFormat = ref('semester') // 'semester', 'columns', 'presence', 'presence-vertical'
   const configYear = ref(new Date().getFullYear())
   const selectedCountry = ref('FR')
   const ctrlKeyPressed = ref(false)
-  const theme = ref('light') // 'light' ou 'dark'
+  const theme = ref('light') // 'light' ou 'dark' (thème effectif)
+  const themeMode = ref('auto') // 'auto', 'light' ou 'dark' (préférence utilisateur)
   const fullWidth = ref(false)
   const minimizeHeader = ref(false) // Mode header minimal
   
@@ -26,7 +27,6 @@ export const useUIStore = defineStore('ui', () => {
   const showConfigModal = ref(false)
   const showHelpModal = ref(false)
   const showTeamsModal = ref(false)
-  const showAdminModal = ref(false)
 
   // Getters
   const isMultiSelectActive = computed(() => multiSelectMode.value && selectedDates.value.length > 0)
@@ -141,25 +141,172 @@ export const useUIStore = defineStore('ui', () => {
     ctrlKeyPressed.value = pressed
   }
 
+  // Fonction pour détecter la préférence système
+  function getSystemTheme() {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    return 'light'
+  }
+
+  // Fonction pour obtenir le thème effectif
+  function getEffectiveTheme() {
+    if (themeMode.value === 'auto') {
+      return getSystemTheme()
+    }
+    return themeMode.value
+  }
+
+  // Mettre à jour le meta theme-color
+  function updateThemeColor(themeValue) {
+    if (typeof document === 'undefined') return
+    
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta')
+      metaThemeColor.name = 'theme-color'
+      document.head.appendChild(metaThemeColor)
+    }
+    
+    // Couleurs adaptées selon le thème
+    metaThemeColor.content = themeValue === 'dark' ? '#1a1a1a' : '#4a90e2'
+  }
+
   function toggleTheme() {
-    theme.value = theme.value === 'light' ? 'dark' : 'light'
+    // Cycle entre auto -> light -> dark -> auto
+    if (themeMode.value === 'auto') {
+      themeMode.value = 'light'
+    } else if (themeMode.value === 'light') {
+      themeMode.value = 'dark'
+    } else {
+      themeMode.value = 'auto'
+    }
     applyTheme()
+    saveThemePreference()
   }
 
   function setTheme(newTheme) {
-    theme.value = newTheme
-    applyTheme()
+    if (newTheme === 'auto' || newTheme === 'light' || newTheme === 'dark') {
+      themeMode.value = newTheme
+      applyTheme()
+      saveThemePreference()
+    }
   }
 
   function applyTheme() {
-    document.documentElement.setAttribute('data-theme', theme.value)
-    localStorage.setItem('theme', theme.value)
+    const effectiveTheme = getEffectiveTheme()
+    theme.value = effectiveTheme
+    
+    if (typeof document !== 'undefined') {
+      // Ajouter une classe de transition temporaire pour une animation fluide
+      document.documentElement.classList.add('theme-transitioning')
+      setTimeout(() => {
+        document.documentElement.classList.remove('theme-transitioning')
+      }, 300)
+      
+      document.documentElement.setAttribute('data-theme', effectiveTheme)
+      
+      // Mettre à jour le meta theme-color
+      updateThemeColor(effectiveTheme)
+      
+      // Synchroniser avec localStorage
+      localStorage.setItem('theme', effectiveTheme)
+      localStorage.setItem('themeMode', themeMode.value)
+    }
+  }
+
+  // Écouter les changements de préférence système
+  let systemThemeListener = null
+  
+  function setupSystemThemeListener() {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    
+    // Nettoyer l'ancien listener s'il existe
+    if (systemThemeListener) {
+      systemThemeListener()
+      systemThemeListener = null
+    }
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    
+    // Fonction de callback
+    const handleChange = (e) => {
+      if (themeMode.value === 'auto') {
+        applyTheme()
+      }
+    }
+    
+    // Support moderne et ancien
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange)
+      systemThemeListener = () => {
+        mediaQuery.removeEventListener('change', handleChange)
+      }
+    } else if (mediaQuery.addListener) {
+      // Fallback pour anciens navigateurs
+      mediaQuery.addListener(handleChange)
+      systemThemeListener = () => {
+        mediaQuery.removeListener(handleChange)
+      }
+    }
+  }
+
+  async function saveThemePreference() {
+    const authStore = useAuthStore()
+    if (!authStore.user || !supabase) return
+
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: authStore.user.id,
+          theme_mode: themeMode.value,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+
+      if (error) throw error
+    } catch (err) {
+      logger.error('Erreur lors de la sauvegarde du thème:', err)
+    }
+  }
+
+  async function loadThemePreference() {
+    const authStore = useAuthStore()
+    
+    // Charger depuis localStorage d'abord (pour une application immédiate)
+    const savedMode = localStorage.getItem('themeMode') || 'auto'
+    themeMode.value = savedMode
+    
+    // Si l'utilisateur est connecté, charger depuis Supabase
+    if (authStore.user && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .select('theme_mode')
+          .eq('user_id', authStore.user.id)
+          .maybeSingle()
+
+        if (error) throw error
+
+        if (data && data.theme_mode) {
+          themeMode.value = data.theme_mode
+        }
+      } catch (err) {
+        logger.error('Erreur lors du chargement du thème depuis Supabase:', err)
+        // Continuer avec la valeur localStorage
+      }
+    }
+    
+    // Appliquer le thème et configurer l'écouteur système
+    applyTheme()
+    setupSystemThemeListener()
   }
 
   function loadTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light'
-    theme.value = savedTheme
-    applyTheme()
+    // Fonction de compatibilité, utilise loadThemePreference maintenant
+    loadThemePreference()
   }
 
   function toggleFullWidth() {
@@ -245,14 +392,6 @@ export const useUIStore = defineStore('ui', () => {
     showTeamsModal.value = false
   }
 
-  function openAdminModal() {
-    showAdminModal.value = true
-  }
-
-  function closeAdminModal() {
-    showAdminModal.value = false
-  }
-
   function reset() {
     currentDate.value = new Date()
     currentYear.value = new Date().getFullYear()
@@ -269,7 +408,6 @@ export const useUIStore = defineStore('ui', () => {
     showConfigModal.value = false
     showHelpModal.value = false
     showTeamsModal.value = false
-    showAdminModal.value = false
   }
 
   return {
@@ -286,13 +424,13 @@ export const useUIStore = defineStore('ui', () => {
     selectedCountry,
     ctrlKeyPressed,
     theme,
+    themeMode,
     fullWidth,
     minimizeHeader,
     showModal,
     showConfigModal,
     showHelpModal,
     showTeamsModal,
-    showAdminModal,
     // Getters
     isMultiSelectActive,
     // Actions
@@ -314,6 +452,10 @@ export const useUIStore = defineStore('ui', () => {
     setTheme,
     applyTheme,
     loadTheme,
+    loadThemePreference,
+    saveThemePreference,
+    getSystemTheme,
+    getEffectiveTheme,
     toggleFullWidth,
     loadFullWidth,
     toggleMinimizeHeader,
@@ -326,8 +468,6 @@ export const useUIStore = defineStore('ui', () => {
     closeHelpModal,
     openTeamsModal,
     closeTeamsModal,
-    openAdminModal,
-    closeAdminModal,
     reset
   }
 })

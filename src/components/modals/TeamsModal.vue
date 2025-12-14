@@ -6,17 +6,44 @@
         <!-- Section création d'équipe -->
         <div class="create-team-section">
           <h4>Créer une nouvelle équipe</h4>
-          <div class="form-group">
-            <label>Nom de l'équipe</label>
-            <input v-model="newTeamName" type="text" placeholder="Ex: Équipe Marketing" />
-          </div>
-          <div class="form-group">
-            <label>Description (optionnel)</label>
-            <textarea v-model="newTeamDescription" placeholder="Description de l'équipe"></textarea>
-          </div>
-          <button @click="handleCreateTeam" class="btn-primary" :disabled="!newTeamName || creating">
-            {{ creating ? 'Création...' : 'Créer l\'équipe' }}
-          </button>
+          <Form @submit="onCreateTeamSubmit" v-slot="{ meta }" :initial-values="{ teamName: '', teamDescription: '' }">
+            <div class="form-group">
+              <label>Nom de l'équipe</label>
+              <Field
+                name="teamName"
+                type="text"
+                rules="required|min:2"
+                v-slot="{ field, errors }"
+              >
+                <input
+                  v-bind="field"
+                  type="text"
+                  class="form-input"
+                  :class="{ 'form-input-error': errors.length > 0 }"
+                  placeholder="Ex: Équipe Marketing"
+                />
+                <ErrorMessage name="teamName" class="field-error" />
+              </Field>
+            </div>
+            <div class="form-group">
+              <label>Description (optionnel)</label>
+              <Field
+                name="teamDescription"
+                v-slot="{ field, errors }"
+              >
+                <textarea
+                  v-bind="field"
+                  class="form-textarea"
+                  :class="{ 'form-input-error': errors.length > 0 }"
+                  placeholder="Description de l'équipe"
+                ></textarea>
+                <ErrorMessage name="teamDescription" class="field-error" />
+              </Field>
+            </div>
+            <button type="submit" class="btn-primary" :disabled="!meta.valid || creating">
+              {{ creating ? 'Création...' : 'Créer l\'équipe' }}
+            </button>
+          </Form>
         </div>
 
         <!-- Liste des équipes -->
@@ -127,16 +154,32 @@
       <!-- Dialog d'ajout de membre -->
       <div v-if="showAddMember" class="add-member-dialog">
         <h5>Inviter un membre</h5>
-        <div class="form-group">
-          <label>Email</label>
-          <input v-model="newMemberEmail" type="email" placeholder="email@example.com" />
-        </div>
-        <div class="dialog-actions">
-          <button @click="hideAddMemberDialog" class="btn-secondary">Annuler</button>
-          <button @click="handleInviteMember" class="btn-primary" :disabled="!newMemberEmail || inviting">
-            {{ inviting ? 'Envoi...' : 'Inviter' }}
-          </button>
-        </div>
+        <Form @submit="onInviteMemberSubmit" v-slot="{ meta }" :initial-values="{ email: '' }">
+          <div class="form-group">
+            <label>Email</label>
+            <Field
+              name="email"
+              type="email"
+              rules="required|email"
+              v-slot="{ field, errors }"
+            >
+              <input
+                v-bind="field"
+                type="email"
+                class="form-input"
+                :class="{ 'form-input-error': errors.length > 0 }"
+                placeholder="email@example.com"
+              />
+              <ErrorMessage name="email" class="field-error" />
+            </Field>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" @click="hideAddMemberDialog" class="btn-secondary">Annuler</button>
+            <button type="submit" class="btn-primary" :disabled="!meta.valid || inviting">
+              {{ inviting ? 'Envoi...' : 'Inviter' }}
+            </button>
+          </div>
+        </Form>
       </div>
     </div>
   </Modal>
@@ -144,6 +187,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useUIStore } from '../../stores/ui'
 import { useTeamsStore } from '../../stores/teams'
 import { useAuthStore } from '../../stores/auth'
@@ -151,21 +195,21 @@ import Modal from '../common/Modal.vue'
 import * as teamsService from '../../services/teams'
 import Swal from 'sweetalert2'
 import logger from '../../services/logger'
+import { useToast } from '../../composables/useToast'
+import devLogger from '../../utils/devLogger'
 
 const uiStore = useUIStore()
 const teamsStore = useTeamsStore()
 const authStore = useAuthStore()
+const { success, error: showErrorToast } = useToast()
 
 const showModal = computed(() => uiStore.showTeamsModal)
 const selectedTeam = ref(null)
 const members = ref([])
 const pendingInvitations = ref([])
 const loadingMembers = ref(false)
-const newTeamName = ref('')
-const newTeamDescription = ref('')
 const creating = ref(false)
 const showAddMember = ref(false)
-const newMemberEmail = ref('')
 const inviting = ref(false)
 
 const canDeleteTeam = computed(() => {
@@ -187,10 +231,7 @@ const canDeleteInvitation = computed(() => {
 function closeModal() {
   uiStore.closeTeamsModal()
   selectedTeam.value = null
-  newTeamName.value = ''
-  newTeamDescription.value = ''
   showAddMember.value = false
-  newMemberEmail.value = ''
 }
 
 function getRoleLabel(role) {
@@ -202,17 +243,17 @@ function getRoleLabel(role) {
   return labels[role] || role
 }
 
-async function handleCreateTeam() {
-  if (!newTeamName.value.trim()) return
-
+async function onCreateTeamSubmit(values) {
   try {
     creating.value = true
-    await teamsStore.createTeam(newTeamName.value, newTeamDescription.value)
-    Swal.fire('Succès', 'Équipe créée avec succès', 'success')
-    newTeamName.value = ''
-    newTeamDescription.value = ''
+    await teamsStore.createTeam(
+      values.teamName || '', 
+      values.teamDescription || ''
+    )
+    success('Équipe créée avec succès')
+    // Le formulaire se réinitialisera automatiquement via :initial-values
   } catch (err) {
-    Swal.fire('Erreur', err.message || 'Erreur lors de la création de l\'équipe', 'error')
+    showErrorToast(err.message || 'Erreur lors de la création de l\'équipe')
   } finally {
     creating.value = false
   }
@@ -228,7 +269,7 @@ async function showTeamDetails(team) {
     pendingInvitations.value = invitations.filter(inv => inv.status === 'pending')
   } catch (err) {
     logger.error('[TeamsModal] Erreur lors du chargement des membres:', err)
-    Swal.fire('Erreur', 'Impossible de charger les membres', 'error')
+    showErrorToast('Impossible de charger les membres')
   } finally {
     loadingMembers.value = false
   }
@@ -267,11 +308,11 @@ async function handleTransferOwnership(member) {
   if (result.isConfirmed) {
     try {
       await teamsService.transferTeamOwnership(selectedTeam.value.id, member.userId)
-      Swal.fire('Succès', 'Propriété transférée avec succès', 'success')
+      success('Propriété transférée avec succès')
       await showTeamDetails(selectedTeam.value)
       await teamsStore.loadUserTeams()
     } catch (err) {
-      Swal.fire('Erreur', err.message || 'Erreur lors du transfert', 'error')
+      showErrorToast(err.message || 'Erreur lors du transfert')
     }
   }
 }
@@ -289,10 +330,10 @@ async function handleRemoveMember(member) {
   if (result.isConfirmed) {
     try {
       await teamsService.removeTeamMember(selectedTeam.value.id, member.userId)
-      Swal.fire('Succès', 'Membre retiré avec succès', 'success')
+      success('Membre retiré avec succès')
       await showTeamDetails(selectedTeam.value)
     } catch (err) {
-      Swal.fire('Erreur', err.message || 'Erreur lors du retrait', 'error')
+      showErrorToast(err.message || 'Erreur lors du retrait')
     }
   }
 }
@@ -311,40 +352,36 @@ async function handleDeleteTeam() {
   if (result.isConfirmed) {
     try {
       await teamsService.deleteTeam(selectedTeam.value.id)
-      Swal.fire('Succès', 'Équipe supprimée avec succès', 'success')
+      success('Équipe supprimée avec succès')
       backToTeamsList()
       await teamsStore.loadUserTeams()
     } catch (err) {
-      Swal.fire('Erreur', err.message || 'Erreur lors de la suppression', 'error')
+      showErrorToast(err.message || 'Erreur lors de la suppression')
     }
   }
 }
 
 function showAddMemberDialog() {
   showAddMember.value = true
-  newMemberEmail.value = ''
 }
 
 function hideAddMemberDialog() {
   showAddMember.value = false
-  newMemberEmail.value = ''
 }
 
-async function handleInviteMember() {
-  if (!newMemberEmail.value.trim()) return
-
+async function onInviteMemberSubmit(values) {
   try {
     inviting.value = true
     await teamsService.inviteTeamMember(
       selectedTeam.value.id,
       authStore.user.id,
-      newMemberEmail.value
+      values.email || ''
     )
-    Swal.fire('Succès', 'Invitation envoyée', 'success')
+    success('Invitation envoyée')
     hideAddMemberDialog()
     await showTeamDetails(selectedTeam.value)
   } catch (err) {
-    Swal.fire('Erreur', err.message || 'Erreur lors de l\'invitation', 'error')
+    showErrorToast(err.message || 'Erreur lors de l\'invitation')
   } finally {
     inviting.value = false
   }
@@ -353,37 +390,37 @@ async function handleInviteMember() {
 async function handleDeleteInvitation(invitation) {
   try {
     await teamsService.deleteTeamInvitation(invitation.id)
-    Swal.fire('Succès', 'Invitation annulée', 'success')
+    success('Invitation annulée')
     await showTeamDetails(selectedTeam.value)
   } catch (err) {
-    Swal.fire('Erreur', err.message || 'Erreur lors de l\'annulation', 'error')
+    showErrorToast(err.message || 'Erreur lors de l\'annulation')
   }
 }
 
 watch(showModal, async (isOpen) => {
   if (isOpen) {
-    console.log('[TeamsModal] Modal ouverte, chargement des équipes...')
+    devLogger.log('[TeamsModal] Modal ouverte, chargement des équipes...')
     if (!authStore.user?.id) {
-      console.warn('[TeamsModal] Utilisateur non disponible')
+      devLogger.warn('[TeamsModal] Utilisateur non disponible')
       return
     }
     try {
       await teamsStore.loadUserTeams()
-      console.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
+      devLogger.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
     } catch (err) {
-      console.error('[TeamsModal] Erreur lors du chargement:', err)
+      logger.error('[TeamsModal] Erreur lors du chargement:', err)
     }
   }
 })
 
 onMounted(async () => {
   if (showModal.value && authStore.user?.id) {
-    console.log('[TeamsModal] Composant monté, chargement des équipes...')
+    devLogger.log('[TeamsModal] Composant monté, chargement des équipes...')
     try {
       await teamsStore.loadUserTeams()
-      console.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
+      devLogger.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
     } catch (err) {
-      console.error('[TeamsModal] Erreur lors du chargement:', err)
+      logger.error('[TeamsModal] Erreur lors du chargement:', err)
     }
   }
 })
@@ -420,17 +457,43 @@ onMounted(async () => {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-input,
+.form-textarea {
   width: 100%;
   padding: 10px;
   border: 2px solid var(--border-color);
   border-radius: 4px;
   font-size: 1em;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
 }
 
-.form-group textarea {
+.form-group input:focus,
+.form-group textarea:focus,
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color, #4a90e2);
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+.form-group textarea,
+.form-textarea {
   min-height: 80px;
   resize: vertical;
+}
+
+.form-input-error,
+.form-textarea.form-input-error {
+  border-color: #e74c3c;
+}
+
+.field-error {
+  display: block;
+  color: #e74c3c;
+  font-size: 0.85em;
+  margin-top: 5px;
 }
 
 .teams-list-section {

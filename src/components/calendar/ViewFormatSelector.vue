@@ -7,7 +7,8 @@
       @change="handleFormatChange"
       class="format-select"
     >
-      <option value="semester">Vue Semestrielle</option>
+      <option value="semester">Vue Annuelle</option>
+      <option value="columns">Vue Colonnes</option>
       <option value="presence">Matrice de Présence (Horizontale)</option>
       <option value="presence-vertical">Matrice de Présence (Verticale)</option>
     </select>
@@ -35,35 +36,34 @@ function handleFormatChange(event) {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
-  padding: 10px;
-  background: var(--card-bg, white);
-  border-radius: 4px;
-  border: 1px solid var(--border-color, #e0e0e0);
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
 .format-label {
   font-weight: 500;
   color: var(--text-color, #2c3e50);
   font-size: 0.95em;
+  white-space: nowrap;
 }
 
 .format-select {
-  flex: 1;
-  max-width: 300px;
+  min-width: 200px;
   padding: 8px 12px;
   border: 1px solid var(--border-color, #e0e0e0);
   border-radius: 4px;
-  background-color: var(--bg-color, #f5f5f5);
+  background-color: var(--card-bg, white);
   color: var(--text-color, #2c3e50);
   font-size: 0.95em;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .format-select:hover {
   border-color: var(--primary-color, #4a90e2);
-  background-color: var(--card-bg, white);
+  box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.1);
 }
 
 .format-select:focus {

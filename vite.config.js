@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
 export default defineConfig({
+  base: '/gestion-conges/',
   plugins: [
     vue(),
     VitePWA({
@@ -38,6 +39,9 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src')
     }
+  },
+  optimizeDeps: {
+    include: ['@vuepic/vue-datepicker', 'date-fns']
   },
   build: {
     outDir: 'dist',

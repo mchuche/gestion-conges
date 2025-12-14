@@ -15,9 +15,11 @@
         <button
           class="theme-toggle"
           @click="toggleTheme"
-          :title="theme === 'dark' ? 'Mode clair' : 'Mode sombre'"
+          :title="themeTitle"
         >
-          {{ theme === 'dark' ? '☀️' : '🌙' }}
+          <span v-if="themeMode === 'auto'">🖥️</span>
+          <span v-else-if="theme === 'dark'">☀️</span>
+          <span v-else>🌙</span>
         </button>
         <button
           class="full-width-toggle"
@@ -27,59 +29,85 @@
         >
           ⛶
         </button>
-        <div class="menu-dropdown">
-          <button class="menu-btn" @click="toggleMenu" title="Menu">
+        <Menu as="div" class="menu-dropdown">
+          <MenuButton class="menu-btn" title="Menu">
             ☰
-          </button>
-          <div class="menu-dropdown-content" :class="{ show: showMenu }">
-            <button class="menu-item" @click="openConfig">
-              ⚙️ Configuration
-            </button>
-            <button class="menu-item" @click="openHelp">
-              ❓ Aide
-            </button>
-            <button class="menu-item" @click="openTeams">
-              👥 Équipes
-            </button>
-            <button
-              v-if="authStore.isAdmin"
-              class="menu-item"
-              @click="openAdmin"
-            >
-              ⚙️ Administration
-            </button>
+          </MenuButton>
+          <MenuItems class="menu-dropdown-content">
+            <MenuItem v-slot="{ active }">
+              <button
+                :class="['menu-item', { active }]"
+                @click="openConfig"
+              >
+                ⚙️ Configuration
+              </button>
+            </MenuItem>
+            <MenuItem v-slot="{ active }">
+              <button
+                :class="['menu-item', { active }]"
+                @click="openHelp"
+              >
+                ❓ Aide
+              </button>
+            </MenuItem>
+            <MenuItem v-slot="{ active }">
+              <button
+                :class="['menu-item', { active }]"
+                @click="openTeams"
+              >
+                👥 Équipes
+              </button>
+            </MenuItem>
+            <MenuItem v-if="authStore.isAdmin" v-slot="{ active }">
+              <button
+                :class="['menu-item', { active }]"
+                @click="openAdmin"
+              >
+                ⚙️ Administration
+              </button>
+            </MenuItem>
             <div class="menu-divider"></div>
-            <button class="menu-item" @click="logout">
-              🚪 Déconnexion
-            </button>
-          </div>
-        </div>
+            <MenuItem v-slot="{ active }">
+              <button
+                :class="['menu-item', { active }]"
+                @click="logout"
+              >
+                🚪 Déconnexion
+              </button>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
+import { useToast } from '../../composables/useToast'
+import logger from '../../services/logger'
 import Icon from '../common/Icon.vue'
 
+const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const { error: showErrorToast } = useToast()
 
-const showMenu = ref(false)
 const theme = computed(() => uiStore.theme)
+const themeMode = computed(() => uiStore.themeMode)
 const fullWidth = computed(() => uiStore.fullWidth)
 const minimizeHeader = computed(() => uiStore.minimizeHeader)
 
-function toggleMenu() {
-  showMenu.value = !showMenu.value
-}
-
-function closeMenu() {
-  showMenu.value = false
-}
+const themeTitle = computed(() => {
+  if (themeMode.value === 'auto') {
+    return `Mode automatique (actuellement: ${theme.value === 'dark' ? 'sombre' : 'clair'})`
+  }
+  return theme.value === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'
+})
 
 function toggleTheme() {
   uiStore.toggleTheme()
@@ -95,57 +123,39 @@ function toggleMinimizeHeader() {
 
 function openConfig() {
   uiStore.openConfigModal()
-  closeMenu()
 }
 
 function openHelp() {
   uiStore.openHelpModal()
-  closeMenu()
 }
 
 function openTeams() {
   uiStore.openTeamsModal()
-  closeMenu()
 }
 
 function openAdmin() {
-  uiStore.openAdminModal()
-  closeMenu()
+  router.push('/admin')
 }
 
 async function logout() {
   try {
     const result = await authStore.signOut()
-    if (result.success) {
-      closeMenu()
-      // La réactivité de Vue devrait automatiquement afficher la modale d'auth
-      // car isAuthenticated devient false
-    } else {
-      console.error('Erreur lors de la déconnexion:', result.error)
-      alert('Erreur lors de la déconnexion: ' + result.error)
+    if (!result.success) {
+      logger.error('Erreur lors de la déconnexion:', result.error)
+      showErrorToast('Erreur lors de la déconnexion: ' + result.error)
     }
+    // La réactivité de Vue devrait automatiquement afficher la modale d'auth
+    // car isAuthenticated devient false
   } catch (error) {
-    console.error('Erreur lors de la déconnexion:', error)
-    alert('Erreur lors de la déconnexion')
-  }
-}
-
-// Fermer le menu quand on clique ailleurs
-function handleClickOutside(event) {
-  if (!event.target.closest('.menu-dropdown')) {
-    closeMenu()
+    logger.error('Erreur lors de la déconnexion:', error)
+    showErrorToast('Erreur lors de la déconnexion')
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
   if (typeof uiStore.loadMinimizeHeader === 'function') {
     uiStore.loadMinimizeHeader()
   }
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -262,7 +272,6 @@ onUnmounted(() => {
 }
 
 .menu-dropdown-content {
-  display: none;
   position: absolute;
   right: 0;
   top: calc(100% + 5px);
@@ -273,22 +282,17 @@ onUnmounted(() => {
   z-index: 10000;
   border: 1px solid var(--border-color);
   overflow: hidden;
+  outline: none;
+  transform-origin: top right;
 }
 
-.menu-dropdown-content.show {
+/* Headless UI masque le menu avec hidden, on le gère avec CSS */
+.menu-dropdown-content[hidden] {
+  display: none;
+}
+
+.menu-dropdown-content:not([hidden]) {
   display: block;
-  animation: slideDown 0.2s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .menu-item {
@@ -304,7 +308,13 @@ onUnmounted(() => {
   transition: background 0.2s;
 }
 
-.menu-item:hover {
+.menu-item:hover,
+.menu-item.active {
+  background: var(--hover-color);
+}
+
+.menu-item:focus {
+  outline: none;
   background: var(--hover-color);
 }
 

@@ -1,52 +1,78 @@
 <template>
   <div class="auth-form">
     <h3>👤 Inscription</h3>
-    <div v-if="error" class="error-message">{{ error }}</div>
+    <div v-if="authError" class="error-message">{{ authError }}</div>
     
-    <div class="auth-input-group">
-      <label for="signupEmail">Email :</label>
-      <input 
-        type="email" 
-        id="signupEmail" 
-        v-model="email"
-        class="auth-input" 
-        placeholder="votre@email.com" 
-        required
+    <Form @submit="onSubmit" v-slot="{ meta }" :initial-values="{ email: '', password: '', name: '' }">
+      <div class="auth-input-group">
+        <label for="signupEmail">Email :</label>
+        <Field
+          id="signupEmail"
+          name="email"
+          type="email"
+          rules="required|email"
+          v-slot="{ field, errors }"
+        >
+          <input
+            v-bind="field"
+            type="email"
+            class="auth-input"
+            :class="{ 'auth-input-error': errors.length > 0 }"
+            placeholder="votre@email.com"
+          />
+          <ErrorMessage name="email" class="field-error" />
+        </Field>
+      </div>
+      
+      <div class="auth-input-group">
+        <label for="signupPassword">Mot de passe :</label>
+        <Field
+          id="signupPassword"
+          name="password"
+          type="password"
+          rules="required|min:6"
+          v-slot="{ field, errors }"
+        >
+          <input
+            v-bind="field"
+            type="password"
+            class="auth-input"
+            :class="{ 'auth-input-error': errors.length > 0 }"
+            placeholder="••••••••"
+          />
+          <ErrorMessage name="password" class="field-error" />
+          <small class="auth-hint">Minimum 6 caractères</small>
+        </Field>
+      </div>
+      
+      <div class="auth-input-group">
+        <label for="signupName">Nom :</label>
+        <Field
+          id="signupName"
+          name="name"
+          type="text"
+          rules="required|min:2"
+          v-slot="{ field, errors }"
+        >
+          <input
+            v-bind="field"
+            type="text"
+            class="auth-input"
+            :class="{ 'auth-input-error': errors.length > 0 }"
+            placeholder="Votre nom"
+          />
+          <ErrorMessage name="name" class="field-error" />
+        </Field>
+      </div>
+      
+      <button 
+        type="submit"
+        :disabled="loading || !meta.valid"
+        class="save-btn"
       >
-    </div>
-    
-    <div class="auth-input-group">
-      <label for="signupPassword">Mot de passe :</label>
-      <input 
-        type="password" 
-        id="signupPassword" 
-        v-model="password"
-        class="auth-input" 
-        placeholder="••••••••" 
-        required
-      >
-      <small class="auth-hint">Minimum 6 caractères</small>
-    </div>
-    
-    <div class="auth-input-group">
-      <label for="signupName">Nom :</label>
-      <input 
-        type="text" 
-        id="signupName" 
-        v-model="name"
-        class="auth-input" 
-        placeholder="Votre nom" 
-        required
-      >
-    </div>
-    
-    <button 
-      @click="handleSignup" 
-      :disabled="loading"
-      class="save-btn"
-    >
-      {{ loading ? 'Inscription...' : "S'inscrire" }}
-    </button>
+        {{ loading ? 'Inscription...' : "S'inscrire" }}
+      </button>
+    </Form>
     
     <p class="auth-switch">
       Déjà un compte ? 
@@ -57,50 +83,53 @@
 
 <script setup>
 import { ref } from 'vue'
+import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useAuthStore } from '../../stores/auth'
+import { useToast } from '../../composables/useToast'
+import logger from '../../services/logger'
 
 const emit = defineEmits(['switch-to-login'])
 
 const authStore = useAuthStore()
-const email = ref('')
-const password = ref('')
-const name = ref('')
+const { success, error: showErrorToast } = useToast()
 const loading = ref(false)
-const error = ref(null)
+const authError = ref(null)
 
-async function handleSignup() {
-  if (!email.value || !password.value || !name.value) {
-    error.value = 'Veuillez remplir tous les champs'
-    return
-  }
-  
-  if (password.value.length < 6) {
-    error.value = 'Le mot de passe doit contenir au moins 6 caractères'
-    return
-  }
-  
+// Handler de soumission avec validation VeeValidate
+async function onSubmit(values) {
+  authError.value = null
   loading.value = true
-  error.value = null
+  
+  // S'assurer que les valeurs sont bien définies
+  const email = values.email?.trim() || ''
+  const password = values.password || ''
+  const name = values.name?.trim() || ''
+  
+  // Validation supplémentaire côté client
+  if (!email || !password || !name) {
+    authError.value = 'Veuillez remplir tous les champs'
+    showErrorToast('Veuillez remplir tous les champs')
+    loading.value = false
+    return
+  }
   
   try {
-    console.log('Tentative d\'inscription...')
-    const result = await authStore.signUp(email.value, password.value, name.value)
-    console.log('Résultat inscription:', result)
+    const result = await authStore.signUp(email, password, name)
     
     if (!result.success) {
-      error.value = result.error || 'Erreur lors de l\'inscription'
-      alert('Erreur d\'inscription: ' + (result.error || 'Une erreur est survenue'))
+      authError.value = result.error || 'Erreur lors de l\'inscription'
+      showErrorToast('Erreur d\'inscription: ' + (result.error || 'Une erreur est survenue'))
     } else {
       if (result.needsConfirmation) {
-        alert('Inscription réussie ! Vérifiez votre email pour confirmer votre compte.')
+        success('Inscription réussie ! Vérifiez votre email pour confirmer votre compte.')
       } else {
-        alert('Inscription réussie ! Vous êtes maintenant connecté.')
+        success('Inscription réussie ! Vous êtes maintenant connecté.')
       }
     }
   } catch (err) {
-    error.value = 'Une erreur est survenue'
-    console.error('Erreur inscription:', err)
-    alert('Erreur: ' + (err.message || err))
+    authError.value = 'Une erreur est survenue'
+    logger.error('Erreur inscription:', err)
+    showErrorToast('Erreur: ' + (err.message || err))
   } finally {
     loading.value = false
   }
@@ -130,6 +159,24 @@ async function handleSignup() {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--primary-color, #4a90e2);
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+.auth-input-error {
+  border-color: #e74c3c;
+}
+
+.field-error {
+  display: block;
+  color: #e74c3c;
+  font-size: 0.85em;
+  margin-top: 5px;
 }
 
 .auth-hint {

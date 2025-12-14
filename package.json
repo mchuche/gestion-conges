@@ -6,20 +6,35 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write \"src/**/*.{vue,js,jsx,ts,tsx,json,css,scss,md}\""
   },
   "dependencies": {
-    "vue": "^3.4.15",
-    "pinia": "^2.1.7",
+    "@formkit/auto-animate": "^0.9.0",
+    "@headlessui/vue": "^1.7.23",
     "@supabase/supabase-js": "^2.39.3",
-    "sweetalert2": "^11.10.5",
+    "@vee-validate/i18n": "^4.15.1",
+    "@vee-validate/rules": "^4.15.1",
+    "@vuepic/vue-datepicker": "^12.1.0",
+    "@vueuse/core": "^14.1.0",
+    "date-fns": "^3.2.0",
     "lucide-vue-next": "^0.309.0",
-    "date-fns": "^3.2.0"
+    "pinia": "^2.1.7",
+    "sweetalert2": "^11.10.5",
+    "vee-validate": "^4.15.1",
+    "vue": "^3.4.15",
+    "vue-i18n": "^11.2.2",
+    "vue-router": "^4.6.4",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "eslint": "^9.39.2",
+    "eslint-plugin-vue": "^10.6.2",
+    "prettier": "^3.7.4",
     "vite": "^5.1.0",
     "vite-plugin-pwa": "^0.17.4"
   }
 }
-

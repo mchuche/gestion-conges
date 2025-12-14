@@ -95,6 +95,19 @@
             Enregistrer
           </button>
         </div>
+
+        <!-- Section Compte -->
+        <div class="account-section">
+          <h4>Compte</h4>
+          <div class="account-actions">
+            <button class="btn-danger" @click="handleDeleteAccount">
+              🗑️ Supprimer mon compte et toutes mes données
+            </button>
+            <p class="account-warning">
+              ⚠️ <strong>Attention :</strong> Cette action est irréversible. Toutes vos données (congés, types de congés, quotas, équipes, etc.) seront définitivement supprimées.
+            </p>
+          </div>
+        </div>
       </div>
     </template>
   </Modal>
@@ -106,14 +119,20 @@ import { useUIStore } from '../../stores/ui'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useLeavesStore } from '../../stores/leaves'
+import { useAuthStore } from '../../stores/auth'
 import { useLeaves } from '../../composables/useLeaves'
+import { useToast } from '../../composables/useToast'
 import Modal from '../common/Modal.vue'
 import logger from '../../services/logger'
+import devLogger from '../../utils/devLogger'
+import Swal from 'sweetalert2'
 
 const uiStore = useUIStore()
 const leaveTypesStore = useLeaveTypesStore()
+const { error: showErrorToast, success: showSuccessToast } = useToast()
 const quotasStore = useQuotasStore()
 const leavesStore = useLeavesStore()
+const authStore = useAuthStore()
 const { isLeaveTypeUsed, countLeaveTypeUsage } = useLeaves()
 
 const showModal = computed(() => uiStore.showConfigModal)
@@ -149,22 +168,22 @@ watch([configYear, leaveTypes], async () => {
 // Charger les données quand la modale s'ouvre
 watch(showModal, async (isOpen) => {
   if (isOpen) {
-    console.log('[ConfigModal] Modal ouverte, chargement des données...')
+    devLogger.log('[ConfigModal] Modal ouverte, chargement des données...')
     // S'assurer que les types de congés sont chargés
     if (leaveTypes.value.length === 0) {
-      console.log('[ConfigModal] Chargement des types de congés...')
+      devLogger.log('[ConfigModal] Chargement des types de congés...')
       await leaveTypesStore.loadLeaveTypes()
     }
-    console.log('[ConfigModal] LeaveTypes chargés:', leaveTypes.value.length)
+    devLogger.log('[ConfigModal] LeaveTypes chargés:', leaveTypes.value.length)
     await loadQuotas()
-    console.log('[ConfigModal] Quotas chargés:', quotas.value)
+    devLogger.log('[ConfigModal] Quotas chargés:', quotas.value)
   }
 })
 
 onMounted(async () => {
   // Charger les types de congés au montage si nécessaire
   if (leaveTypes.value.length === 0) {
-    console.log('[ConfigModal] Composant monté, chargement des types de congés...')
+    devLogger.log('[ConfigModal] Composant monté, chargement des types de congés...')
     await leaveTypesStore.loadLeaveTypes()
   }
 })
@@ -215,19 +234,28 @@ async function handleDeleteType(index) {
   // Vérifier si ce type est utilisé
   const isUsed = isLeaveTypeUsed(typeToDelete.id)
   
-  let confirmMessage = `Êtes-vous sûr de vouloir supprimer le type "${typeToDelete.name}" ?`
+  let confirmMessage = `Êtes-vous sûr de vouloir supprimer le type "<strong>${typeToDelete.name}</strong>" ?`
   if (isUsed) {
     const usageCount = countLeaveTypeUsage(typeToDelete.id)
-    confirmMessage += `\n\n⚠️ Attention : Ce type est utilisé dans ${usageCount} jour(s) de congé. Ces congés seront également supprimés.`
+    confirmMessage += `<br><br>⚠️ <strong>Attention</strong> : Ce type est utilisé dans ${usageCount} jour(s) de congé. Ces congés seront également supprimés.`
   }
   if (leaveTypes.value.length === 1) {
-    confirmMessage += `\n\n⚠️ Attention : C'est le dernier type de congé. Vous devrez en créer un nouveau.`
+    confirmMessage += `<br><br>⚠️ <strong>Attention</strong> : C'est le dernier type de congé. Vous devrez en créer un nouveau.`
   }
   
-  // TODO: Utiliser SweetAlert2 ou un composant de confirmation
-  const confirmed = window.confirm(confirmMessage)
+  // Utiliser SweetAlert2 pour la confirmation
+  const result = await Swal.fire({
+    title: 'Supprimer le type de congé ?',
+    html: confirmMessage,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, supprimer',
+    cancelButtonText: 'Annuler',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6'
+  })
   
-  if (confirmed) {
+  if (result.isConfirmed) {
     // Supprimer les congés de ce type si nécessaire
     if (isUsed) {
       await leavesStore.removeLeavesByType(typeToDelete.id)
@@ -269,21 +297,30 @@ async function handleAddType() {
 }
 
 async function handleResetAllLeaves() {
-  const confirmed = window.confirm(
-    '⚠️ ATTENTION : Cette action est irréversible !\n\n' +
-    'Voulez-vous vraiment supprimer TOUS vos jours de congé ?\n\n' +
-    'Tous les congés enregistrés seront définitivement supprimés.'
-  )
+  const result = await Swal.fire({
+    title: '⚠️ ATTENTION',
+    html: 'Cette action est <strong style="color: #e74c3c;">irréversible</strong> !<br><br>' +
+          'Voulez-vous vraiment supprimer <strong>TOUS</strong> vos jours de congé ?<br><br>' +
+          'Tous les congés enregistrés seront définitivement supprimés.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, tout supprimer',
+    cancelButtonText: 'Annuler',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6'
+  })
   
-  if (confirmed) {
+  if (result.isConfirmed) {
     try {
       leavesStore.clearAllLeaves()
       await leavesStore.saveLeaves()
+      // Recharger les congés depuis la base pour rafraîchir l'affichage du calendrier
+      await leavesStore.loadLeaves()
       logger.log('Tous les congés ont été réinitialisés')
-      // TODO: Rafraîchir l'affichage du calendrier
+      showSuccessToast('Tous les congés ont été réinitialisés')
     } catch (error) {
       logger.error('Erreur lors de la réinitialisation:', error)
-      alert('Erreur lors de la réinitialisation des congés')
+      showErrorToast('Erreur lors de la réinitialisation des congés')
     }
   }
 }
@@ -297,7 +334,54 @@ async function handleSave() {
     closeModal()
   } catch (error) {
     logger.error('Erreur lors de la sauvegarde:', error)
-    alert('Erreur lors de la sauvegarde de la configuration')
+    showErrorToast('Erreur lors de la sauvegarde de la configuration')
+  }
+}
+
+async function handleDeleteAccount() {
+  const result = await Swal.fire({
+    title: '🗑️ Supprimer mon compte ?',
+    html: 'Cette action est <strong style="color: #e74c3c;">irréversible</strong> !<br><br>' +
+          'Toutes vos données seront définitivement supprimées :<br>' +
+          '• Tous vos congés<br>' +
+          '• Vos types de congés personnalisés<br>' +
+          '• Vos quotas<br>' +
+          '• Vos préférences<br>' +
+          '• Votre participation aux équipes<br><br>' +
+          'Si vous possédez des équipes, elles seront transférées au premier membre disponible ou supprimées.<br><br>' +
+          'Le compte Supabase devra être supprimé depuis le dashboard Supabase.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, supprimer mon compte',
+    cancelButtonText: 'Annuler',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    input: 'text',
+    inputLabel: 'Tapez "SUPPRIMER" pour confirmer',
+    inputPlaceholder: 'SUPPRIMER',
+    inputValidator: (value) => {
+      if (value !== 'SUPPRIMER') {
+        return 'Vous devez taper "SUPPRIMER" pour confirmer'
+      }
+    }
+  })
+  
+  if (result.isConfirmed) {
+    try {
+      devLogger.log('[ConfigModal] Suppression du compte demandée')
+      const deleteResult = await authStore.deleteAccount()
+      
+      if (deleteResult.success) {
+        showSuccessToast('Votre compte et toutes vos données ont été supprimés. Vous allez être déconnecté.')
+        closeModal()
+        // La déconnexion automatique devrait déjà avoir eu lieu dans deleteAccount
+      } else {
+        showErrorToast('Erreur lors de la suppression du compte: ' + (deleteResult.error || 'Erreur inconnue'))
+      }
+    } catch (error) {
+      logger.error('[ConfigModal] Erreur lors de la suppression du compte:', error)
+      showErrorToast('Erreur lors de la suppression du compte: ' + (error.message || error))
+    }
   }
 }
 
@@ -435,6 +519,34 @@ function closeModal() {
   margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid var(--border-color);
+}
+
+.account-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid var(--border-color);
+}
+
+.account-section h4 {
+  margin-bottom: 15px;
+  color: var(--text-color);
+  font-size: 1.1em;
+}
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.account-warning {
+  font-size: 0.9em;
+  color: var(--danger-color, #e74c3c);
+  margin: 0;
+  padding: 10px;
+  background: var(--danger-bg, #ffeaea);
+  border-radius: 4px;
+  border: 1px solid var(--danger-color, #e74c3c);
 }
 
 .btn-primary,

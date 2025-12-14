@@ -1,26 +1,31 @@
 <template>
   <div class="calendar-container">
     <div class="calendar-header">
-      <div class="header-controls">
-        <button
-          v-if="minimizeHeader"
-          id="minimizeHeaderBtn"
-          class="minimize-header-btn"
-          :class="{ active: minimizeHeader }"
-          @click="toggleMinimizeHeader"
-          :title="minimizeHeader ? 'Afficher les éléments du header' : 'Masquer les éléments du header'"
-        >
-          <Icon :name="minimizeHeader ? 'chevrons-down' : 'chevrons-up'" />
-        </button>
-        <button class="nav-btn" @click="previousYear" title="Année précédente">
-          ◀
-        </button>
-        <h2 id="currentMonth">{{ calendarTitle }}</h2>
-        <button class="nav-btn" @click="nextYear" title="Année suivante">
-          ▶
-        </button>
+      <div class="header-controls-row">
+        <div class="header-controls">
+          <button
+            v-if="minimizeHeader"
+            id="minimizeHeaderBtn"
+            class="minimize-header-btn"
+            :class="{ active: minimizeHeader }"
+            @click="toggleMinimizeHeader"
+            :title="minimizeHeader ? 'Afficher les éléments du header' : 'Masquer les éléments du header'"
+          >
+            <Icon :name="minimizeHeader ? 'chevrons-down' : 'chevrons-up'" />
+          </button>
+          <button class="nav-btn" @click="previousYear" title="Année précédente">
+            ◀
+          </button>
+          <h2 id="currentMonth">{{ calendarTitle }}</h2>
+          <button class="nav-btn" @click="nextYear" title="Année suivante">
+            ▶
+          </button>
+        </div>
+        <div class="calendar-header-options">
+          <ViewFormatSelector id="yearViewFormatSelect" />
+          <TeamSelector v-if="yearViewFormat === 'presence' || yearViewFormat === 'presence-vertical'" />
+        </div>
       </div>
-      <ViewFormatSelector id="yearViewFormatSelect" />
     </div>
 
     <Stats class="stats" />
@@ -31,6 +36,11 @@
     <div id="semesterCalendar" :class="calendarViewClass">
       <YearViewSemester
         v-if="yearViewFormat === 'semester'"
+        @day-click="handleDayClick"
+        @day-mousedown="handleDayMouseDown"
+      />
+      <YearViewColumns
+        v-if="yearViewFormat === 'columns'"
         @day-click="handleDayClick"
         @day-mousedown="handleDayMouseDown"
       />
@@ -52,12 +62,15 @@
 import { computed, onMounted, watch } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useLeavesStore } from '../../stores/leaves'
+import logger from '../../services/logger'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useAuthStore } from '../../stores/auth'
 import { defineAsyncComponent } from 'vue'
 import YearViewSemester from './YearViewSemester.vue'
+import YearViewColumns from './YearViewColumns.vue'
 import ViewFormatSelector from './ViewFormatSelector.vue'
+import TeamSelector from '../common/TeamSelector.vue'
 import Stats from '../stats/Stats.vue'
 import Quotas from '../stats/Quotas.vue'
 import HelpHint from '../common/HelpHint.vue'
@@ -94,6 +107,8 @@ const calendarTitle = computed(() => {
     return `Matrice de Présence ${currentYear.value}`
   } else if (yearViewFormat.value === 'presence-vertical') {
     return `Matrice de Présence ${currentYear.value} (Verticale)`
+  } else if (yearViewFormat.value === 'columns') {
+    return `Vue Colonnes ${currentYear.value}`
   }
   return currentYearTitle.value
 })
@@ -118,9 +133,9 @@ async function loadAllData() {
       uiStore.loadTheme(),
       uiStore.loadFullWidth()
     ])
-    console.log('Toutes les données chargées')
+    logger.log('Toutes les données chargées')
   } catch (err) {
-    console.error('Erreur lors du chargement des données:', err)
+    logger.error('Erreur lors du chargement des données:', err)
   }
 }
 
@@ -139,25 +154,79 @@ function toggleMinimizeHeader() {
 }
 
 function handleDayClick(date, event) {
-  // Ouvrir la modale pour sélectionner le type de congé
+  // Si on est en mode sélection multiple avec des dates déjà sélectionnées,
+  // ouvrir la modale pour appliquer le congé aux jours sélectionnés
+  if (uiStore.multiSelectMode && uiStore.selectedDates.length > 0) {
+    // Ouvrir la modale avec la date courante comme référence
+    // La modale devra gérer l'application aux dates sélectionnées
+    uiStore.setSelectedDate(date)
+    uiStore.openModal()
+    return
+  }
+  
+  // Ne pas ouvrir la modale si on est en train de sélectionner (mode multi activé mais aucune date encore)
+  if (uiStore.multiSelectMode) {
+    return
+  }
+  
+  // Ouvrir la modale pour sélectionner le type de congé (clic simple)
   uiStore.setSelectedDate(date)
   uiStore.openModal()
+  
+  // Empêcher la propagation si l'événement existe
+  if (event && typeof event.stopPropagation === 'function') {
+    event.stopPropagation()
+  }
 }
 
 function handleDayMouseDown(date, event) {
   // Gérer la sélection multiple avec Ctrl/Cmd
-  if (event.ctrlKey || event.metaKey) {
+  // Utiliser le store en priorité (plus fiable car mis à jour par les listeners globaux)
+  // Vérifier aussi l'événement natif comme fallback
+  let ctrlKey = uiStore.ctrlKeyPressed
+  let metaKey = false
+  
+  // Fallback : vérifier dans l'événement natif si disponible
+  if (!ctrlKey && event && typeof event === 'object') {
+    if (event instanceof MouseEvent || ('ctrlKey' in event) || ('metaKey' in event)) {
+      ctrlKey = event.ctrlKey === true
+      metaKey = event.metaKey === true
+    }
+  }
+  
+  const isMultiSelect = ctrlKey || metaKey
+  
+  if (isMultiSelect) {
     uiStore.setMultiSelectMode(true)
+    // Empêcher le click d'ouvrir la modale immédiatement
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault()
+    }
     if (uiStore.selectedDates.find(d => getDateKey(d) === getDateKey(date))) {
       uiStore.removeSelectedDate(date)
     } else {
       uiStore.addSelectedDate(date)
     }
   } else {
-    // Clic simple : sélectionner ce jour uniquement
-    uiStore.setSelectedDate(date)
-    uiStore.clearSelectedDates()
-    uiStore.setMultiSelectMode(false)
+    // Clic simple sans Ctrl
+    // Si on a déjà des dates sélectionnées en mode multi, ne pas les effacer
+    // mais permettre l'ouverture de la modale pour les appliquer
+    if (uiStore.multiSelectMode && uiStore.selectedDates.length > 0) {
+      // Garder le mode sélection multiple et les dates sélectionnées
+      // Ne pas empêcher le click - il doit ouvrir la modale
+      uiStore.setSelectedDate(date)
+      // Ne pas faire preventDefault ici pour permettre au click de se déclencher
+    } else {
+      // Clic simple sans sélection multiple : sélectionner ce jour uniquement
+      uiStore.setSelectedDate(date)
+      uiStore.clearSelectedDates()
+      uiStore.setMultiSelectMode(false)
+    }
+  }
+  
+  // Empêcher la propagation si l'événement existe
+  if (event && typeof event.stopPropagation === 'function') {
+    event.stopPropagation()
   }
 }
 
@@ -177,12 +246,40 @@ onMounted(async () => {
   margin-bottom: 20px;
 }
 
+.header-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
 .header-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 20px;
-  margin-bottom: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-header-options {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.calendar-header h2 {
+  margin: 0;
+  color: var(--text-color, #2c3e50);
+  font-size: 2em;
 }
 
 .nav-btn {
@@ -207,13 +304,13 @@ onMounted(async () => {
   transform: scale(0.95);
 }
 
-#currentMonth {
-  font-size: 1.6em;
+.calendar-header-title-row #currentMonth {
+  font-size: 2em;
   font-weight: 600;
-  min-width: 250px;
   color: var(--text-color, #2c3e50);
   line-height: 1.2;
-  text-align: center;
+  text-align: left;
+  margin: 0;
 }
 
 #semesterCalendar {
@@ -259,6 +356,27 @@ onMounted(async () => {
 
 .header-controls .minimize-header-btn.active {
   background: var(--secondary-color, #50c878);
+}
+
+@media (max-width: 768px) {
+  .header-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .calendar-header h2 {
+    font-size: 1.5em;
+  }
+
+  .calendar-header-options {
+    justify-content: center;
+  }
 }
 </style>
 

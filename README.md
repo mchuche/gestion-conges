@@ -22,7 +22,6 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 - 📱 **Responsive** : Fonctionne parfaitement sur ordinateur, tablette et mobile
 - 🎯 **Interface moderne** : Design élégant et intuitif
 - 📲 **PWA (Progressive Web App)** : Installable comme une app native, fonctionne hors ligne
-- 📲 **PWA (Progressive Web App)** : Installable comme une app native, fonctionne hors ligne
 
 ## 🚀 Installation et Configuration
 
@@ -40,17 +39,25 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 2. **Configurer les clés API** :
 
    **Pour le développement local :**
-   - Exécutez `setup-local.bat` (Windows) ou `./setup-local.sh` (Linux/Mac)
-   - Modifiez `config.js` avec vos clés Supabase
-   - ⚠️ **Ne commitez JAMAIS `config.js` dans Git** (déjà dans `.gitignore`)
+   - Copiez `.env.example` vers `.env`
+   - Modifiez `.env` avec vos clés Supabase :
+     ```
+     VITE_SUPABASE_URL=votre_url_supabase
+     VITE_SUPABASE_ANON_KEY=votre_cle_anon
+     ```
+   - ⚠️ **Ne commitez JAMAIS `.env` dans Git** (déjà dans `.gitignore`)
 
    **Pour GitHub Pages :**
    - Configurez les secrets GitHub (voir section "Déploiement")
-   - Le fichier `config.js` sera généré automatiquement lors du déploiement
+   - Les variables d'environnement seront utilisées lors du déploiement
 
-3. **Ouvrir l'application** :
-   - Ouvrez `index.html` dans votre navigateur
-   - Ou servez via un serveur web local (recommandé)
+3. **Installer les dépendances et lancer l'application** :
+   ```bash
+   npm install
+   npm run dev
+   ```
+   
+   L'application sera accessible sur `http://localhost:5173`
 
 ## 📖 Utilisation
 
@@ -90,26 +97,44 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 
 ```
 gestion-conges/
-├── index.html              # Structure HTML avec authentification
-├── styles.css              # Styles et design responsive
-├── js/                     # Modules JavaScript modulaires
-│   ├── supabase-init.js   # Initialisation Supabase
-│   ├── utils.js           # Fonctions utilitaires
-│   ├── holidays.js         # Calcul des jours fériés
-│   ├── database.js         # Opérations Supabase
-│   ├── auth.js             # Authentification
-│   ├── calendar.js         # Rendu du calendrier
-│   ├── stats.js            # Statistiques et quotas
-│   ├── modals.js           # Gestion des modales
-│   ├── config.js           # Configuration des événements
-│   └── leaveManager.js     # Classe principale
-├── config.js.example       # Exemple de configuration
-├── config.js               # Configuration Supabase (généré par GitHub Actions ou créé localement)
+├── index.html              # Point d'entrée HTML (utilisé par Vite)
+├── vite.config.js          # Configuration Vite
+├── package.json            # Dépendances npm
+├── public/                 # Fichiers statiques
+│   ├── 404.html           # Page 404 pour GitHub Pages (routage SPA)
+│   ├── manifest.json      # Manifest PWA
+│   └── icons/             # Icônes PWA
+├── src/                    # Code source Vue.js
+│   ├── main.js            # Point d'entrée Vue
+│   ├── App.vue            # Composant racine
+│   ├── router/            # Configuration Vue Router
+│   │   └── index.js
+│   ├── stores/            # Stores Pinia
+│   │   ├── auth.js        # Authentification
+│   │   ├── leaves.js      # Gestion des congés
+│   │   ├── leaveTypes.js  # Types de congés
+│   │   ├── quotas.js      # Quotas
+│   │   ├── teams.js       # Équipes
+│   │   └── ui.js          # État UI
+│   ├── components/        # Composants Vue
+│   │   ├── admin/         # Administration
+│   │   ├── auth/          # Authentification
+│   │   ├── calendar/      # Calendrier
+│   │   ├── common/        # Composants réutilisables
+│   │   ├── header/        # En-tête
+│   │   ├── modals/        # Modales
+│   │   └── stats/         # Statistiques
+│   ├── composables/       # Composables Vue (hooks)
+│   ├── services/          # Services (Supabase, API, etc.)
+│   ├── styles/            # Styles CSS
+│   ├── utils/             # Utilitaires
+│   ├── plugins/           # Plugins Vue
+│   └── i18n/              # Internationalisation
 ├── .github/workflows/      # Workflows GitHub Actions
 │   └── deploy.yml         # Déploiement automatique
-├── setup-local.sh          # Script de configuration locale (Linux/Mac)
-├── setup-local.bat         # Script de configuration locale (Windows)
-├── .gitignore              # Fichiers à ignorer (inclut config.js)
+├── .env.example            # Exemple de variables d'environnement
+├── supabase-schema.sql     # Script SQL pour créer les tables
+├── supabase-admin-schema.sql  # Script SQL pour l'administration
 └── README.md               # Ce fichier
 ```
 
@@ -143,10 +168,16 @@ L'application est maintenant une **PWA complète** et peut être installée sur 
 ## 🛠️ Outils et Technologies
 
 ### Frontend
-- **HTML5** : Structure de l'application
-- **CSS3** : Styles et design responsive avec variables CSS
-- **JavaScript (ES6+)** : Logique de l'application, modules ES6
-- **Vanilla JS** : Pas de framework, JavaScript pur pour la performance
+- **Vue.js 3** : Framework JavaScript (Composition API)
+- **Vite** : Build tool et serveur de développement
+- **Vue Router** : Routage côté client
+- **Pinia** : Gestion d'état
+- **Headless UI Vue** : Composants UI accessibles
+- **VeeValidate** : Validation de formulaires
+- **Vue I18n** : Internationalisation
+- **AutoAnimate** : Animations automatiques
+- **VueUse** : Collection de composables utilitaires
+- **VueDatePicker** : Sélecteur de dates
 
 ### Backend & Base de données
 - **Supabase** : Backend as a Service (BaaS)
@@ -157,7 +188,7 @@ L'application est maintenant une **PWA complète** et peut être installée sur 
 
 ### Déploiement & CI/CD
 - **GitHub Pages** : Hébergement de l'application
-- **GitHub Actions** : Déploiement automatique et génération de `config.js`
+- **GitHub Actions** : Déploiement automatique sur GitHub Pages
 - **Git** : Contrôle de version
 
 ### Outils de développement
@@ -170,7 +201,8 @@ L'application est maintenant une **PWA complète** et peut être installée sur 
 
 ### Bibliothèques externes
 - **@supabase/supabase-js** (v2) : Client JavaScript officiel pour Supabase
-  - Chargé via CDN : `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2`
+- **SweetAlert2** : Modales et notifications
+- **date-fns** : Manipulation de dates
 
 ## 💡 Notes techniques
 
@@ -201,17 +233,17 @@ Vous pouvez facilement personnaliser :
 
 ## 🔒 Sécurité
 
-- **Clés API** : Stockées dans GitHub Secrets (production) ou `config.js` (développement local, non versionné)
+- **Clés API** : Stockées dans GitHub Secrets (production) ou `.env` (développement local, non versionné)
 - **Row Level Security (RLS)** : Activé - chaque utilisateur ne voit que ses données
 - **Authentification** : Sécurisée via Supabase Auth
 - **Mots de passe** : Hashés (jamais stockés en clair)
-- **GitHub Actions** : Génère `config.js` automatiquement à partir des secrets lors du déploiement
+- **Variables d'environnement** : Gérées via Vite pour un accès sécurisé aux clés API
 
 ## 🚀 Déploiement
 
 ### GitHub Pages avec GitHub Actions (Recommandé)
 
-Cette méthode utilise GitHub Secrets pour stocker vos clés Supabase de manière sécurisée. Le fichier `config.js` est généré automatiquement lors du déploiement.
+Cette méthode utilise GitHub Secrets pour stocker vos clés Supabase de manière sécurisée. Les variables d'environnement sont injectées lors du build.
 
 #### 1. Configurer les secrets GitHub
 
@@ -234,7 +266,7 @@ Cette méthode utilise GitHub Secrets pour stocker vos clés Supabase de manièr
 
 1. Poussez votre code sur la branche `main`
 2. Le workflow GitHub Actions se déclenchera automatiquement
-3. Le fichier `config.js` sera créé à partir des secrets
+3. Les variables d'environnement seront injectées lors du build
 4. Votre site sera déployé sur GitHub Pages
 
 #### 4. Vérifier le déploiement
@@ -242,27 +274,10 @@ Cette méthode utilise GitHub Secrets pour stocker vos clés Supabase de manièr
 - Allez dans l'onglet **Actions** de votre dépôt pour voir le statut du déploiement
 - Une fois terminé, votre site sera accessible à `https://votre-username.github.io/gestion-conges`
 
-### Développement local
-
-Pour développer localement :
-
-**Windows :**
-```bash
-setup-local.bat
-```
-
-**Linux/Mac :**
-```bash
-chmod +x setup-local.sh
-./setup-local.sh
-```
-
-Puis modifiez `config.js` avec vos clés Supabase.
-
-### Alternative : Vercel/Netlify
+### Alternative : Déploiement sur Vercel/Netlify
 
 Pour un déploiement sur Vercel ou Netlify :
-- Utilisez les variables d'environnement au lieu de `config.js`
+- Configurez les variables d'environnement dans leur interface
 - Plus sécurisé pour la production
 - Configuration similaire avec leurs interfaces respectives
 

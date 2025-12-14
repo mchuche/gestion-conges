@@ -53,10 +53,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, nextTick } from 'vue'
+import { computed, onMounted, nextTick, ref, watch } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
+import { useTeamsStore } from '../../stores/teams'
 import PresenceDayCell from './PresenceDayCell.vue'
+import * as teamsService from '../../services/teams'
 import {
   getYear,
   getMonth,
@@ -67,11 +69,13 @@ import {
 } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
+import logger from '../../services/logger'
 
 const emit = defineEmits(['day-click', 'day-mousedown'])
 
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const teamsStore = useTeamsStore()
 
 const year = computed(() => getYear(uiStore.currentDate))
 const currentYear = computed(() => getYear(today()))
@@ -83,17 +87,60 @@ const monthNames = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ]
 
-// Créer la liste des utilisateurs (actuellement seulement l'utilisateur actuel)
+const teamMembers = ref([])
+const loadingMembers = ref(false)
+
+// Charger les membres de l'équipe sélectionnée
+async function loadTeamMembers() {
+  if (!teamsStore.currentTeamId) {
+    teamMembers.value = []
+    return
+  }
+
+  try {
+    loadingMembers.value = true
+    const members = await teamsService.loadTeamMembers(teamsStore.currentTeamId)
+    teamMembers.value = members.map(member => ({
+      id: member.userId,
+      name: member.email || member.name || 'Utilisateur inconnu',
+      leaves: {} // Les leaves sont gérés par le store
+    }))
+    logger.debug('[YearViewPresence] Membres chargés:', teamMembers.value.length)
+  } catch (err) {
+    logger.error('[YearViewPresence] Erreur lors du chargement des membres:', err)
+    teamMembers.value = []
+  } finally {
+    loadingMembers.value = false
+  }
+}
+
+// Créer la liste des utilisateurs
 const users = computed(() => {
+  // Si une équipe est sélectionnée, utiliser ses membres
+  if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
+    return teamMembers.value
+  }
+  
+  // Sinon, utiliser seulement l'utilisateur actuel
   if (authStore.user) {
     return [{
       id: authStore.user.id,
       name: authStore.user.name || authStore.user.email || 'Moi',
-      leaves: {} // Les leaves sont gérés par le store
+      leaves: {}
     }]
   }
+  
   return []
 })
+
+// Watcher pour charger les membres quand l'équipe change
+watch(() => teamsStore.currentTeamId, async (newTeamId) => {
+  if (newTeamId) {
+    await loadTeamMembers()
+  } else {
+    teamMembers.value = []
+  }
+}, { immediate: true })
 
 // Créer la structure des mois avec leurs jours
 const months = computed(() => {
@@ -135,6 +182,7 @@ const months = computed(() => {
 
 // Scroll automatique vers le mois courant
 onMounted(async () => {
+  await loadTeamMembers()
   await nextTick()
   if (isCurrentYear.value) {
     setTimeout(() => {

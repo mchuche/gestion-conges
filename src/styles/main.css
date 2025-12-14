@@ -4,6 +4,15 @@
     box-sizing: border-box;
 }
 
+/* Transitions fluides pour le changement de thème */
+/* Exclure les éléments qui ne doivent pas transitionner (animations, etc.) */
+*:not(.no-transition):not(script):not(style) {
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 :root {
     --primary-color: #4a90e2;
     --secondary-color: #50c878;
@@ -30,9 +39,9 @@
     --text-color: #e0e0e0;
     --border-color: #404040;
     --hover-color: #3a3a3a;
-    --shadow-color: rgba(0, 0, 0, 0.6);
-    --gradient-start: #2d2d2d;
-    --gradient-end: #1a1a1a;
+    --shadow-color: rgba(0, 0, 0, 0.8);
+    --gradient-start: #1a1a1a;
+    --gradient-end: #0d0d0d;
 }
 
 body {
@@ -41,7 +50,14 @@ body {
     min-height: 100vh;
     padding: 20px;
     color: var(--text-color);
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation de transition de thème */
+.theme-transitioning {
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .container {
@@ -52,7 +68,10 @@ body {
     box-shadow: 0 20px 60px var(--shadow-color);
     padding: 30px;
     animation: fadeIn 0.5s ease-in;
-    transition: background 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease;
+    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                max-width 0.3s ease,
+                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Mode pleine largeur */
@@ -2938,13 +2957,7 @@ body.minimal-header #currentMonth {
     font-weight: 600;
 }
 
-.admin-tab-content {
-    display: none;
-}
-
-.admin-tab-content.active {
-    display: block;
-}
+/* .admin-tab-content - Règles supprimées car l'affichage est maintenant géré par v-if dans AdminView.vue */
 
 .admin-section-header {
     margin-bottom: 20px;

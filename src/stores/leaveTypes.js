@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '../services/supabase'
 import logger from '../services/logger'
 import { useAuthStore } from './auth'
+import { useLeaveTypesRealtime } from '../composables/useRealtime'
 
 // Types de congés par défaut
 function getDefaultLeaveTypes() {
@@ -22,6 +23,8 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
   const leaveTypes = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const realtimeEnabled = ref(false)
+  const realtimeSubscription = ref(null) // Référence à la subscription Realtime
 
   // Getters
   const leaveTypesCount = computed(() => leaveTypes.value.length)
@@ -80,6 +83,11 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
       }
 
       logger.log('Types de congés chargés:', leaveTypes.value.length, 'types')
+      
+      // Activer Realtime après le premier chargement
+      if (!realtimeEnabled.value) {
+        setupRealtime()
+      }
     } catch (err) {
       error.value = err.message
       logger.error('Erreur lors du chargement des types de congés:', err)
@@ -210,10 +218,76 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
     leaveTypes.value = newTypes
   }
 
+  // Configuration Realtime
+  function setupRealtime() {
+    const authStore = useAuthStore()
+    if (!authStore.user || realtimeEnabled.value) return
+
+    // Nettoyer l'ancienne subscription si elle existe
+    disableRealtime()
+
+    realtimeEnabled.value = true
+    
+    // Stocker la référence de la subscription pour pouvoir la nettoyer
+    realtimeSubscription.value = useLeaveTypesRealtime(authStore.user.id, {
+      onInsert: (newType) => {
+        logger.log('[Realtime] Nouveau type de congé inséré:', newType)
+        // Ajouter le type s'il n'existe pas déjà
+        const exists = leaveTypes.value.find(t => t.id === newType.id)
+        if (!exists) {
+          leaveTypes.value.push({
+            id: newType.id,
+            name: newType.name,
+            label: newType.label,
+            color: newType.color,
+            category: newType.category || 'leave'
+          })
+        }
+      },
+      onUpdate: (updatedType, oldType) => {
+        logger.log('[Realtime] Type de congé mis à jour:', updatedType)
+        // Mettre à jour le type dans le store
+        const index = leaveTypes.value.findIndex(t => t.id === oldType.id)
+        if (index !== -1) {
+          leaveTypes.value[index] = {
+            id: updatedType.id,
+            name: updatedType.name,
+            label: updatedType.label,
+            color: updatedType.color,
+            category: updatedType.category || 'leave'
+          }
+        }
+      },
+      onDelete: (deletedType) => {
+        logger.log('[Realtime] Type de congé supprimé:', deletedType)
+        // Supprimer le type du store
+        const index = leaveTypes.value.findIndex(t => t.id === deletedType.id)
+        if (index !== -1) {
+          leaveTypes.value.splice(index, 1)
+        }
+      }
+    })
+    
+    logger.log('[Realtime] Subscription activée pour les types de congés')
+  }
+
+  function disableRealtime() {
+    // Nettoyer la subscription si elle existe
+    if (realtimeSubscription.value && typeof realtimeSubscription.value.unsubscribe === 'function') {
+      realtimeSubscription.value.unsubscribe()
+      logger.log('[Realtime] Subscription nettoyée pour les types de congés')
+    }
+    realtimeSubscription.value = null
+    realtimeEnabled.value = false
+  }
+
   function reset() {
     leaveTypes.value = getDefaultLeaveTypes()
     loading.value = false
     error.value = null
+    realtimeEnabled.value = false
+    realtimeSubscription.value = null
+    disableRealtime()
   }
 
   return {
@@ -221,6 +295,7 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
     leaveTypes,
     loading,
     error,
+    realtimeEnabled,
     // Getters
     leaveTypesCount,
     leaveTypesByCategory,
@@ -233,6 +308,8 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
     updateLeaveType,
     removeLeaveType,
     setLeaveTypes,
+    setupRealtime,
+    disableRealtime,
     reset
   }
 })

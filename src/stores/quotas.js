@@ -3,12 +3,15 @@ import { ref, computed } from 'vue'
 import { supabase } from '../services/supabase'
 import logger from '../services/logger'
 import { useAuthStore } from './auth'
+import { useQuotasRealtime } from '../composables/useRealtime'
 
 export const useQuotasStore = defineStore('quotas', () => {
   // State
   const quotasByYear = ref({}) // { year: { leave_type_id: quota } }
   const loading = ref(false)
   const error = ref(null)
+  const realtimeEnabled = ref(false)
+  const realtimeSubscription = ref(null) // Référence à la subscription Realtime
 
   // Getters
   const getQuota = (year, leaveTypeId) => {
@@ -64,6 +67,11 @@ export const useQuotasStore = defineStore('quotas', () => {
       }
 
       logger.log('Quotas chargés pour', Object.keys(quotasByYear.value).length, 'années')
+      
+      // Activer Realtime après le premier chargement
+      if (!realtimeEnabled.value) {
+        setupRealtime()
+      }
     } catch (err) {
       error.value = err.message
       logger.error('Erreur lors du chargement des quotas:', err)
@@ -182,10 +190,77 @@ export const useQuotasStore = defineStore('quotas', () => {
     }
   }
 
+  // Configuration Realtime
+  function setupRealtime() {
+    const authStore = useAuthStore()
+    if (!authStore.user || realtimeEnabled.value) return
+
+    // Nettoyer l'ancienne subscription si elle existe
+    disableRealtime()
+
+    realtimeEnabled.value = true
+    
+    // Stocker la référence de la subscription pour pouvoir la nettoyer
+    realtimeSubscription.value = useQuotasRealtime(authStore.user.id, {
+      onInsert: (newQuota) => {
+        logger.log('[Realtime] Nouveau quota inséré:', newQuota)
+        // Ajouter le quota au store
+        if (!quotasByYear.value[newQuota.year]) {
+          quotasByYear.value[newQuota.year] = {}
+        }
+        quotasByYear.value[newQuota.year][newQuota.leave_type_id] = newQuota.quota
+      },
+      onUpdate: (updatedQuota, oldQuota) => {
+        logger.log('[Realtime] Quota mis à jour:', updatedQuota)
+        // Mettre à jour le quota dans le store
+        if (!quotasByYear.value[updatedQuota.year]) {
+          quotasByYear.value[updatedQuota.year] = {}
+        }
+        quotasByYear.value[updatedQuota.year][updatedQuota.leave_type_id] = updatedQuota.quota
+        // Si l'année ou le type a changé, nettoyer l'ancien
+        if (oldQuota.year !== updatedQuota.year || oldQuota.leave_type_id !== updatedQuota.leave_type_id) {
+          if (quotasByYear.value[oldQuota.year] && quotasByYear.value[oldQuota.year][oldQuota.leave_type_id]) {
+            delete quotasByYear.value[oldQuota.year][oldQuota.leave_type_id]
+            // Supprimer l'année si elle est vide
+            if (Object.keys(quotasByYear.value[oldQuota.year]).length === 0) {
+              delete quotasByYear.value[oldQuota.year]
+            }
+          }
+        }
+      },
+      onDelete: (deletedQuota) => {
+        logger.log('[Realtime] Quota supprimé:', deletedQuota)
+        // Supprimer le quota du store
+        if (quotasByYear.value[deletedQuota.year] && quotasByYear.value[deletedQuota.year][deletedQuota.leave_type_id]) {
+          delete quotasByYear.value[deletedQuota.year][deletedQuota.leave_type_id]
+          // Supprimer l'année si elle est vide
+          if (Object.keys(quotasByYear.value[deletedQuota.year]).length === 0) {
+            delete quotasByYear.value[deletedQuota.year]
+          }
+        }
+      }
+    })
+    
+    logger.log('[Realtime] Subscription activée pour les quotas')
+  }
+
+  function disableRealtime() {
+    // Nettoyer la subscription si elle existe
+    if (realtimeSubscription.value && typeof realtimeSubscription.value.unsubscribe === 'function') {
+      realtimeSubscription.value.unsubscribe()
+      logger.log('[Realtime] Subscription nettoyée pour les quotas')
+    }
+    realtimeSubscription.value = null
+    realtimeEnabled.value = false
+  }
+
   function reset() {
     quotasByYear.value = {}
     loading.value = false
     error.value = null
+    realtimeEnabled.value = false
+    realtimeSubscription.value = null
+    disableRealtime()
   }
 
   return {
@@ -193,6 +268,7 @@ export const useQuotasStore = defineStore('quotas', () => {
     quotasByYear,
     loading,
     error,
+    realtimeEnabled,
     // Getters
     getQuota,
     getQuotasForYear,
@@ -201,6 +277,8 @@ export const useQuotasStore = defineStore('quotas', () => {
     saveQuotas,
     setQuota,
     removeQuota,
+    setupRealtime,
+    disableRealtime,
     reset
   }
 })

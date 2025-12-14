@@ -11,8 +11,31 @@
           <div v-if="selectedDates.length > 1" class="selection-info">
             <p>{{ selectedDates.length }} jours sélectionnés</p>
             <button @click="openSelectionModal" class="btn-secondary">
-              Voir la sélection
+              {{ showSelectionList ? 'Masquer' : 'Voir' }} la sélection
             </button>
+            <div v-if="showSelectionList" class="selected-dates-list">
+              <ul>
+                <li v-for="(date, index) in selectedDates" :key="index">
+                  {{ formatDateShort(date) }}
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="date-picker-section">
+            <button @click="showDatePicker = !showDatePicker" class="btn-secondary">
+              📅 {{ showDatePicker ? 'Masquer' : 'Sélectionner une plage de dates' }}
+            </button>
+            <div v-if="showDatePicker" class="date-picker-container">
+              <Datepicker
+                v-model="pickerDates"
+                :enable-time-picker="false"
+                :locale="fr"
+                range
+                auto-apply
+                @update:model-value="handleDatePickerChange"
+                placeholder="Sélectionner une plage de dates"
+              />
+            </div>
           </div>
         </div>
 
@@ -79,13 +102,20 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
+import { VueDatePicker as Datepicker } from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
+import { fr } from 'date-fns/locale/fr'
 import { useUIStore } from '../../stores/ui'
 import { useLeavesStore } from '../../stores/leaves'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useLeaves } from '../../composables/useLeaves'
+import { useToast } from '../../composables/useToast'
 import Modal from '../common/Modal.vue'
-import { getDateKey } from '../../services/utils'
+import logger from '../../services/logger'
+import { handleError } from '../../services/errorHandler'
+import { getDateKey, calculateWorkingDaysFromDates } from '../../services/utils'
+import { getPublicHolidays } from '../../services/holidays'
 // Formatage de date en français
 function formatDate(date, options = {}) {
   return date.toLocaleDateString('fr-FR', {
@@ -101,6 +131,7 @@ const uiStore = useUIStore()
 const leavesStore = useLeavesStore()
 const leaveTypesStore = useLeaveTypesStore()
 const { getLeaveForDate, getLeaveTypeConfig, setLeave, removeLeave: removeLeaveForDate } = useLeaves()
+const { error: showErrorToast } = useToast()
 
 const showModal = computed(() => uiStore.showModal)
 const selectedDate = computed(() => uiStore.selectedDate)
@@ -134,9 +165,64 @@ const currentLeaveType = computed(() => {
 })
 
 const workingDaysCount = computed(() => {
-  // TODO: Calculer les jours ouvrés pour la sélection multiple
-  return selectedDates.value.length
+  if (selectedDates.value.length === 0) return 0
+  if (selectedDates.value.length === 1) {
+    // Pour un seul jour, vérifier si c'est un jour ouvré
+    const date = selectedDates.value[0]
+    const dayOfWeek = date.getDay()
+    if (dayOfWeek === 0 || dayOfWeek === 6) return 0 // Weekend
+    
+    const holidays = getPublicHolidays(uiStore.selectedCountry, date.getFullYear())
+    const dateKey = getDateKey(date)
+    if (holidays[dateKey]) return 0 // Jour férié
+    
+    return 1
+  }
+  
+  // Pour plusieurs jours, utiliser la fonction de calcul
+  return calculateWorkingDaysFromDates(selectedDates.value, uiStore.selectedCountry, getPublicHolidays)
 })
+
+const showDatePicker = ref(false)
+const pickerDates = ref(null)
+
+function formatDatePicker(date) {
+  if (!date) return ''
+  if (Array.isArray(date) && date.length === 2) {
+    return `${date[0].toLocaleDateString('fr-FR')} - ${date[1].toLocaleDateString('fr-FR')}`
+  }
+  return date.toLocaleDateString('fr-FR')
+}
+
+function handleDatePickerChange(dates) {
+  if (!dates || !Array.isArray(dates) || dates.length !== 2) return
+  
+  const [startDate, endDate] = dates
+  const selectedDatesArray = []
+  
+  // Générer toutes les dates entre startDate et endDate
+  const currentDate = new Date(startDate)
+  currentDate.setHours(0, 0, 0, 0)
+  const end = new Date(endDate)
+  end.setHours(0, 0, 0, 0)
+  
+  while (currentDate <= end) {
+    selectedDatesArray.push(new Date(currentDate))
+    currentDate.setDate(currentDate.getDate() + 1)
+  }
+  
+  // Mettre à jour le store avec les dates sélectionnées
+  if (selectedDatesArray.length > 0) {
+    uiStore.clearSelectedDates()
+    selectedDatesArray.forEach(date => {
+      uiStore.addOrRemoveSelectedDate(date)
+    })
+    // Définir la première date comme date principale
+    uiStore.setSelectedDate(selectedDatesArray[0])
+  }
+  
+  showDatePicker.value = false
+}
 
 function setPeriod(period) {
   uiStore.setSelectedPeriod(period)
@@ -190,7 +276,10 @@ async function selectLeaveType(typeId) {
     }
     closeModal()
   } catch (error) {
-    console.error('Erreur lors de la sélection du type de congé:', error)
+    handleError(error, {
+      context: 'LeaveModal.selectLeaveType',
+      showToast: true
+    })
   }
 }
 
@@ -205,7 +294,10 @@ async function handleRemoveLeave() {
     }
     closeModal()
   } catch (error) {
-    console.error('Erreur lors de la suppression du congé:', error)
+    handleError(error, {
+      context: 'LeaveModal.handleRemoveLeave',
+      showToast: true
+    })
   }
 }
 
@@ -216,9 +308,18 @@ function closeModal() {
   uiStore.setMultiSelectMode(false)
 }
 
+const showSelectionList = ref(false)
+
 function openSelectionModal() {
-  // TODO: Implémenter la modale de sélection multiple
-  console.log('Ouvrir modale de sélection multiple')
+  showSelectionList.value = !showSelectionList.value
+}
+
+function formatDateShort(date) {
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  })
 }
 
 // Ajuster la période selon le congé existant
@@ -254,6 +355,32 @@ watch(leaveInfo, (newInfo) => {
 
 .selection-info {
   margin-top: 10px;
+}
+
+.selected-dates-list {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.selected-dates-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.selected-dates-list li {
+  padding: 6px 10px;
+  background: var(--bg-color, #f5f5f5);
+  border-radius: 4px;
+  font-size: 0.9em;
 }
 
 .period-selection {
@@ -370,6 +497,26 @@ watch(leaveInfo, (newInfo) => {
 
 .btn-danger:hover {
   background: #c0392b;
+}
+
+.date-picker-section {
+  margin-top: 15px;
+}
+
+.date-picker-container {
+  margin-top: 15px;
+  padding: 15px;
+  background: var(--bg-color, #f5f5f5);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e0e0e0);
+}
+
+.date-picker-container :deep(.dp__main) {
+  font-family: inherit;
+}
+
+.date-picker-container :deep(.dp__input_wrap) {
+  width: 100%;
 }
 </style>
 

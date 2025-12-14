@@ -22,8 +22,8 @@ export function useLeaves() {
 
   // Définir un congé pour une date et une période
   async function setLeave(date, leaveTypeId, period = 'full') {
-    const dateKey = getDateKeyWithPeriod(date, period)
     const keys = getDateKeys(date)
+    const dateKey = period === 'full' ? keys.full : keys[period]
 
     // Si on définit une journée complète, supprimer les demi-journées
     if (period === 'full') {
@@ -36,15 +36,12 @@ export function useLeaves() {
       leavesStore.setLeave(keys.full, leaveTypeId)
     } else {
       // Si on définit une demi-journée, supprimer la journée complète si elle existe
+      // (mais on garde l'autre demi-journée si elle existe pour permettre matin+après-midi)
       if (leavesStore.leaves[keys.full]) {
         leavesStore.removeLeave(keys.full)
       }
-      // Supprimer l'autre demi-journée si elle existe
-      const otherPeriod = period === 'morning' ? 'afternoon' : 'morning'
-      if (leavesStore.leaves[keys[otherPeriod]]) {
-        leavesStore.removeLeave(keys[otherPeriod])
-      }
-      leavesStore.setLeave(dateKey, leaveTypeId)
+      // Utiliser la clé de la période spécifique
+      leavesStore.setLeave(keys[period], leaveTypeId)
     }
 
     // Sauvegarder dans Supabase
@@ -62,7 +59,7 @@ export function useLeaves() {
 
     if (period) {
       // Supprimer une période spécifique
-      const dateKey = getDateKeyWithPeriod(date, period)
+      const dateKey = period === 'full' ? keys.full : keys[period]
       leavesStore.removeLeave(dateKey)
     } else {
       // Supprimer toutes les périodes pour cette date

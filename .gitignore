@@ -1,5 +1,5 @@
-# Configuration Supabase (contient les clés API) - seulement à la racine
-/config.js
+# Configuration Supabase (contient les clés API)
+# Note: Les clés sont maintenant dans .env (géré via Vite)
 
 # Backup files
 *.backup

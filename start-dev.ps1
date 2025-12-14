@@ -12,13 +12,14 @@ if (-not (Test-Path "node_modules")) {
 
 # Vérifier que .env existe
 if (-not (Test-Path ".env")) {
-    Write-Host "⚠️  Fichier .env introuvable. Génération depuis config.js..." -ForegroundColor Yellow
-    if (Test-Path "setup-env.ps1") {
-        .\setup-env.ps1
-    } else {
-        Write-Host "❌ Erreur: setup-env.ps1 introuvable" -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "⚠️  Fichier .env introuvable." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Créez un fichier .env avec le contenu suivant:" -ForegroundColor Yellow
+    Write-Host "VITE_SUPABASE_URL=votre_url_supabase"
+    Write-Host "VITE_SUPABASE_ANON_KEY=votre_cle_anon"
+    Write-Host ""
+    Write-Host "Vous pouvez copier .env.example vers .env et le modifier." -ForegroundColor Yellow
+    exit 1
 }
 
 Write-Host "✅ Configuration OK" -ForegroundColor Green
