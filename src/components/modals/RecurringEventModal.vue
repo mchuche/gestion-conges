@@ -5,17 +5,53 @@
     </template>
     
     <template #body>
-      <div v-if="selectedDate && selectedEventType" class="modal-content">
-        <div class="selected-date-info">
+      <div v-if="showModal" class="modal-content">
+        <div v-if="selectedDate" class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
-          <div class="selected-event-type">
-            <span class="event-type-badge" :style="{ backgroundColor: selectedEventType.color }">
-              {{ selectedEventType.name }}
-            </span>
+          <div v-if="recurringDateRange" class="date-range-info">
+            <p class="range-display">
+              <strong>Période :</strong> {{ formatDateRange(recurringDateRange) }}
+            </p>
           </div>
         </div>
 
-        <div class="period-selection">
+        <!-- Sélection du type d'événement -->
+        <div v-if="!selectedEventTypeId" class="event-type-selection">
+          <h4>Sélectionner un type d'événement :</h4>
+          <div class="event-types-grid">
+            <button
+              v-for="type in eventTypesList"
+              :key="type.id"
+              :class="['event-type-btn', { active: selectedEventTypeId === type.id }]"
+              :style="{ borderColor: type.color, backgroundColor: selectedEventTypeId === type.id ? type.color : 'transparent' }"
+              @click="selectedEventTypeId = type.id"
+            >
+              <span :style="{ color: selectedEventTypeId === type.id ? 'white' : type.color }">
+                {{ type.name }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="selectedEventType" class="selected-event-type">
+          <span class="event-type-badge" :style="{ backgroundColor: selectedEventType.color }">
+            {{ selectedEventType.name }}
+          </span>
+        </div>
+
+        <!-- Sélection de la date de début si pas de date sélectionnée -->
+        <div v-if="!selectedDate" class="date-selection">
+          <h4>Date de début :</h4>
+          <Datepicker
+            v-model="startDatePicker"
+            :enable-time-picker="false"
+            :locale="fr"
+            @update:model-value="handleStartDateChange"
+            placeholder="Sélectionner une date de début"
+          />
+        </div>
+
+        <div v-if="selectedDate" class="period-selection">
           <h4>Période :</h4>
           <div class="period-buttons">
             <button
@@ -112,11 +148,14 @@
           
           <!-- Date de fin -->
           <div class="recurrence-end-date">
-            <label>
+            <label v-if="!recurringDateRange">
               <input type="checkbox" v-model="noEndDate" />
               Sans fin
             </label>
-            <div v-if="!noEndDate" class="end-date-picker">
+            <div v-if="recurringDateRange" class="date-range-note">
+              <p>La récurrence sera limitée à la période sélectionnée : {{ formatDateRange(recurringDateRange) }}</p>
+            </div>
+            <div v-if="!noEndDate && !recurringDateRange" class="end-date-picker">
               <label>Jusqu'à :</label>
               <Datepicker 
                 v-model="recurrenceEndDate"
@@ -181,8 +220,32 @@ const leaveTypesStore = useLeaveTypesStore()
 const { error: showErrorToast, success: showSuccessToast } = useToast()
 
 const showModal = computed(() => uiStore.showRecurringEventModal)
-const selectedDate = computed(() => uiStore.selectedDate)
-const selectedEventTypeId = computed(() => uiStore.selectedEventTypeId)
+const selectedDate = computed(() => {
+  // Si une plage de dates est fournie, utiliser la date de début
+  if (uiStore.recurringEventDateRange && Array.isArray(uiStore.recurringEventDateRange) && uiStore.recurringEventDateRange.length === 2) {
+    return uiStore.recurringEventDateRange[0]
+  }
+  // Utiliser la date du picker si définie
+  if (startDatePicker.value) {
+    return startDatePicker.value
+  }
+  // Sinon utiliser la date sélectionnée dans le store ou la date du jour
+  return uiStore.selectedDate || new Date()
+})
+const selectedEventTypeId = ref(uiStore.selectedEventTypeId)
+const recurringDateRange = computed(() => uiStore.recurringEventDateRange)
+
+// Liste des types d'événements
+const eventTypesList = computed(() => {
+  return leaveTypesStore.leaveTypes.filter(type => type.category === 'event')
+})
+
+// Surveiller les changements de selectedEventTypeId dans le store
+watch(() => uiStore.selectedEventTypeId, (newId) => {
+  if (newId) {
+    selectedEventTypeId.value = newId
+  }
+})
 
 const selectedEventType = computed(() => {
   if (!selectedEventTypeId.value) return null
@@ -199,6 +262,7 @@ const monthlyRecurrenceMode = ref('dayOfMonth')
 const monthlyWeekOfMonth = ref(1)
 const monthlyDayOfWeek = ref(1)
 const recurrencePreview = ref([])
+const startDatePicker = ref(null)
 
 const daysOfWeek = [
   { value: 0, label: 'Dim' },
@@ -233,6 +297,22 @@ const formattedDate = computed(() => {
   return formatDate(selectedDate.value)
 })
 
+function formatDateRange(range) {
+  if (!range || !Array.isArray(range) || range.length !== 2) return ''
+  return `${range[0].toLocaleDateString('fr-FR')} - ${range[1].toLocaleDateString('fr-FR')}`
+}
+
+function handleStartDateChange(date) {
+  if (date) {
+    startDatePicker.value = date
+    // Initialiser avec le jour de la semaine si récurrence hebdomadaire
+    if (recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
+      selectedDays.value = [date.getDay()]
+    }
+    updateRecurrencePreview()
+  }
+}
+
 function handleRecurrenceTypeChange() {
   if (selectedDate.value) {
     const dayOfWeek = selectedDate.value.getDay()
@@ -244,8 +324,8 @@ function handleRecurrenceTypeChange() {
 }
 
 // Surveiller les changements pour mettre à jour la prévisualisation
-watch([selectedDays, recurrenceInterval, recurrenceType, recurrenceEndDate, noEndDate, monthlyRecurrenceMode, monthlyWeekOfMonth, monthlyDayOfWeek, selectedDate, selectedPeriod], () => {
-  if (selectedDate.value) {
+watch([selectedDays, recurrenceInterval, recurrenceType, recurrenceEndDate, noEndDate, monthlyRecurrenceMode, monthlyWeekOfMonth, monthlyDayOfWeek, selectedDate, selectedPeriod, recurringDateRange, selectedEventTypeId], () => {
+  if (selectedDate.value && selectedEventTypeId.value) {
     updateRecurrencePreview()
   }
 }, { deep: true })
@@ -255,19 +335,33 @@ watch(selectedDate, (newDate) => {
   if (newDate && recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
     selectedDays.value = [newDate.getDay()]
   }
-  updateRecurrencePreview()
+  if (newDate && selectedEventTypeId.value) {
+    updateRecurrencePreview()
+  }
 }, { immediate: true })
 
 function updateRecurrencePreview() {
-  if (!selectedDate.value || !selectedEventType.value) {
+  if (!selectedDate.value || !selectedEventTypeId.value) {
+    recurrencePreview.value = []
+    return
+  }
+  
+  const eventType = selectedEventType.value
+  if (!eventType) {
     recurrencePreview.value = []
     return
   }
 
   const startDate = selectedDate.value
-  const endDate = noEndDate.value 
-    ? new Date(startDate.getFullYear() + 1, 11, 31)
-    : recurrenceEndDate.value || new Date(startDate.getFullYear() + 1, 11, 31)
+  // Si une plage de dates est fournie, l'utiliser comme période de validité
+  let endDate
+  if (recurringDateRange.value && Array.isArray(recurringDateRange.value) && recurringDateRange.value.length === 2) {
+    endDate = new Date(recurringDateRange.value[1])
+  } else if (noEndDate.value) {
+    endDate = new Date(startDate.getFullYear() + 1, 11, 31)
+  } else {
+    endDate = recurrenceEndDate.value || new Date(startDate.getFullYear() + 1, 11, 31)
+  }
 
   const pattern = buildRecurrencePattern()
   if (!pattern) {
@@ -350,7 +444,15 @@ async function createRecurringEvent() {
 
   try {
     const startDate = selectedDate.value
-    const endDate = noEndDate.value ? null : recurrenceEndDate.value
+    // Si une plage de dates est fournie, l'utiliser comme période de validité
+    let endDate
+    if (recurringDateRange.value && Array.isArray(recurringDateRange.value) && recurringDateRange.value.length === 2) {
+      endDate = recurringDateRange.value[1]
+    } else if (noEndDate.value) {
+      endDate = null
+    } else {
+      endDate = recurrenceEndDate.value
+    }
 
     await recurringEventsStore.createRecurringEvent({
       leave_type_id: selectedEventTypeId.value,
@@ -378,6 +480,7 @@ async function createRecurringEvent() {
 function closeModal() {
   uiStore.closeRecurringEventModal()
   // Réinitialiser les valeurs
+  selectedEventTypeId.value = null
   selectedPeriod.value = 'full'
   recurrenceType.value = 'weekly'
   recurrenceInterval.value = 1
@@ -412,6 +515,86 @@ function closeModal() {
 
 .selected-event-type {
   margin-top: 10px;
+}
+
+.date-range-info {
+  margin-top: 10px;
+  padding: 8px;
+  background: var(--card-bg);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.range-display {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--text-color);
+}
+
+.date-range-note {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg-color, #f5f5f5);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.date-range-note p {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--text-color);
+  font-style: italic;
+}
+
+.event-type-selection {
+  margin-bottom: 20px;
+}
+
+.event-type-selection h4 {
+  margin-bottom: 15px;
+  font-size: 1em;
+  color: var(--text-color);
+}
+
+.event-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.event-type-btn {
+  padding: 10px 16px;
+  border: 2px solid;
+  border-radius: 4px;
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.event-type-btn:hover {
+  opacity: 0.8;
+  transform: translateY(-2px);
+}
+
+.event-type-btn.active {
+  color: white;
+}
+
+.selected-event-type {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.date-selection {
+  margin-bottom: 20px;
+}
+
+.date-selection h4 {
+  margin-bottom: 10px;
+  font-size: 1em;
+  color: var(--text-color);
 }
 
 .event-type-badge {

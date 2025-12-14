@@ -34,6 +34,7 @@ export const useUIStore = defineStore('ui', () => {
   const showLeaveRecapModal = ref(false)
   const showRecurringEventModal = ref(false)
   const selectedEventTypeId = ref(null) // Pour la modale d'événements récurrents
+  const recurringEventDateRange = ref(null) // Plage de dates pour la récurrence [startDate, endDate]
 
   // Getters
   const isMultiSelectActive = computed(() => multiSelectMode.value && selectedDates.value.length > 0)
@@ -609,14 +610,16 @@ export const useUIStore = defineStore('ui', () => {
     showLeaveRecapModal.value = false
   }
 
-  function openRecurringEventModal(eventTypeId) {
+  function openRecurringEventModal(eventTypeId, dateRange = null) {
     selectedEventTypeId.value = eventTypeId
+    recurringEventDateRange.value = dateRange
     showRecurringEventModal.value = true
   }
 
   function closeRecurringEventModal() {
     showRecurringEventModal.value = false
     selectedEventTypeId.value = null
+    recurringEventDateRange.value = null
   }
 
   function reset() {
@@ -719,6 +722,7 @@ export const useUIStore = defineStore('ui', () => {
     closeLeaveRecapModal,
     showRecurringEventModal,
     selectedEventTypeId,
+    recurringEventDateRange,
     openRecurringEventModal,
     closeRecurringEventModal,
     reset

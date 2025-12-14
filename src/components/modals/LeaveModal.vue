@@ -115,6 +115,16 @@
           </div>
         </div>
 
+        <!-- Bouton pour créer un événement récurrent -->
+        <div class="recurring-event-button-section">
+          <button 
+            class="btn-primary btn-recurring-event" 
+            @click="openRecurringEventModal"
+          >
+            🔄 Créer un événement récurrent
+          </button>
+        </div>
+
         <div class="modal-actions">
           <button
             v-if="hasLeave"
@@ -310,11 +320,10 @@ async function selectLeaveType(typeId) {
   const config = getLeaveTypeConfig(typeId)
   const isEvent = config && config.category === 'event'
   
-  // Si c'est un événement, ouvrir la modale de choix
+  // Si c'est un événement, ouvrir la modale de récurrence directement
   if (isEvent) {
-    // Ouvrir la modale d'événements récurrents
+    // Ouvrir la modale d'événements récurrents avec le type d'événement sélectionné
     uiStore.openRecurringEventModal(typeId)
-    // Ne pas fermer la modale principale, elle sera fermée par l'utilisateur
     return
   }
   
@@ -388,7 +397,11 @@ function openSelectionModal() {
   showSelectionList.value = !showSelectionList.value
 }
 
-
+function openRecurringEventModal() {
+  // Ouvrir la modale d'événements récurrents sans type d'événement pré-sélectionné
+  // L'utilisateur choisira le type dans la modale
+  uiStore.openRecurringEventModal(null)
+}
 
 // Ajuster la période selon le congé existant
 watch(leaveInfo, (newInfo) => {
@@ -637,6 +650,23 @@ watch(leaveInfo, (newInfo) => {
   font-size: 0.85em;
   color: var(--text-color);
   opacity: 0.7;
+}
+
+.recurring-event-button-section {
+  margin-top: 20px;
+  padding: 15px 0;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.btn-recurring-event {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 1em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 </style>
 
