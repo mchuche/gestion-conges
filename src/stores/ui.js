@@ -14,13 +14,16 @@ export const useUIStore = defineStore('ui', () => {
   const selectedPeriod = ref('full') // 'full', 'morning', 'afternoon'
   const multiSelectMode = ref(false)
   const viewMode = ref('year') // 'year', 'month', etc.
-  const yearViewFormat = ref('semester') // 'semester', 'columns', 'presence', 'presence-vertical'
+  const yearViewFormat = ref('columns') // 'semester', 'columns', 'presence', 'presence-vertical'
   const configYear = ref(new Date().getFullYear())
   const selectedCountry = ref('FR')
+  const weekStartDay = ref(0) // 0 = Dimanche, 1 = Lundi, etc.
+  const eventOpacity = ref(0.15) // Opacité des événements (0.0 à 1.0)
+  const holidayWeekendIntensity = ref('normal') // Intensité des jours fériés et weekends: 'light', 'normal', 'strong'
   const ctrlKeyPressed = ref(false)
   const theme = ref('light') // 'light' ou 'dark' (thème effectif)
   const themeMode = ref('auto') // 'auto', 'light' ou 'dark' (préférence utilisateur)
-  const fullWidth = ref(false)
+  const fullWidth = ref(true)
   const minimizeHeader = ref(false) // Mode header minimal
   
   // Modales
@@ -28,6 +31,7 @@ export const useUIStore = defineStore('ui', () => {
   const showConfigModal = ref(false)
   const showHelpModal = ref(false)
   const showTeamsModal = ref(false)
+  const showLeaveRecapModal = ref(false)
 
   // Getters
   const isMultiSelectActive = computed(() => multiSelectMode.value && selectedDates.value.length > 0)
@@ -138,6 +142,185 @@ export const useUIStore = defineStore('ui', () => {
   function setSelectedCountry(country) {
     selectedCountry.value = country
     saveSelectedCountry()
+  }
+
+  async function loadWeekStartDay() {
+    const authStore = useAuthStore()
+    if (!authStore.user || !supabase) {
+      weekStartDay.value = 0
+    eventOpacity.value = 0.15
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('week_start_day')
+        .eq('user_id', authStore.user.id)
+        .maybeSingle()
+
+      if (error) throw error
+
+      if (data && data.week_start_day !== null && data.week_start_day !== undefined) {
+        weekStartDay.value = data.week_start_day
+      } else {
+        weekStartDay.value = 0
+    eventOpacity.value = 0.15
+        await saveWeekStartDay()
+      }
+    } catch (err) {
+      logger.error('Erreur lors du chargement du jour de début de semaine:', err)
+      weekStartDay.value = 0
+    eventOpacity.value = 0.15
+    }
+  }
+
+  async function saveWeekStartDay() {
+    const authStore = useAuthStore()
+    if (!authStore.user || !supabase) return
+
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: authStore.user.id,
+          week_start_day: weekStartDay.value,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+
+      if (error) throw error
+    } catch (err) {
+      logger.error('Erreur lors de la sauvegarde du jour de début de semaine:', err)
+      throw err
+    }
+  }
+
+  function setWeekStartDay(day) {
+    weekStartDay.value = day
+    saveWeekStartDay()
+  }
+
+  async function loadEventOpacity() {
+    const authStore = useAuthStore()
+    if (!authStore.user || !supabase) {
+      eventOpacity.value = 0.15
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('event_opacity')
+        .eq('user_id', authStore.user.id)
+        .maybeSingle()
+
+      if (error) throw error
+
+      if (data && data.event_opacity !== null && data.event_opacity !== undefined) {
+        const opacity = parseFloat(data.event_opacity)
+        if (!isNaN(opacity) && opacity >= 0 && opacity <= 1) {
+          eventOpacity.value = opacity
+        } else {
+          eventOpacity.value = 0.15
+          await saveEventOpacity()
+        }
+      } else {
+        eventOpacity.value = 0.15
+        await saveEventOpacity()
+      }
+    } catch (err) {
+      logger.error('Erreur lors du chargement de event_opacity:', err)
+      eventOpacity.value = 0.15
+    }
+  }
+
+  async function saveEventOpacity() {
+    const authStore = useAuthStore()
+    if (!authStore.user || !supabase) return
+
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: authStore.user.id,
+          event_opacity: eventOpacity.value,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+
+      if (error) throw error
+    } catch (err) {
+      logger.error('Erreur lors de la sauvegarde de event_opacity:', err)
+      throw err
+    }
+  }
+
+  function setEventOpacity(opacity) {
+    const value = parseFloat(opacity)
+    if (!isNaN(value) && value >= 0 && value <= 1) {
+      eventOpacity.value = value
+      saveEventOpacity()
+    }
+  }
+
+  async function loadHolidayWeekendIntensity() {
+    const authStore = useAuthStore()
+    if (!authStore.user || !supabase) {
+      holidayWeekendIntensity.value = 'normal'
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('holiday_weekend_intensity')
+        .eq('user_id', authStore.user.id)
+        .maybeSingle()
+
+      if (error) throw error
+
+      if (data && data.holiday_weekend_intensity && ['light', 'normal', 'strong'].includes(data.holiday_weekend_intensity)) {
+        holidayWeekendIntensity.value = data.holiday_weekend_intensity
+      } else {
+        holidayWeekendIntensity.value = 'normal'
+        await saveHolidayWeekendIntensity()
+      }
+    } catch (err) {
+      logger.error('Erreur lors du chargement de holiday_weekend_intensity:', err)
+      holidayWeekendIntensity.value = 'normal'
+    }
+  }
+
+  async function saveHolidayWeekendIntensity() {
+    const authStore = useAuthStore()
+    if (!authStore.user || !supabase) return
+
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: authStore.user.id,
+          holiday_weekend_intensity: holidayWeekendIntensity.value,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+
+      if (error) throw error
+    } catch (err) {
+      logger.error('Erreur lors de la sauvegarde de holiday_weekend_intensity:', err)
+      throw err
+    }
+  }
+
+  function setHolidayWeekendIntensity(intensity) {
+    if (['light', 'normal', 'strong'].includes(intensity)) {
+      holidayWeekendIntensity.value = intensity
+      saveHolidayWeekendIntensity()
+    }
   }
 
   function setCtrlKeyPressed(pressed) {
@@ -327,12 +510,15 @@ export const useUIStore = defineStore('ui', () => {
     const saved = localStorage.getItem('fullWidth')
     if (saved !== null) {
       fullWidth.value = saved === 'true'
-      // Appliquer immédiatement la classe au body
-      if (fullWidth.value) {
-        document.body.classList.add('full-width')
-      } else {
-        document.body.classList.remove('full-width')
-      }
+    } else {
+      // Par défaut, activer le mode pleine largeur
+      fullWidth.value = true
+    }
+    // Appliquer immédiatement la classe au body
+    if (fullWidth.value) {
+      document.body.classList.add('full-width')
+    } else {
+      document.body.classList.remove('full-width')
     }
   }
 
@@ -388,7 +574,9 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function openConfigModal() {
+    console.log('[UIStore] openConfigModal appelé, showConfigModal avant:', showConfigModal.value)
     showConfigModal.value = true
+    console.log('[UIStore] openConfigModal appelé, showConfigModal après:', showConfigModal.value)
   }
 
   function closeConfigModal() {
@@ -411,22 +599,37 @@ export const useUIStore = defineStore('ui', () => {
     showTeamsModal.value = false
   }
 
+  function openLeaveRecapModal() {
+    showLeaveRecapModal.value = true
+  }
+
+  function closeLeaveRecapModal() {
+    showLeaveRecapModal.value = false
+  }
+
   function reset() {
     currentDate.value = new Date()
-    currentYear.value = new Date().getFullYear()
     selectedDate.value = null
     selectedDates.value = []
     selectedPeriod.value = 'full'
     multiSelectMode.value = false
     viewMode.value = 'year'
-    yearViewFormat.value = 'semester'
+    yearViewFormat.value = 'columns'
     configYear.value = new Date().getFullYear()
     selectedCountry.value = 'FR'
+    weekStartDay.value = 0
+    eventOpacity.value = 0.15
+    holidayWeekendIntensity.value = 'normal'
     ctrlKeyPressed.value = false
+    theme.value = 'light'
+    themeMode.value = 'auto'
+    fullWidth.value = false
+    minimizeHeader.value = false
     showModal.value = false
     showConfigModal.value = false
     showHelpModal.value = false
     showTeamsModal.value = false
+    showLeaveRecapModal.value = false
   }
 
   return {
@@ -441,6 +644,9 @@ export const useUIStore = defineStore('ui', () => {
     yearViewFormat,
     configYear,
     selectedCountry,
+    weekStartDay,
+    eventOpacity,
+    holidayWeekendIntensity,
     ctrlKeyPressed,
     theme,
     themeMode,
@@ -450,6 +656,7 @@ export const useUIStore = defineStore('ui', () => {
     showConfigModal,
     showHelpModal,
     showTeamsModal,
+    showLeaveRecapModal,
     // Getters
     isMultiSelectActive,
     // Actions
@@ -466,6 +673,15 @@ export const useUIStore = defineStore('ui', () => {
     loadSelectedCountry,
     saveSelectedCountry,
     setSelectedCountry,
+    loadWeekStartDay,
+    saveWeekStartDay,
+    setWeekStartDay,
+    loadEventOpacity,
+    saveEventOpacity,
+    setEventOpacity,
+    loadHolidayWeekendIntensity,
+    saveHolidayWeekendIntensity,
+    setHolidayWeekendIntensity,
     setCtrlKeyPressed,
     toggleTheme,
     setTheme,
@@ -487,6 +703,8 @@ export const useUIStore = defineStore('ui', () => {
     closeHelpModal,
     openTeamsModal,
     closeTeamsModal,
+    openLeaveRecapModal,
+    closeLeaveRecapModal,
     reset
   }
 })

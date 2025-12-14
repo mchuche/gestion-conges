@@ -12,6 +12,7 @@
         <span
           v-if="leaveInfo.full"
           class="leave-badge full"
+          :class="{ 'is-event': isEventCategory(leaveInfo.full) }"
           :style="{ backgroundColor: getLeaveColor(leaveInfo.full) }"
           :title="getLeaveLabel(leaveInfo.full)"
         >
@@ -24,6 +25,7 @@
           <span
             v-if="leaveInfo.morning"
             class="leave-badge morning"
+            :class="{ 'is-event': isEventCategory(leaveInfo.morning) }"
             :style="{ backgroundColor: getLeaveColor(leaveInfo.morning) }"
             :title="getLeaveLabel(leaveInfo.morning)"
           >
@@ -32,6 +34,7 @@
           <span
             v-if="leaveInfo.afternoon"
             class="leave-badge afternoon"
+            :class="{ 'is-event': isEventCategory(leaveInfo.afternoon) }"
             :style="{ backgroundColor: getLeaveColor(leaveInfo.afternoon) }"
             :title="getLeaveLabel(leaveInfo.afternoon)"
           >
@@ -46,6 +49,7 @@
       <span
         v-if="leaveInfo.full"
         class="leave-badge full"
+        :class="{ 'is-event': isEventCategory(leaveInfo.full) }"
         :style="{ backgroundColor: getLeaveColor(leaveInfo.full) }"
         :title="getLeaveLabel(leaveInfo.full)"
       >
@@ -58,6 +62,7 @@
         <span
           v-if="leaveInfo.morning"
           class="leave-badge morning"
+          :class="{ 'is-event': isEventCategory(leaveInfo.morning) }"
           :style="{ backgroundColor: getLeaveColor(leaveInfo.morning) }"
           :title="getLeaveLabel(leaveInfo.morning)"
         >
@@ -66,6 +71,7 @@
         <span
           v-if="leaveInfo.afternoon"
           class="leave-badge afternoon"
+          :class="{ 'is-event': isEventCategory(leaveInfo.afternoon) }"
           :style="{ backgroundColor: getLeaveColor(leaveInfo.afternoon) }"
           :title="getLeaveLabel(leaveInfo.afternoon)"
         >
@@ -151,8 +157,52 @@ const isInMultiSelect = computed(() => {
 
 const dayLetter = computed(() => {
   const dayOfWeek = getDay(props.date)
+  // Utiliser la lettre du jour selon la préférence de début de semaine
+  // Pour la vue liste, on garde la lettre du jour réel (pas ajustée)
   const letters = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
   return letters[dayOfWeek]
+})
+
+// Computed properties pour obtenir les couleurs selon l'intensité (mode clair)
+const weekendColor = computed(() => {
+  const intensity = uiStore.holidayWeekendIntensity || 'normal'
+  const colors = {
+    light: '#f5f5f5',
+    normal: '#f9f9f9',
+    strong: '#e8e8e8'
+  }
+  return colors[intensity] || colors.normal
+})
+
+const holidayColor = computed(() => {
+  const intensity = uiStore.holidayWeekendIntensity || 'normal'
+  const colors = {
+    light: '#fffef0',
+    normal: '#fff3cd',
+    strong: '#ffd54f'
+  }
+  return colors[intensity] || colors.normal
+})
+
+// Computed properties pour obtenir les couleurs selon l'intensité (mode sombre)
+const weekendColorDark = computed(() => {
+  const intensity = uiStore.holidayWeekendIntensity || 'normal'
+  const colors = {
+    light: 'rgba(255, 255, 255, 0.01)',
+    normal: 'rgba(255, 255, 255, 0.03)',
+    strong: 'rgba(255, 255, 255, 0.06)'
+  }
+  return colors[intensity] || colors.normal
+})
+
+const holidayColorDark = computed(() => {
+  const intensity = uiStore.holidayWeekendIntensity || 'normal'
+  const colors = {
+    light: 'rgba(255, 193, 7, 0.03)',
+    normal: 'rgba(255, 193, 7, 0.08)',
+    strong: 'rgba(255, 193, 7, 0.15)'
+  }
+  return colors[intensity] || colors.normal
 })
 
 const dayClasses = computed(() => {
@@ -186,14 +236,42 @@ const dayClasses = computed(() => {
   ]
 })
 
+// Fonction pour convertir une couleur hex en rgba avec opacité
+function colorWithOpacity(color, opacity = 0.3) {
+  if (!color) return color
+  if (color.startsWith('#')) {
+    const hex = color.replace('#', '')
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  } else if (color.startsWith('rgba')) {
+    return color.replace(/[\d.]+\)$/g, `${opacity})`)
+  } else if (color.startsWith('rgb')) {
+    return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`)
+  }
+  return color
+}
+
 function getLeaveColor(leaveTypeId) {
   const config = getLeaveTypeConfig(leaveTypeId)
-  return config?.color || '#cccccc'
+  const color = config?.color || '#cccccc'
+  // Si c'est un événement, utiliser l'opacité configurée par l'utilisateur
+  if (isEventCategory(leaveTypeId)) {
+    const opacity = uiStore.eventOpacity ?? 0.15
+    return colorWithOpacity(color, opacity)
+  }
+  return color
 }
 
 function getLeaveLabel(leaveTypeId) {
   const config = getLeaveTypeConfig(leaveTypeId)
   return config?.label || leaveTypeId
+}
+
+function isEventCategory(leaveTypeId) {
+  const config = getLeaveTypeConfig(leaveTypeId)
+  return config?.category === 'event'
 }
 
 function handleClick(event) {
@@ -289,25 +367,28 @@ function handleMouseDown(event) {
   opacity: 0.6;
 }
 
+/* Weekends - Mode clair */
 .calendar-day.weekend,
 .year-view-day.weekend {
-  background: var(--weekend-bg, #f9f9f9);
+  background: v-bind('weekendColor');
 }
 
+/* Jours fériés - Mode clair */
 .calendar-day.public-holiday,
 .year-view-day.public-holiday {
-  background: var(--holiday-bg, #fff3cd);
+  background: v-bind('holidayColor');
 }
 
-/* Styles pour le mode sombre - réduire l'intensité des weekends et jours fériés */
+/* Weekends - Mode sombre */
 [data-theme="dark"] .calendar-day.weekend,
 [data-theme="dark"] .year-view-day.weekend {
-  background: rgba(255, 255, 255, 0.03);
+  background: v-bind('weekendColorDark');
 }
 
+/* Jours fériés - Mode sombre */
 [data-theme="dark"] .calendar-day.public-holiday,
 [data-theme="dark"] .year-view-day.public-holiday {
-  background: rgba(255, 193, 7, 0.08);
+  background: v-bind('holidayColorDark');
 }
 
 .calendar-day.selected,
@@ -436,6 +517,12 @@ function handleMouseDown(event) {
   border-bottom-right-radius: 3px;
 }
 
+/* Liseré pour différencier les événements des congés - plus discret */
+.leave-badge.is-event {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+}
+
 /* Assurer que les demi-journées dans le mode liste prennent 50% de la largeur */
 .calendar-day-list .leave-badges-split .leave-badge.morning,
 .calendar-day-list .leave-badges-split .leave-badge.afternoon {
@@ -476,21 +563,24 @@ function handleMouseDown(event) {
   opacity: 0.6;
 }
 
+/* Weekends - Vue liste - Mode clair */
 .calendar-day-list.weekend {
-  background: var(--weekend-bg, #f9f9f9);
+  background: v-bind('weekendColor');
 }
 
+/* Jours fériés - Vue liste - Mode clair */
 .calendar-day-list.public-holiday {
-  background: var(--holiday-bg, #fff3cd);
+  background: v-bind('holidayColor');
 }
 
-/* Styles pour le mode sombre - réduire l'intensité des weekends et jours fériés */
+/* Weekends - Vue liste - Mode sombre */
 [data-theme="dark"] .calendar-day-list.weekend {
-  background: rgba(255, 255, 255, 0.03);
+  background: v-bind('weekendColorDark');
 }
 
+/* Jours fériés - Vue liste - Mode sombre */
 [data-theme="dark"] .calendar-day-list.public-holiday {
-  background: rgba(255, 193, 7, 0.08);
+  background: v-bind('holidayColorDark');
 }
 
 .calendar-day-list.selected {

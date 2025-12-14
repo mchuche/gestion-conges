@@ -75,8 +75,9 @@ import Stats from '../stats/Stats.vue'
 import Quotas from '../stats/Quotas.vue'
 import HelpHint from '../common/HelpHint.vue'
 import Icon from '../common/Icon.vue'
-import { getYear, addYears } from '../../services/dateUtils'
+import { getYear, addYears, getDay } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
+import { getPublicHolidays } from '../../services/holidays'
 
 // Lazy loading des vues de présence (chargées uniquement quand nécessaires)
 const YearViewPresence = defineAsyncComponent(() => import('./YearViewPresence.vue'))
@@ -108,7 +109,7 @@ const calendarTitle = computed(() => {
   } else if (yearViewFormat.value === 'presence-vertical') {
     return `Matrice de Présence ${currentYear.value} (Verticale)`
   } else if (yearViewFormat.value === 'columns') {
-    return `Vue Colonnes ${currentYear.value}`
+    return `Vue Annuelle (Colonnes) ${currentYear.value}`
   }
   return currentYearTitle.value
 })
@@ -154,6 +155,19 @@ function toggleMinimizeHeader() {
 }
 
 function handleDayClick(date, event) {
+  // Vérifier si c'est un weekend ou un jour férié
+  const dayOfWeek = getDay(date)
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+  const year = date.getFullYear()
+  const holidays = getPublicHolidays(uiStore.selectedCountry, year)
+  const dateKey = getDateKey(date)
+  const isHoliday = holidays[dateKey] !== undefined
+  
+  if (isWeekend || isHoliday) {
+    // Ne pas ouvrir la modale pour les weekends et jours fériés
+    return
+  }
+  
   // Si on est en mode sélection multiple avec des dates déjà sélectionnées,
   // ouvrir la modale pour appliquer le congé aux jours sélectionnés
   if (uiStore.multiSelectMode && uiStore.selectedDates.length > 0) {
@@ -180,6 +194,19 @@ function handleDayClick(date, event) {
 }
 
 function handleDayMouseDown(date, event) {
+  // Vérifier si c'est un weekend ou un jour férié
+  const dayOfWeek = getDay(date)
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+  const year = date.getFullYear()
+  const holidays = getPublicHolidays(uiStore.selectedCountry, year)
+  const dateKey = getDateKey(date)
+  const isHoliday = holidays[dateKey] !== undefined
+  
+  if (isWeekend || isHoliday) {
+    // Ne pas permettre la sélection des weekends et jours fériés
+    return
+  }
+  
   // Gérer la sélection multiple avec Ctrl/Cmd
   // Utiliser le store en priorité (plus fiable car mis à jour par les listeners globaux)
   // Vérifier aussi l'événement natif comme fallback

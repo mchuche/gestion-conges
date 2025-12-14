@@ -34,36 +34,44 @@
             ☰
           </MenuButton>
           <MenuItems class="menu-dropdown-content">
-            <MenuItem v-slot="{ active }">
+            <MenuItem v-slot="{ active, close }">
               <button
                 :class="['menu-item', { active }]"
-                @click="openConfig"
+                @click="() => { openConfig(); close(); }"
               >
                 ⚙️ Configuration
               </button>
             </MenuItem>
-            <MenuItem v-slot="{ active }">
+            <MenuItem v-slot="{ active, close }">
               <button
                 :class="['menu-item', { active }]"
-                @click="openHelp"
+                @click="() => { openHelp(); close(); }"
               >
                 ❓ Aide
               </button>
             </MenuItem>
-            <MenuItem v-slot="{ active }">
+            <MenuItem v-slot="{ active, close }">
               <button
                 :class="['menu-item', { active }]"
-                @click="openTeams"
+                @click="() => { openTeams(); close(); }"
               >
                 👥 Équipes
               </button>
             </MenuItem>
-            <MenuItem v-if="authStore.isAdmin" v-slot="{ active }">
+            <MenuItem v-if="authStore.isAdmin" v-slot="{ active, close }">
               <button
                 :class="['menu-item', { active }]"
-                @click="openAdmin"
+                @click="() => { openAdmin(); close(); }"
               >
                 ⚙️ Administration
+              </button>
+            </MenuItem>
+            <MenuItem v-slot="{ active, close }">
+              <button
+                :class="['menu-item', { active }]"
+                @click="() => { openLeaveRecap(); close(); }"
+              >
+                📅 Récapitulatif
               </button>
             </MenuItem>
             <div class="menu-divider"></div>
@@ -122,19 +130,37 @@ function toggleMinimizeHeader() {
 }
 
 function openConfig() {
-  uiStore.openConfigModal()
+  console.log('[Header] openConfig appelé')
+  try {
+    uiStore.openConfigModal()
+    console.log('[Header] showConfigModal après appel:', uiStore.showConfigModal)
+  } catch (error) {
+    console.error('[Header] Erreur dans openConfig:', error)
+  }
 }
 
 function openHelp() {
+  console.log('[Header] openHelp appelé')
   uiStore.openHelpModal()
 }
 
 function openTeams() {
+  console.log('[Header] openTeams appelé')
   uiStore.openTeamsModal()
 }
 
+function openLeaveRecap() {
+  console.log('[Header] openLeaveRecap appelé')
+  uiStore.openLeaveRecapModal()
+}
+
 function openAdmin() {
-  router.push('/admin')
+  console.log('[Header] openAdmin appelé')
+  try {
+    router.push('/admin')
+  } catch (error) {
+    console.error('[Header] Erreur dans openAdmin:', error)
+  }
 }
 
 async function logout() {

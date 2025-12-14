@@ -7,7 +7,7 @@
       @change="handleTeamChange"
       class="team-select"
     >
-      <option :value="null">Mon calendrier</option>
+      <option value="">Mon calendrier</option>
       <option
         v-for="team in teamsStore.userTeams"
         :key="team.id"
@@ -23,6 +23,7 @@
 import { computed, watch, onMounted } from 'vue'
 import { useTeamsStore } from '../../stores/teams'
 import { useUIStore } from '../../stores/ui'
+import logger from '../../services/logger'
 
 const teamsStore = useTeamsStore()
 const uiStore = useUIStore()
@@ -35,7 +36,15 @@ const selectedTeamId = computed({
 })
 
 function handleTeamChange(event) {
-  const teamId = event.target.value === 'null' || event.target.value === '' ? null : event.target.value
+  const value = event.target.value
+  // Vérifier si c'est null, vide, ou "Mon calendrier" (texte de l'option)
+  const teamId = (value === 'null' || value === '' || value === null || value === undefined || value === 'Mon calendrier') ? null : value
+  // Valider que c'est un UUID valide si ce n'est pas null
+  if (teamId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+    logger.warn('[TeamSelector] ID d\'équipe invalide:', teamId)
+    teamsStore.setCurrentTeam(null)
+    return
+  }
   teamsStore.setCurrentTeam(teamId)
 }
 

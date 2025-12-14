@@ -63,6 +63,31 @@ export function getDay(date) {
   }
 }
 
+/**
+ * Ajuste le jour de la semaine selon le jour de début de semaine personnalisé
+ * @param {number} dayOfWeek - Jour de la semaine (0 = Dimanche, 6 = Samedi)
+ * @param {number} weekStartDay - Jour de début de semaine (0 = Dimanche, 1 = Lundi, etc.)
+ * @returns {number} Jour ajusté (0 = premier jour de la semaine personnalisée)
+ */
+export function adjustDayOfWeek(dayOfWeek, weekStartDay = 0) {
+  // Ajuster pour que weekStartDay devienne 0
+  return (dayOfWeek - weekStartDay + 7) % 7
+}
+
+/**
+ * Obtient les noms des jours de la semaine selon le jour de début
+ * @param {number} weekStartDay - Jour de début de semaine (0 = Dimanche, 1 = Lundi, etc.)
+ * @returns {string[]} Tableau des noms de jours réorganisés
+ */
+export function getDayNames(weekStartDay = 0) {
+  const allDays = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
+  const result = []
+  for (let i = 0; i < 7; i++) {
+    result.push(allDays[(weekStartDay + i) % 7])
+  }
+  return result
+}
+
 // Créer une nouvelle date avec année, mois, jour
 export function createDate(year, month, day) {
   const date = new Date(year, month, day)

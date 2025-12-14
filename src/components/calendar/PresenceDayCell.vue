@@ -9,12 +9,14 @@
     <div
       v-if="hasSplit"
       class="presence-cell-half presence-cell-morning"
-      :style="{ backgroundColor: morningColor }"
+      :class="{ 'is-event': isMorningEvent }"
+      :style="{ backgroundColor: isMorningEvent && morningColor ? colorWithOpacity(morningColor, uiStore.eventOpacity ?? 0.15) : morningColor }"
     ></div>
     <div
       v-if="hasSplit"
       class="presence-cell-half presence-cell-afternoon"
-      :style="{ backgroundColor: afternoonColor }"
+      :class="{ 'is-event': isAfternoonEvent }"
+      :style="{ backgroundColor: isAfternoonEvent && afternoonColor ? colorWithOpacity(afternoonColor, uiStore.eventOpacity ?? 0.15) : afternoonColor }"
     ></div>
   </div>
 </template>
@@ -110,6 +112,38 @@ const fullColor = computed(() => {
   return null
 })
 
+const isEvent = computed(() => {
+  if (!hasLeave.value) return false
+  const leaveType = leaveInfo.value.full || leaveInfo.value.morning || leaveInfo.value.afternoon
+  if (!leaveType) return false
+  const config = getLeaveTypeConfig(leaveType)
+  return config?.category === 'event'
+})
+
+const isMorningEvent = computed(() => {
+  if (leaveInfo.value.morning) {
+    const config = getLeaveTypeConfig(leaveInfo.value.morning)
+    return config?.category === 'event'
+  }
+  return false
+})
+
+const isAfternoonEvent = computed(() => {
+  if (leaveInfo.value.afternoon) {
+    const config = getLeaveTypeConfig(leaveInfo.value.afternoon)
+    return config?.category === 'event'
+  }
+  return false
+})
+
+const isFullEvent = computed(() => {
+  if (leaveInfo.value.full) {
+    const config = getLeaveTypeConfig(leaveInfo.value.full)
+    return config?.category === 'event'
+  }
+  return false
+})
+
 const isToday = computed(() => isSameDay(props.date, today()))
 const isPast = computed(() => isBefore(props.date, today()))
 const isWeekend = computed(() => {
@@ -138,6 +172,37 @@ const isInMultiSelect = computed(() => {
   return isSelected
 })
 
+// Computed properties pour obtenir les couleurs selon l'intensité (vue présence)
+const weekendOpacity = computed(() => {
+  const intensity = uiStore.holidayWeekendIntensity || 'normal'
+  const opacities = {
+    light: 0.4,
+    normal: 0.6,
+    strong: 0.8
+  }
+  return opacities[intensity] || opacities.normal
+})
+
+const holidayBorderColor = computed(() => {
+  const intensity = uiStore.holidayWeekendIntensity || 'normal'
+  const colors = {
+    light: '#ffc107',
+    normal: '#ffc107',
+    strong: '#ff9800'
+  }
+  return colors[intensity] || colors.normal
+})
+
+const holidayBorderWidth = computed(() => {
+  const intensity = uiStore.holidayWeekendIntensity || 'normal'
+  const widths = {
+    light: '1px',
+    normal: '2px',
+    strong: '3px'
+  }
+  return widths[intensity] || widths.normal
+})
+
 const cellClasses = computed(() => {
   const classes = ['year-presence-day-cell']
   
@@ -149,6 +214,7 @@ const cellClasses = computed(() => {
   if (hasSplit.value) classes.push('has-split')
   if (!hasLeave.value && !isWeekend.value && !isHoliday.value) classes.push('present')
   if (isInMultiSelect.value) classes.push('multi-selected')
+  if (isEvent.value) classes.push('is-event')
   
   return classes
 })
@@ -169,6 +235,23 @@ const cellTitle = computed(() => {
   }
 })
 
+// Fonction pour convertir une couleur hex en rgba avec opacité
+function colorWithOpacity(color, opacity = 0.3) {
+  if (!color) return color
+  if (color.startsWith('#')) {
+    const hex = color.replace('#', '')
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  } else if (color.startsWith('rgba')) {
+    return color.replace(/[\d.]+\)$/g, `${opacity})`)
+  } else if (color.startsWith('rgb')) {
+    return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`)
+  }
+  return color
+}
+
 const cellStyle = computed(() => {
   const style = {}
   
@@ -177,16 +260,34 @@ const cellStyle = computed(() => {
     style.overflow = 'hidden'
     style.background = 'transparent'
   } else if (fullColor.value) {
-    style.backgroundColor = fullColor.value
-    style.color = 'white'
+    if (isFullEvent.value) {
+      const opacity = uiStore.eventOpacity ?? 0.15
+      style.backgroundColor = colorWithOpacity(fullColor.value, opacity)
+      style.color = 'white'
+    } else {
+      style.backgroundColor = fullColor.value
+      style.color = 'white'
+    }
   } else if (morningColor.value && !leaveInfo.value.afternoon) {
-    style.backgroundColor = morningColor.value
-    style.color = 'white'
+    if (isMorningEvent.value) {
+      const opacity = uiStore.eventOpacity ?? 0.15
+      style.backgroundColor = colorWithOpacity(morningColor.value, opacity)
+      style.color = 'white'
+    } else {
+      style.backgroundColor = morningColor.value
+      style.color = 'white'
+    }
     style.borderTopWidth = '3px'
     style.borderTopColor = 'white'
   } else if (afternoonColor.value && !leaveInfo.value.morning) {
-    style.backgroundColor = afternoonColor.value
-    style.color = 'white'
+    if (isAfternoonEvent.value) {
+      const opacity = uiStore.eventOpacity ?? 0.15
+      style.backgroundColor = colorWithOpacity(afternoonColor.value, opacity)
+      style.color = 'white'
+    } else {
+      style.backgroundColor = afternoonColor.value
+      style.color = 'white'
+    }
     style.borderBottomWidth = '3px'
     style.borderBottomColor = 'white'
   }
@@ -242,14 +343,16 @@ function handleMouseDown(event) {
   opacity: 0.7;
 }
 
+/* Weekends - Vue présence */
 .year-presence-day-cell.weekend {
   background: var(--bg-color);
-  opacity: 0.6;
+  opacity: v-bind('weekendOpacity');
 }
 
+/* Jours fériés - Vue présence */
 .year-presence-day-cell.public-holiday {
-  border-color: #ffc107;
-  border-width: 2px;
+  border-color: v-bind('holidayBorderColor');
+  border-width: v-bind('holidayBorderWidth');
 }
 
 .year-presence-day-cell.present {
@@ -301,6 +404,14 @@ function handleMouseDown(event) {
   background: rgba(74, 144, 226, 0.3) !important;
   border-color: var(--primary-color, #4a90e2) !important;
 }
+
+/* Liseré pour différencier les événements des congés - plus discret */
+.year-presence-day-cell.is-event {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+}
+
+/* L'opacité des couleurs d'événements dans les demi-journées est gérée par le style inline */
 </style>
 
 

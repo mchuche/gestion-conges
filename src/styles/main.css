@@ -3259,10 +3259,19 @@ body.minimal-header #currentMonth {
 }
 
 /* Styles pour SweetAlert2 - Adaptation au thème */
+.swal2-container {
+    z-index: 10001 !important; /* Au-dessus de la modale (z-index: 10000) */
+}
+
+.swal2-backdrop-show {
+    z-index: 10000 !important; /* Au-dessus de la modale backdrop */
+}
+
 .swal2-popup {
     background: var(--card-bg) !important;
     color: var(--text-color) !important;
     border-radius: 8px !important;
+    z-index: 10002 !important; /* Au-dessus du container */
 }
 
 .swal2-title {

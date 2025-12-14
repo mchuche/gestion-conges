@@ -3,6 +3,8 @@ import { useLeavesStore } from '../stores/leaves'
 import { useLeaveTypesStore } from '../stores/leaveTypes'
 import { useUIStore } from '../stores/ui'
 import { getDateKey, getDateKeyWithPeriod, getDateKeys } from '../services/utils'
+import { getDay } from '../services/dateUtils'
+import { getPublicHolidays } from '../services/holidays'
 import logger from '../services/logger'
 
 export function useLeaves() {
@@ -20,8 +22,46 @@ export function useLeaves() {
     }
   }
 
+  // Vérifier si une date est un weekend ou un jour férié
+  function isWeekendOrHoliday(date) {
+    // Vérifier si c'est un weekend
+    const dayOfWeek = getDay(date)
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+    
+    // Vérifier si c'est un jour férié
+    const year = date.getFullYear()
+    const holidays = getPublicHolidays(uiStore.selectedCountry, year)
+    const dateKey = getDateKey(date)
+    const isHoliday = holidays[dateKey] !== undefined
+    
+    return isWeekend || isHoliday
+  }
+
   // Définir un congé pour une date et une période
   async function setLeave(date, leaveTypeId, period = 'full') {
+    // Empêcher l'ajout de congés sur les weekends et jours fériés
+    if (isWeekendOrHoliday(date)) {
+      const dayOfWeek = getDay(date)
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+      const year = date.getFullYear()
+      const holidays = getPublicHolidays(uiStore.selectedCountry, year)
+      const dateKey = getDateKey(date)
+      const isHoliday = holidays[dateKey] !== undefined
+      
+      let errorMessage = 'Impossible de poser un congé sur '
+      if (isWeekend && isHoliday) {
+        errorMessage += 'un weekend et jour férié'
+      } else if (isWeekend) {
+        errorMessage += 'un weekend'
+      } else {
+        errorMessage += 'un jour férié'
+      }
+      
+      const error = new Error(errorMessage)
+      error.code = 'WEEKEND_OR_HOLIDAY'
+      throw error
+    }
+    
     const keys = getDateKeys(date)
     const dateKey = period === 'full' ? keys.full : keys[period]
 
@@ -104,7 +144,8 @@ export function useLeaves() {
     removeLeave,
     isLeaveTypeUsed,
     countLeaveTypeUsage,
-    getLeaveTypeConfig
+    getLeaveTypeConfig,
+    isWeekendOrHoliday
   }
 }
 

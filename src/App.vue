@@ -16,6 +16,7 @@
       <ConfigModal />
       <HelpModal />
       <TeamsModal />
+      <LeaveRecapModal />
       
       <!-- Système de toasts -->
       <ToastContainer />
@@ -35,6 +36,7 @@ import LeaveModal from './components/modals/LeaveModal.vue'
 import ConfigModal from './components/modals/ConfigModal.vue'
 import HelpModal from './components/modals/HelpModal.vue'
 import TeamsModal from './components/modals/TeamsModal.vue'
+import LeaveRecapModal from './components/modals/LeaveRecapModal.vue'
 import ToastContainer from './components/common/ToastContainer.vue'
 import logger from './services/logger'
 
@@ -123,6 +125,18 @@ onMounted(async () => {
     // Charger le minimizeHeader au démarrage
     if (typeof uiStore.loadMinimizeHeader === 'function') {
       uiStore.loadMinimizeHeader()
+    }
+    // Charger le weekStartDay au démarrage
+    if (typeof uiStore.loadWeekStartDay === 'function') {
+      await uiStore.loadWeekStartDay()
+    }
+    // Charger l'opacité des événements au démarrage
+    if (typeof uiStore.loadEventOpacity === 'function') {
+      await uiStore.loadEventOpacity()
+    }
+    // Charger l'intensité des jours fériés/weekends au démarrage
+    if (typeof uiStore.loadHolidayWeekendIntensity === 'function') {
+      await uiStore.loadHolidayWeekendIntensity()
     }
   } catch (err) {
     logger.error('Erreur lors de la vérification:', err)

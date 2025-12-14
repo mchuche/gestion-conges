@@ -10,8 +10,8 @@
       </div>
       <div class="year-week-header">
         <div
-          v-for="dayName in dayNames"
-          :key="dayName"
+          v-for="(dayName, index) in dayNames"
+          :key="`${dayName}-${index}`"
           class="year-week-day"
         >
           {{ dayName }}
@@ -45,13 +45,15 @@ import {
   getMonth,
   getDay,
   getDaysInMonth,
-  createDate
+  createDate,
+  adjustDayOfWeek,
+  getDayNames
 } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 
 const uiStore = useUIStore()
 
-const dayNames = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
+const dayNames = computed(() => getDayNames(uiStore.weekStartDay))
 const monthNames = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -66,7 +68,8 @@ const months = computed(() => {
   for (let month = 0; month < 12; month++) {
     const firstDay = createDate(year, month, 1)
     const daysInMonth = getDaysInMonth(firstDay)
-    const startingDayOfWeek = getDay(firstDay) // 0 = Dimanche
+    const dayOfWeek = getDay(firstDay) // 0 = Dimanche
+    const startingDayOfWeek = adjustDayOfWeek(dayOfWeek, uiStore.weekStartDay)
 
     const days = []
     for (let day = 1; day <= daysInMonth; day++) {

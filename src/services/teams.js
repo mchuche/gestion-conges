@@ -104,6 +104,12 @@ export async function loadTeamMembers(teamId) {
     return []
   }
 
+  // Valider que teamId est un UUID valide
+  if (typeof teamId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+    logger.warn('[loadTeamMembers] ID d\'équipe invalide:', teamId)
+    return []
+  }
+
   try {
     // Charger les membres
     const { data: membersData, error: membersError } = await supabase

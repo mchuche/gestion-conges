@@ -71,7 +71,15 @@ export const useTeamsStore = defineStore('teams', () => {
   }
 
   function setCurrentTeam(teamId) {
-    currentTeamId.value = teamId
+    // Valider que teamId est soit null, soit un UUID valide
+    if (teamId === null || teamId === undefined || teamId === '') {
+      currentTeamId.value = null
+    } else if (typeof teamId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+      currentTeamId.value = teamId
+    } else {
+      logger.warn('[TeamsStore] setCurrentTeam: ID d\'équipe invalide:', teamId)
+      currentTeamId.value = null
+    }
   }
 
   return {

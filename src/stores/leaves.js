@@ -270,6 +270,68 @@ export const useLeavesStore = defineStore('leaves', () => {
     leaveIdMap.value = {}
   }
 
+  // Supprimer tous les congés (catégorie 'leave') pour une année donnée
+  function clearLeavesForYear(year, leaveTypesStore) {
+    const newLeaves = { ...leaves.value }
+    const newLeaveIdMap = { ...leaveIdMap.value }
+    
+    Object.keys(leaves.value).forEach(dateKey => {
+      // Extraire l'année de la date_key (format: YYYY-MM-DD ou YYYY-MM-DD-period)
+      const yearFromKey = parseInt(dateKey.split('-')[0])
+      
+      if (yearFromKey === year) {
+        const leaveTypeId = leaves.value[dateKey]
+        const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
+        const category = leaveType?.category || 'leave'
+        
+        // Supprimer seulement les congés de catégorie 'leave'
+        if (category === 'leave') {
+          delete newLeaves[dateKey]
+          // Supprimer aussi du mapping si présent
+          Object.keys(newLeaveIdMap).forEach(id => {
+            if (newLeaveIdMap[id] === dateKey) {
+              delete newLeaveIdMap[id]
+            }
+          })
+        }
+      }
+    })
+    
+    leaves.value = newLeaves
+    leaveIdMap.value = newLeaveIdMap
+  }
+
+  // Supprimer tous les événements (catégorie 'event') pour une année donnée
+  function clearEventsForYear(year, leaveTypesStore) {
+    const newLeaves = { ...leaves.value }
+    const newLeaveIdMap = { ...leaveIdMap.value }
+    
+    Object.keys(leaves.value).forEach(dateKey => {
+      // Extraire l'année de la date_key (format: YYYY-MM-DD ou YYYY-MM-DD-period)
+      const yearFromKey = parseInt(dateKey.split('-')[0])
+      
+      if (yearFromKey === year) {
+        const leaveTypeId = leaves.value[dateKey]
+        const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
+        const category = leaveType?.category || 'leave'
+        
+        // Supprimer seulement les événements de catégorie 'event'
+        if (category === 'event') {
+          delete newLeaves[dateKey]
+          // Supprimer aussi du mapping si présent
+          Object.keys(newLeaveIdMap).forEach(id => {
+            if (newLeaveIdMap[id] === dateKey) {
+              delete newLeaveIdMap[id]
+            }
+          })
+        }
+      }
+    })
+    
+    leaves.value = newLeaves
+    leaveIdMap.value = newLeaveIdMap
+  }
+
   function reset() {
     leaves.value = {}
     leaveIdMap.value = {}
@@ -297,6 +359,8 @@ export const useLeavesStore = defineStore('leaves', () => {
     removeLeave,
     removeLeavesByType,
     clearAllLeaves,
+    clearLeavesForYear,
+    clearEventsForYear,
     setupRealtime,
     disableRealtime,
     reset

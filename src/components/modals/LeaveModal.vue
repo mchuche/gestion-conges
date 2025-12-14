@@ -67,23 +67,51 @@
           <p>Jours ouvrés : <strong>{{ workingDaysCount }}</strong></p>
         </div>
 
-        <div class="leave-types">
-          <h4>Types de congé :</h4>
-          <div class="leave-buttons-grid">
-            <button
-              v-for="type in leaveTypes"
-              :key="type.id"
-              :class="['leave-btn', { active: isSelectedType(type.id) }]"
-              :style="getButtonStyle(type)"
-              @click="selectLeaveType(type.id)"
-              :title="getTypeTooltip(type)"
-            >
-              <span v-if="type.category === 'event'">📅</span>
-              {{ type.name }}
-              <span v-if="type.label !== type.name" class="type-label">
-                ({{ type.label }})
-              </span>
-            </button>
+        <div class="leave-types-container">
+          <!-- Section Congés -->
+          <div class="leave-types-section" v-if="leaveTypesList.length > 0">
+            <h4 class="section-title">
+              <span class="section-icon">🏖️</span>
+              Congés
+            </h4>
+            <div class="leave-buttons-grid">
+              <button
+                v-for="type in leaveTypesList"
+                :key="type.id"
+                :class="['leave-btn', { active: isSelectedType(type.id) }]"
+                :style="getButtonStyle(type)"
+                @click="selectLeaveType(type.id)"
+                :title="getTypeTooltip(type)"
+              >
+                {{ type.name }}
+                <span v-if="type.label !== type.name" class="type-label">
+                  ({{ type.label }})
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Section Événements -->
+          <div class="leave-types-section" v-if="eventTypesList.length > 0">
+            <h4 class="section-title">
+              <span class="section-icon">📅</span>
+              Événements
+            </h4>
+            <div class="leave-buttons-grid">
+              <button
+                v-for="type in eventTypesList"
+                :key="type.id"
+                :class="['leave-btn', 'event-btn', { active: isSelectedType(type.id) }]"
+                :style="getButtonStyle(type)"
+                @click="selectLeaveType(type.id)"
+                :title="getTypeTooltip(type)"
+              >
+                {{ type.name }}
+                <span v-if="type.label !== type.name" class="type-label">
+                  ({{ type.label }})
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -130,7 +158,7 @@ function formatDate(date, options = {}) {
 const uiStore = useUIStore()
 const leavesStore = useLeavesStore()
 const leaveTypesStore = useLeaveTypesStore()
-const { getLeaveForDate, getLeaveTypeConfig, setLeave, removeLeave: removeLeaveForDate } = useLeaves()
+const { getLeaveForDate, getLeaveTypeConfig, setLeave, removeLeave: removeLeaveForDate, isWeekendOrHoliday } = useLeaves()
 const { error: showErrorToast } = useToast()
 
 const showModal = computed(() => uiStore.showModal)
@@ -138,6 +166,15 @@ const selectedDate = computed(() => uiStore.selectedDate)
 const selectedDates = computed(() => uiStore.selectedDates)
 const selectedPeriod = computed(() => uiStore.selectedPeriod)
 const leaveTypes = computed(() => leaveTypesStore.leaveTypes)
+
+// Séparer les types en congés et événements
+const leaveTypesList = computed(() => {
+  return leaveTypes.value.filter(type => type.category !== 'event')
+})
+
+const eventTypesList = computed(() => {
+  return leaveTypes.value.filter(type => type.category === 'event')
+})
 
 const formattedDate = computed(() => {
   if (!selectedDate.value) return ''
@@ -206,8 +243,12 @@ function handleDatePickerChange(dates) {
   const end = new Date(endDate)
   end.setHours(0, 0, 0, 0)
   
+  // Filtrer les weekends et jours fériés
   while (currentDate <= end) {
-    selectedDatesArray.push(new Date(currentDate))
+    // Ne pas inclure les weekends et jours fériés
+    if (!isWeekendOrHoliday(currentDate)) {
+      selectedDatesArray.push(new Date(currentDate))
+    }
     currentDate.setDate(currentDate.getDate() + 1)
   }
   
@@ -219,6 +260,8 @@ function handleDatePickerChange(dates) {
     })
     // Définir la première date comme date principale
     uiStore.setSelectedDate(selectedDatesArray[0])
+  } else {
+    showErrorToast('Aucune date valide dans cette plage. Les weekends et jours fériés sont exclus.')
   }
   
   showDatePicker.value = false
@@ -268,14 +311,32 @@ async function selectLeaveType(typeId) {
     ? selectedDates.value 
     : [selectedDate.value]
   
+  // Filtrer les weekends et jours fériés
+  const validDates = datesToProcess.filter(date => !isWeekendOrHoliday(date))
+  
+  if (validDates.length === 0) {
+    showErrorToast('Aucune date valide sélectionnée. Les weekends et jours fériés ne peuvent pas avoir de congés.')
+    return
+  }
+  
+  if (validDates.length < datesToProcess.length) {
+    const skippedCount = datesToProcess.length - validDates.length
+    showErrorToast(`${skippedCount} date(s) ignorée(s) (weekends ou jours fériés).`)
+  }
+  
   const period = selectedPeriod.value || 'full'
   
   try {
-    for (const date of datesToProcess) {
+    for (const date of validDates) {
       await setLeave(date, typeId, period)
     }
     closeModal()
   } catch (error) {
+    // Si l'erreur est déjà gérée (weekend/holiday), ne pas la re-gérer
+    if (error.code === 'WEEKEND_OR_HOLIDAY') {
+      showErrorToast(error.message)
+      return
+    }
     handleError(error, {
       context: 'LeaveModal.selectLeaveType',
       showToast: true
@@ -339,6 +400,8 @@ watch(leaveInfo, (newInfo) => {
 <style scoped>
 .modal-content {
   padding: 20px;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .selected-date-info {
@@ -387,11 +450,36 @@ watch(leaveInfo, (newInfo) => {
   margin-bottom: 20px;
 }
 
-.period-selection h4,
-.leave-types h4 {
+.period-selection h4 {
   margin-bottom: 10px;
   font-size: 1em;
   color: var(--text-color);
+}
+
+.leave-types-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.leave-types-section {
+  flex: 1;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 1em;
+  color: var(--text-color);
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.section-icon {
+  font-size: 1.2em;
 }
 
 .period-buttons {
@@ -434,13 +522,12 @@ watch(leaveInfo, (newInfo) => {
 
 .leave-buttons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
-  margin-bottom: 20px;
 }
 
 .leave-btn {
-  padding: 12px;
+  padding: 10px 12px;
   border: 2px solid;
   border-radius: 4px;
   cursor: pointer;
@@ -448,6 +535,16 @@ watch(leaveInfo, (newInfo) => {
   font-size: 0.9em;
   text-align: center;
   font-weight: 500;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.event-btn {
+  opacity: 0.9;
 }
 
 .leave-btn:hover {
