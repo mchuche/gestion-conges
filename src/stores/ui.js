@@ -32,6 +32,8 @@ export const useUIStore = defineStore('ui', () => {
   const showHelpModal = ref(false)
   const showTeamsModal = ref(false)
   const showLeaveRecapModal = ref(false)
+  const showRecurringEventModal = ref(false)
+  const selectedEventTypeId = ref(null) // Pour la modale d'événements récurrents
 
   // Getters
   const isMultiSelectActive = computed(() => multiSelectMode.value && selectedDates.value.length > 0)
@@ -607,6 +609,16 @@ export const useUIStore = defineStore('ui', () => {
     showLeaveRecapModal.value = false
   }
 
+  function openRecurringEventModal(eventTypeId) {
+    selectedEventTypeId.value = eventTypeId
+    showRecurringEventModal.value = true
+  }
+
+  function closeRecurringEventModal() {
+    showRecurringEventModal.value = false
+    selectedEventTypeId.value = null
+  }
+
   function reset() {
     currentDate.value = new Date()
     selectedDate.value = null
@@ -705,6 +717,10 @@ export const useUIStore = defineStore('ui', () => {
     closeTeamsModal,
     openLeaveRecapModal,
     closeLeaveRecapModal,
+    showRecurringEventModal,
+    selectedEventTypeId,
+    openRecurringEventModal,
+    closeRecurringEventModal,
     reset
   }
 })

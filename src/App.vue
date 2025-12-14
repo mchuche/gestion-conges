@@ -17,6 +17,7 @@
       <HelpModal />
       <TeamsModal />
       <LeaveRecapModal />
+      <RecurringEventModal />
       
       <!-- Système de toasts -->
       <ToastContainer />
@@ -30,6 +31,7 @@ import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { useUIStore } from './stores/ui'
+import { useRecurringEventsStore } from './stores/recurringEvents'
 import AuthModal from './components/auth/AuthModal.vue'
 import Header from './components/header/Header.vue'
 import LeaveModal from './components/modals/LeaveModal.vue'
@@ -37,12 +39,14 @@ import ConfigModal from './components/modals/ConfigModal.vue'
 import HelpModal from './components/modals/HelpModal.vue'
 import TeamsModal from './components/modals/TeamsModal.vue'
 import LeaveRecapModal from './components/modals/LeaveRecapModal.vue'
+import RecurringEventModal from './components/modals/RecurringEventModal.vue'
 import ToastContainer from './components/common/ToastContainer.vue'
 import logger from './services/logger'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+const recurringEventsStore = useRecurringEventsStore()
 
 // Utiliser les computed du store pour la réactivité
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -137,6 +141,11 @@ onMounted(async () => {
     // Charger l'intensité des jours fériés/weekends au démarrage
     if (typeof uiStore.loadHolidayWeekendIntensity === 'function') {
       await uiStore.loadHolidayWeekendIntensity()
+    }
+    
+    // Charger les événements récurrents
+    if (authStore.isAuthenticated && typeof recurringEventsStore.loadRecurringEvents === 'function') {
+      await recurringEventsStore.loadRecurringEvents()
     }
   } catch (err) {
     logger.error('Erreur lors de la vérification:', err)

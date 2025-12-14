@@ -16,7 +16,7 @@
             <div v-if="showSelectionList" class="selected-dates-list">
               <ul>
                 <li v-for="(date, index) in selectedDates" :key="index">
-                  {{ formatDateShort(date) }}
+                  {{ date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) }}
                 </li>
               </ul>
             </div>
@@ -159,7 +159,7 @@ const uiStore = useUIStore()
 const leavesStore = useLeavesStore()
 const leaveTypesStore = useLeaveTypesStore()
 const { getLeaveForDate, getLeaveTypeConfig, setLeave, removeLeave: removeLeaveForDate, isWeekendOrHoliday } = useLeaves()
-const { error: showErrorToast } = useToast()
+const { error: showErrorToast, success: showSuccessToast } = useToast()
 
 const showModal = computed(() => uiStore.showModal)
 const selectedDate = computed(() => uiStore.selectedDate)
@@ -307,6 +307,18 @@ function getTypeTooltip(type) {
 }
 
 async function selectLeaveType(typeId) {
+  const config = getLeaveTypeConfig(typeId)
+  const isEvent = config && config.category === 'event'
+  
+  // Si c'est un événement, ouvrir la modale de choix
+  if (isEvent) {
+    // Ouvrir la modale d'événements récurrents
+    uiStore.openRecurringEventModal(typeId)
+    // Ne pas fermer la modale principale, elle sera fermée par l'utilisateur
+    return
+  }
+  
+  // Comportement normal pour les congés (et événements normaux si besoin)
   const datesToProcess = selectedDates.value.length > 1 
     ? selectedDates.value 
     : [selectedDate.value]
@@ -344,6 +356,7 @@ async function selectLeaveType(typeId) {
   }
 }
 
+
 async function handleRemoveLeave() {
   const datesToProcess = selectedDates.value.length > 1 
     ? selectedDates.value 
@@ -375,13 +388,7 @@ function openSelectionModal() {
   showSelectionList.value = !showSelectionList.value
 }
 
-function formatDateShort(date) {
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short'
-  })
-}
+
 
 // Ajuster la période selon le congé existant
 watch(leaveInfo, (newInfo) => {
@@ -395,6 +402,7 @@ watch(leaveInfo, (newInfo) => {
     }
   }
 }, { immediate: true })
+
 </script>
 
 <style scoped>
@@ -614,6 +622,21 @@ watch(leaveInfo, (newInfo) => {
 
 .date-picker-container :deep(.dp__input_wrap) {
   width: 100%;
+}
+
+.event-info {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg-color, #f5f5f5);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.event-hint {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--text-color);
+  opacity: 0.7;
 }
 </style>
 
