@@ -11,7 +11,7 @@ Thumbs.db
 
 # Dependencies
 node_modules/
-package-lock.json
+# package-lock.json - Conservé pour npm ci dans GitHub Actions
 yarn.lock
 pnpm-lock.yaml
 
