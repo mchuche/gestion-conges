@@ -13,25 +13,48 @@ import { getPublicHolidays } from './holidays'
  */
 export function generateRecurringOccurrences(recurringEvent, targetStartDate, targetEndDate, country = 'FR') {
   const occurrences = []
-  const holidays = getPublicHolidays(country, targetStartDate.getFullYear())
+  
+  // Récupérer les jours fériés pour toutes les années nécessaires
+  const startYear = targetStartDate.getFullYear()
+  const endYear = targetEndDate.getFullYear()
+  const holidays = {}
+  for (let year = startYear; year <= endYear; year++) {
+    const yearHolidays = getPublicHolidays(country, year)
+    Object.assign(holidays, yearHolidays)
+  }
   
   let currentDate = new Date(recurringEvent.start_date)
+  currentDate.setHours(0, 0, 0, 0)
+  
   const endLimit = recurringEvent.end_date 
     ? new Date(recurringEvent.end_date)
     : targetEndDate || new Date(targetStartDate.getFullYear() + 1, 11, 31)
+  endLimit.setHours(23, 59, 59, 999)
   
   // Ne pas générer avant la date cible de début
   if (currentDate < targetStartDate) {
     currentDate = new Date(targetStartDate)
+    currentDate.setHours(0, 0, 0, 0)
   }
   
-  // Ne pas générer après la date cible de fin
+  // Ne pas générer après la date cible de fin ou la date de fin de l'événement
   const finalEndDate = endLimit < targetEndDate ? endLimit : targetEndDate
   
   let occurrenceCount = 0
   const maxOccurrences = recurringEvent.max_occurrences || Infinity
   const maxIterations = 10000 // Sécurité pour éviter les boucles infinies
   let iterations = 0
+  
+  // Pour les récurrences hebdomadaires, on doit toujours avancer jour par jour
+  // car on peut avoir plusieurs jours sélectionnés (ex: lundi et mercredi)
+  const useDayByDay = recurringEvent.recurrence_type === 'weekly'
+  
+  console.log('[Recurrence] Début de génération:', {
+    startDate: currentDate.toISOString().split('T')[0],
+    endDate: finalEndDate.toISOString().split('T')[0],
+    pattern: recurringEvent.recurrence_pattern,
+    type: recurringEvent.recurrence_type
+  })
   
   while (currentDate <= finalEndDate && occurrenceCount < maxOccurrences && iterations < maxIterations) {
     iterations++
@@ -40,25 +63,43 @@ export function generateRecurringOccurrences(recurringEvent, targetStartDate, ta
     if (matchesRecurrencePattern(currentDate, recurringEvent)) {
       // Vérifier les exclusions
       if (!isExcluded(currentDate, recurringEvent.excluded_dates || [])) {
-        // Pour les événements, on peut inclure les weekends (selon la logique métier)
-        // Mais on exclut les jours fériés si nécessaire
+        // Exclure les jours fériés
         const dateKey = getDateKey(currentDate)
         const isHoliday = holidays[dateKey] !== undefined
         
-        // Pour l'instant, on génère même les weekends/fériés pour les événements
-        // (l'utilisateur pourra les exclure manuellement si besoin)
-        occurrences.push({
-          date: new Date(currentDate),
-          period: recurringEvent.period || 'full',
-          leaveTypeId: recurringEvent.leave_type_id
-        })
-        occurrenceCount++
+        if (!isHoliday) {
+          occurrences.push({
+            date: new Date(currentDate),
+            period: recurringEvent.period || 'full',
+            leaveTypeId: recurringEvent.leave_type_id
+          })
+          occurrenceCount++
+          if (occurrenceCount <= 3) {
+            console.log(`[Recurrence] Occurrence ${occurrenceCount} ajoutée:`, currentDate.toISOString().split('T')[0])
+          }
+        } else {
+          console.debug(`[Recurrence] Date ${currentDate.toISOString().split('T')[0]} exclue (jour férié)`)
+        }
       }
     }
     
     // Avancer à la prochaine date selon le type
-    currentDate = getNextDate(currentDate, recurringEvent.recurrence_type, recurringEvent.recurrence_pattern)
+    if (useDayByDay) {
+      // Pour les récurrences hebdomadaires avec plusieurs jours, avancer jour par jour
+      currentDate = addDays(currentDate, 1)
+    } else {
+      // Pour les autres types, utiliser la logique spécifique
+      const nextDate = getNextDate(currentDate, recurringEvent.recurrence_type, recurringEvent.recurrence_pattern)
+      // Si on n'avance pas (cas d'erreur), avancer d'un jour pour éviter la boucle infinie
+      if (nextDate.getTime() <= currentDate.getTime()) {
+        currentDate = addDays(currentDate, 1)
+      } else {
+        currentDate = nextDate
+      }
+    }
   }
+  
+  console.log(`[Recurrence] Généré ${occurrences.length} occurrences sur ${iterations} itérations`)
   
   return occurrences
 }
@@ -68,6 +109,13 @@ export function generateRecurringOccurrences(recurringEvent, targetStartDate, ta
  */
 function matchesRecurrencePattern(date, recurringEvent) {
   const pattern = recurringEvent.recurrence_pattern
+  
+  // Vérifier que le pattern existe
+  if (!pattern) {
+    console.warn('[Recurrence] Pas de pattern défini pour l\'événement:', recurringEvent)
+    return false
+  }
+  
   const dayOfWeek = getDay(date)
   
   switch (recurringEvent.recurrence_type) {
@@ -79,10 +127,18 @@ function matchesRecurrencePattern(date, recurringEvent) {
       return true
       
     case 'weekly':
-      if (!pattern.daysOfWeek || pattern.daysOfWeek.length === 0) {
+      // Vérifier que daysOfWeek existe et contient des valeurs
+      if (!pattern.daysOfWeek || !Array.isArray(pattern.daysOfWeek) || pattern.daysOfWeek.length === 0) {
+        console.warn('[Recurrence] Pattern hebdomadaire invalide:', pattern)
         return false
       }
-      return pattern.daysOfWeek.includes(dayOfWeek)
+      // Convertir en nombres si nécessaire (au cas où ce sont des strings)
+      const daysOfWeekNums = pattern.daysOfWeek.map(d => typeof d === 'string' ? parseInt(d, 10) : d)
+      const matches = daysOfWeekNums.includes(dayOfWeek)
+      if (!matches) {
+        console.debug(`[Recurrence] Date ${date.toISOString().split('T')[0]} (jour ${dayOfWeek}) ne correspond pas aux jours ${daysOfWeekNums.join(',')}`)
+      }
+      return matches
       
     case 'monthly':
       if (pattern.dayOfMonth !== undefined) {
@@ -91,15 +147,18 @@ function matchesRecurrencePattern(date, recurringEvent) {
         // Premier/dernier jour de la semaine du mois
         return matchesWeekOfMonth(date, pattern)
       }
+      console.warn('[Recurrence] Pattern mensuel invalide:', pattern)
       return false
       
     case 'yearly':
       if (pattern.month !== undefined && pattern.day !== undefined) {
         return date.getMonth() === pattern.month && date.getDate() === pattern.day
       }
+      console.warn('[Recurrence] Pattern annuel invalide:', pattern)
       return false
       
     default:
+      console.warn('[Recurrence] Type de récurrence inconnu:', recurringEvent.recurrence_type)
       return false
   }
 }

@@ -336,7 +336,7 @@ function handleMouseDown(event) {
 
 .year-presence-day-cell.today {
   border: 2px solid var(--primary-color);
-  box-shadow: 0 0 0 2px var(--primary-color);
+  background: rgba(74, 144, 226, 0.08);
 }
 
 .year-presence-day-cell.past-day {

@@ -86,6 +86,7 @@ function handleBackdropClick() {
   inset: 0;
   z-index: 9999; /* Augmenté pour être au-dessus de tous les éléments sticky */
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .modal-backdrop {
@@ -115,11 +116,12 @@ function handleBackdropClick() {
   position: relative;
   background: var(--card-bg, white);
   border-radius: 8px;
-  padding: 30px;
+  padding: 24px;
   max-width: 700px;
   width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   pointer-events: auto;
   transform: scale(0.95);
@@ -176,8 +178,10 @@ function handleBackdropClick() {
 
 .modal-body {
   color: var(--text-color, #2c3e50);
-  overflow: visible;
-  min-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .modal-footer {

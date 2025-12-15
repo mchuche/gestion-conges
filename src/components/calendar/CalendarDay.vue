@@ -359,7 +359,14 @@ function handleMouseDown(event) {
 .calendar-day.today,
 .year-view-day.today {
   border: 2px solid var(--primary-color, #4a90e2);
-  font-weight: bold;
+  background: rgba(74, 144, 226, 0.08);
+  position: relative;
+}
+
+/* Mode sombre pour le jour courant */
+[data-theme="dark"] .calendar-day.today,
+[data-theme="dark"] .year-view-day.today {
+  background: rgba(74, 144, 226, 0.15);
 }
 
 .calendar-day.past-day,
@@ -555,8 +562,7 @@ function handleMouseDown(event) {
 
 .calendar-day-list.today {
   border: 2px solid var(--primary-color, #4a90e2);
-  font-weight: bold;
-  background: #e3f2fd;
+  background: rgba(74, 144, 226, 0.08);
 }
 
 .calendar-day-list.past-day {

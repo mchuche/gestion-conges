@@ -862,7 +862,7 @@ body.minimal-header #currentMonth {
 
 .year-view-day.today {
     border: 2px solid var(--primary-color);
-    font-weight: bold;
+    background: rgba(74, 144, 226, 0.08);
 }
 
 .year-view-day.future-day {
@@ -1009,7 +1009,7 @@ body.minimal-header #currentMonth {
 
 .year-day.today {
     border: 2px solid var(--primary-color);
-    font-weight: bold;
+    background: rgba(74, 144, 226, 0.08);
     background: #e3f2fd;
 }
 

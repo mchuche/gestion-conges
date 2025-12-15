@@ -5,7 +5,7 @@
     </template>
     
     <template #body>
-      <div v-if="showModal" class="modal-content">
+      <div class="modal-content">
         <div v-if="selectedDate" class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
           <div v-if="recurringDateRange" class="date-range-info">
@@ -16,7 +16,7 @@
         </div>
 
         <!-- Sélection du type d'événement -->
-        <div v-if="!selectedEventTypeId" class="event-type-selection">
+        <div v-if="!selectedEventTypeId && eventTypesList.length > 0" class="event-type-selection">
           <h4>Sélectionner un type d'événement :</h4>
           <div class="event-types-grid">
             <button
@@ -31,6 +31,11 @@
               </span>
             </button>
           </div>
+        </div>
+        
+        <!-- Message si aucun type d'événement disponible -->
+        <div v-if="!selectedEventTypeId && eventTypesList.length === 0" class="no-events-message">
+          <p>Aucun type d'événement disponible. Veuillez d'abord créer un type d'événement dans les paramètres.</p>
         </div>
 
         <div v-if="selectedEventType" class="selected-event-type">
@@ -143,25 +148,29 @@
           
           <!-- Options annuelles -->
           <div v-if="recurrenceType === 'yearly'" class="recurrence-yearly-options">
-            <p>Répéter chaque année le même jour ({{ formatDate(selectedDate) }})</p>
+            <p v-if="selectedDate">Répéter chaque année le même jour ({{ formatDate(selectedDate) }})</p>
+            <p v-else>Répéter chaque année le même jour</p>
           </div>
           
           <!-- Date de fin -->
           <div class="recurrence-end-date">
-            <label v-if="!recurringDateRange">
-              <input type="checkbox" v-model="noEndDate" />
-              Sans fin
-            </label>
             <div v-if="recurringDateRange" class="date-range-note">
               <p>La récurrence sera limitée à la période sélectionnée : {{ formatDateRange(recurringDateRange) }}</p>
             </div>
-            <div v-if="!noEndDate && !recurringDateRange" class="end-date-picker">
-              <label>Jusqu'à :</label>
-              <Datepicker 
-                v-model="recurrenceEndDate"
-                :min-date="selectedDate"
-                :locale="fr"
-              />
+            <div v-else class="end-date-picker">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label>Date de fin :</label>
+                <Datepicker 
+                  v-model="recurrenceEndDate"
+                  :min-date="selectedDate"
+                  :max-date="selectedDate ? getEndOfYear(selectedDate) : null"
+                  :locale="fr"
+                  placeholder="Sélectionner une date de fin"
+                />
+              </div>
+              <span class="date-hint" v-if="selectedDate">
+                (fin de l'année : {{ getEndOfYear(selectedDate).toLocaleDateString('fr-FR') }})
+              </span>
             </div>
           </div>
           
@@ -188,6 +197,7 @@
             Annuler
           </button>
           <button 
+            v-if="selectedEventTypeId && selectedDate"
             class="btn-primary" 
             @click="createRecurringEvent"
             :disabled="recurrencePreview.length === 0"
@@ -220,10 +230,14 @@ const leaveTypesStore = useLeaveTypesStore()
 const { error: showErrorToast, success: showSuccessToast } = useToast()
 
 const showModal = computed(() => uiStore.showRecurringEventModal)
+const recurringDateRange = computed(() => uiStore.recurringEventDateRange)
+
+// Date sélectionnée : priorité à la plage de dates, puis date du picker, puis date du store
+const startDatePicker = ref(null)
 const selectedDate = computed(() => {
   // Si une plage de dates est fournie, utiliser la date de début
-  if (uiStore.recurringEventDateRange && Array.isArray(uiStore.recurringEventDateRange) && uiStore.recurringEventDateRange.length === 2) {
-    return uiStore.recurringEventDateRange[0]
+  if (recurringDateRange.value && Array.isArray(recurringDateRange.value) && recurringDateRange.value.length === 2) {
+    return recurringDateRange.value[0]
   }
   // Utiliser la date du picker si définie
   if (startDatePicker.value) {
@@ -232,19 +246,18 @@ const selectedDate = computed(() => {
   // Sinon utiliser la date sélectionnée dans le store ou la date du jour
   return uiStore.selectedDate || new Date()
 })
-const selectedEventTypeId = ref(uiStore.selectedEventTypeId)
-const recurringDateRange = computed(() => uiStore.recurringEventDateRange)
+
+// Synchroniser selectedEventTypeId avec le store
+const selectedEventTypeId = ref(uiStore.selectedEventTypeId || null)
+
+// Surveiller les changements de selectedEventTypeId dans le store
+watch(() => uiStore.selectedEventTypeId, (newId) => {
+  selectedEventTypeId.value = newId || null
+}, { immediate: true })
 
 // Liste des types d'événements
 const eventTypesList = computed(() => {
   return leaveTypesStore.leaveTypes.filter(type => type.category === 'event')
-})
-
-// Surveiller les changements de selectedEventTypeId dans le store
-watch(() => uiStore.selectedEventTypeId, (newId) => {
-  if (newId) {
-    selectedEventTypeId.value = newId
-  }
 })
 
 const selectedEventType = computed(() => {
@@ -252,17 +265,24 @@ const selectedEventType = computed(() => {
   return leaveTypesStore.getLeaveType(selectedEventTypeId.value)
 })
 
-const selectedPeriod = ref('full')
+// Synchroniser selectedPeriod avec le store
+const selectedPeriod = ref(uiStore.selectedPeriod || 'full')
+
+// Surveiller les changements de selectedPeriod dans le store
+watch(() => uiStore.selectedPeriod, (newPeriod) => {
+  if (newPeriod) {
+    selectedPeriod.value = newPeriod
+  }
+}, { immediate: true })
+
 const recurrenceType = ref('weekly')
 const recurrenceInterval = ref(1)
 const selectedDays = ref([])
-const noEndDate = ref(true)
 const recurrenceEndDate = ref(null)
 const monthlyRecurrenceMode = ref('dayOfMonth')
 const monthlyWeekOfMonth = ref(1)
 const monthlyDayOfWeek = ref(1)
 const recurrencePreview = ref([])
-const startDatePicker = ref(null)
 
 const daysOfWeek = [
   { value: 0, label: 'Dim' },
@@ -305,11 +325,14 @@ function formatDateRange(range) {
 function handleStartDateChange(date) {
   if (date) {
     startDatePicker.value = date
-    // Initialiser avec le jour de la semaine si récurrence hebdomadaire
+    // Initialiser avec le jour de la semaine si récurrence hebdomadaire et aucun jour sélectionné
     if (recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
       selectedDays.value = [date.getDay()]
     }
-    updateRecurrencePreview()
+    // Mettre à jour la prévisualisation si un type d'événement est sélectionné
+    if (selectedEventTypeId.value) {
+      updateRecurrencePreview()
+    }
   }
 }
 
@@ -324,21 +347,74 @@ function handleRecurrenceTypeChange() {
 }
 
 // Surveiller les changements pour mettre à jour la prévisualisation
-watch([selectedDays, recurrenceInterval, recurrenceType, recurrenceEndDate, noEndDate, monthlyRecurrenceMode, monthlyWeekOfMonth, monthlyDayOfWeek, selectedDate, selectedPeriod, recurringDateRange, selectedEventTypeId], () => {
+watch([selectedDays, recurrenceInterval, recurrenceType, recurrenceEndDate, monthlyRecurrenceMode, monthlyWeekOfMonth, monthlyDayOfWeek, selectedDate, selectedPeriod, recurringDateRange, selectedEventTypeId], () => {
   if (selectedDate.value && selectedEventTypeId.value) {
     updateRecurrencePreview()
   }
 }, { deep: true })
 
-// Initialiser avec le jour de la semaine sélectionné
-watch(selectedDate, (newDate) => {
-  if (newDate && recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
-    selectedDays.value = [newDate.getDay()]
-  }
-  if (newDate && selectedEventTypeId.value) {
-    updateRecurrencePreview()
+// Fonction pour obtenir la fin de l'année d'une date
+function getEndOfYear(date) {
+  const endOfYear = new Date(date)
+  endOfYear.setMonth(11, 31)
+  endOfYear.setHours(23, 59, 59, 999)
+  return endOfYear
+}
+
+// Surveiller l'ouverture de la modale pour initialiser/réinitialiser certaines valeurs
+watch(showModal, (isOpen) => {
+  if (isOpen) {
+    // Si un eventTypeId est passé depuis le store, l'utiliser, sinon réinitialiser à null
+    // Cela permet d'afficher la sélection de type si aucun type n'est pré-sélectionné
+    if (uiStore.selectedEventTypeId) {
+      selectedEventTypeId.value = uiStore.selectedEventTypeId
+    } else {
+      selectedEventTypeId.value = null
+    }
+    
+    // Initialiser startDatePicker si une date est sélectionnée dans le store et qu'aucune plage de dates n'est définie
+    if (uiStore.selectedDate && !recurringDateRange.value) {
+      startDatePicker.value = uiStore.selectedDate
+    }
+    
+    // Initialiser la date de fin par défaut (fin de l'année) si pas déjà définie
+    if (!recurrenceEndDate.value && selectedDate.value) {
+      recurrenceEndDate.value = getEndOfYear(selectedDate.value)
+    }
+    
+    // Initialiser les jours sélectionnés si récurrence hebdomadaire et qu'aucun jour n'est sélectionné
+    if (selectedDate.value && recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
+      selectedDays.value = [selectedDate.value.getDay()]
+    }
+    
+    // Réinitialiser la prévisualisation (sera recalculée par les autres watches)
+    recurrencePreview.value = []
   }
 }, { immediate: true })
+
+// Mettre à jour la date de fin quand la date de début change
+watch(selectedDate, (newDate) => {
+  if (newDate && showModal.value) {
+    // Si la date de fin actuelle est après la fin de l'année de la nouvelle date de début, la réinitialiser
+    if (!recurrenceEndDate.value || recurrenceEndDate.value > getEndOfYear(newDate)) {
+      recurrenceEndDate.value = getEndOfYear(newDate)
+    }
+  }
+})
+
+// Initialiser avec le jour de la semaine sélectionné quand la date change
+watch(selectedDate, (newDate) => {
+  if (newDate && showModal.value) {
+    // Si récurrence hebdomadaire et aucun jour sélectionné, initialiser avec le jour de la date
+    if (recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
+      selectedDays.value = [newDate.getDay()]
+    }
+    // Mettre à jour la prévisualisation si un type d'événement est sélectionné
+    if (selectedEventTypeId.value) {
+      updateRecurrencePreview()
+    }
+  }
+})
 
 function updateRecurrencePreview() {
   if (!selectedDate.value || !selectedEventTypeId.value) {
@@ -355,12 +431,14 @@ function updateRecurrencePreview() {
   const startDate = selectedDate.value
   // Si une plage de dates est fournie, l'utiliser comme période de validité
   let endDate
+  
   if (recurringDateRange.value && Array.isArray(recurringDateRange.value) && recurringDateRange.value.length === 2) {
     endDate = new Date(recurringDateRange.value[1])
-  } else if (noEndDate.value) {
-    endDate = new Date(startDate.getFullYear() + 1, 11, 31)
+  } else if (recurrenceEndDate.value) {
+    endDate = recurrenceEndDate.value
   } else {
-    endDate = recurrenceEndDate.value || new Date(startDate.getFullYear() + 1, 11, 31)
+    // Par défaut, utiliser la fin de l'année
+    endDate = getEndOfYear(startDate)
   }
 
   const pattern = buildRecurrencePattern()
@@ -371,11 +449,12 @@ function updateRecurrencePreview() {
 
   const recurringEvent = {
     start_date: startDate.toISOString().split('T')[0],
-    end_date: noEndDate.value ? null : endDate.toISOString().split('T')[0],
+    end_date: endDate ? endDate.toISOString().split('T')[0] : null,
     recurrence_type: recurrenceType.value,
     recurrence_pattern: pattern,
     period: selectedPeriod.value || 'full',
-    leave_type_id: selectedEventTypeId.value
+    leave_type_id: selectedEventTypeId.value,
+    max_occurrences: null
   }
 
   try {
@@ -385,6 +464,7 @@ function updateRecurrencePreview() {
       endDate,
       uiStore.selectedCountry
     )
+    
     recurrencePreview.value = occurrences.map(occ => occ.date)
   } catch (error) {
     logger.error('Erreur lors de la génération de la prévisualisation:', error)
@@ -393,6 +473,10 @@ function updateRecurrencePreview() {
 }
 
 function buildRecurrencePattern() {
+  if (!selectedDate.value) {
+    return null
+  }
+  
   switch (recurrenceType.value) {
     case 'weekly':
       if (selectedDays.value.length === 0) {
@@ -445,13 +529,15 @@ async function createRecurringEvent() {
   try {
     const startDate = selectedDate.value
     // Si une plage de dates est fournie, l'utiliser comme période de validité
-    let endDate
+    let endDate = null
+    
     if (recurringDateRange.value && Array.isArray(recurringDateRange.value) && recurringDateRange.value.length === 2) {
       endDate = recurringDateRange.value[1]
-    } else if (noEndDate.value) {
-      endDate = null
-    } else {
+    } else if (recurrenceEndDate.value) {
       endDate = recurrenceEndDate.value
+    } else {
+      // Par défaut, utiliser la fin de l'année
+      endDate = getEndOfYear(startDate)
     }
 
     await recurringEventsStore.createRecurringEvent({
@@ -478,28 +564,26 @@ async function createRecurringEvent() {
 }
 
 function closeModal() {
-  uiStore.closeRecurringEventModal()
-  // Réinitialiser les valeurs
+  // Réinitialiser les valeurs locales
   selectedEventTypeId.value = null
   selectedPeriod.value = 'full'
   recurrenceType.value = 'weekly'
   recurrenceInterval.value = 1
   selectedDays.value = []
-  noEndDate.value = true
   recurrenceEndDate.value = null
   monthlyRecurrenceMode.value = 'dayOfMonth'
   monthlyWeekOfMonth.value = 1
   monthlyDayOfWeek.value = 1
   recurrencePreview.value = []
+  startDatePicker.value = null
+  
+  // Fermer la modale (cela réinitialisera aussi selectedEventTypeId dans le store)
+  uiStore.closeRecurringEventModal()
 }
 </script>
 
 <style scoped>
-.modal-content {
-  padding: 20px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
+/* Le padding est déjà géré par le composant Modal */
 
 .selected-date-info {
   margin-bottom: 20px;
@@ -761,12 +845,21 @@ function closeModal() {
 
 .end-date-picker {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.end-date-picker label {
-  min-width: 80px;
+.end-date-picker > label {
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.date-hint {
+  font-size: 0.85em;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-style: italic;
+  margin-left: 10px;
 }
 
 .recurrence-preview {
@@ -855,6 +948,20 @@ function closeModal() {
 [data-theme="dark"] .day-checkbox {
   background: var(--card-bg, #2d2d2d);
   border-color: var(--border-color, #404040);
+}
+
+.no-events-message {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-color);
+  background: var(--bg-color, #f5f5f5);
+  border-radius: 4px;
+  margin: 20px 0;
+}
+
+.no-events-message p {
+  margin: 0;
+  font-size: 0.9em;
 }
 </style>
 

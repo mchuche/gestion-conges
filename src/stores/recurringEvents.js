@@ -5,6 +5,7 @@ import logger from '../services/logger'
 import { handleError } from '../services/errorHandler'
 import { useAuthStore } from './auth'
 import { useLeavesStore } from './leaves'
+import { useUIStore } from './ui'
 import { generateRecurringOccurrences, formatRecurrencePattern } from '../services/recurrence'
 import { getYear } from '../services/dateUtils'
 import { getDateKeys } from '../services/utils'
@@ -60,6 +61,7 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
   async function createRecurringEvent(eventData) {
     const authStore = useAuthStore()
     const leavesStore = useLeavesStore()
+    const uiStore = useUIStore()
     if (!authStore.user || !supabase) {
       throw new Error('Utilisateur non authentifié')
     }
@@ -89,41 +91,89 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
 
       if (insertError) throw insertError
 
-      // Générer les occurrences pour l'année en cours et la suivante
-      const currentYear = getYear(new Date())
-      const startDate = new Date(currentYear, 0, 1)
-      const endDate = new Date(currentYear + 1, 11, 31)
+      // Utiliser la date de début de l'événement récurrent
+      const eventStartDate = new Date(eventData.start_date)
+      // Utiliser la date de fin de l'événement récurrent, ou la fin de l'année si non définie
+      let eventEndDate
+      if (eventData.end_date) {
+        eventEndDate = new Date(eventData.end_date)
+      } else {
+        // Si pas de date de fin, utiliser la fin de l'année de la date de début
+        eventEndDate = new Date(eventStartDate)
+        eventEndDate.setMonth(11, 31)
+        eventEndDate.setHours(23, 59, 59, 999)
+      }
 
+      // Générer les occurrences entre la date de début et la date de fin de l'événement
+      console.log('[RecurringEvents] Génération des occurrences avec:', {
+        event: newEvent,
+        eventStartDate: eventStartDate.toISOString().split('T')[0],
+        eventEndDate: eventEndDate.toISOString().split('T')[0],
+        country: uiStore.selectedCountry || 'FR'
+      })
+      
       const occurrences = generateRecurringOccurrences(
         newEvent,
-        startDate,
-        endDate,
-        'FR' // TODO: utiliser le pays de l'utilisateur
+        eventStartDate,
+        eventEndDate,
+        uiStore.selectedCountry || 'FR'
       )
+
+      console.log(`[RecurringEvents] Génération terminée: ${occurrences.length} occurrences générées`)
+      logger.log(`Génération des occurrences: ${occurrences.length} occurrences générées`)
+      if (occurrences.length > 0) {
+        logger.log('Première occurrence:', occurrences[0])
+        logger.log('Dernière occurrence:', occurrences[occurrences.length - 1])
+      } else {
+        console.error('[RecurringEvents] Aucune occurrence générée! Pattern:', newEvent.recurrence_pattern)
+      }
 
       // Insérer les occurrences dans la table leaves
       if (occurrences.length > 0) {
         const leavesToInsert = occurrences.map(occ => {
-          const keys = getDateKeys(occ.date)
+          // S'assurer que occ.date est bien un objet Date
+          const date = occ.date instanceof Date ? occ.date : new Date(occ.date)
+          const keys = getDateKeys(date)
           const dateKey = occ.period === 'full' ? keys.full : keys[occ.period]
-          return {
+          
+          const leave = {
             user_id: authStore.user.id,
             date_key: dateKey,
             leave_type_id: occ.leaveTypeId
           }
+          
+          return leave
         })
 
+        console.log(`[RecurringEvents] Tentative d'insertion de ${leavesToInsert.length} occurrences`)
+        console.log('[RecurringEvents] Premières occurrences:', leavesToInsert.slice(0, 5))
+        console.log('[RecurringEvents] Pattern:', newEvent.recurrence_pattern)
+        console.log('[RecurringEvents] Type:', newEvent.recurrence_type)
+
         // Utiliser upsert pour éviter les doublons
-        const { error: leavesError } = await supabase
+        const { data: insertedData, error: leavesError } = await supabase
           .from('leaves')
           .upsert(leavesToInsert, {
             onConflict: 'user_id,date_key'
           })
+          .select()
 
-        if (leavesError) throw leavesError
+        if (leavesError) {
+          console.error('[RecurringEvents] Erreur lors de l\'insertion des occurrences:', leavesError)
+          logger.error('Erreur lors de l\'insertion des occurrences:', leavesError)
+          throw leavesError
+        }
+
+        console.log(`[RecurringEvents] ${insertedData?.length || leavesToInsert.length} occurrences insérées avec succès`)
+        logger.log(`Insertion de ${leavesToInsert.length} occurrences dans la table leaves réussie`)
 
         // Recharger les congés
         await leavesStore.loadLeaves()
+        console.log('[RecurringEvents] Congés rechargés')
+        logger.log('Congés rechargés')
+      } else {
+        console.warn('[RecurringEvents] Aucune occurrence générée pour l\'événement:', newEvent)
+        logger.warn('Aucune occurrence générée')
       }
 
       // Recharger les événements récurrents

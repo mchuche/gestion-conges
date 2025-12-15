@@ -131,7 +131,7 @@
             class="btn-danger"
             @click="handleRemoveLeave"
           >
-            Supprimer le congé
+            Supprimer
           </button>
         </div>
       </div>
@@ -317,26 +317,38 @@ function getTypeTooltip(type) {
 }
 
 async function selectLeaveType(typeId) {
-  const config = getLeaveTypeConfig(typeId)
-  const isEvent = config && config.category === 'event'
+  // Comportement unifié pour les congés et événements : poser directement
   
-  // Si c'est un événement, ouvrir la modale de récurrence directement
-  if (isEvent) {
-    // Ouvrir la modale d'événements récurrents avec le type d'événement sélectionné
-    uiStore.openRecurringEventModal(typeId)
+  // Déterminer les dates à traiter
+  let datesToProcess = []
+  if (selectedDates.value.length > 1) {
+    // Plusieurs dates sélectionnées
+    datesToProcess = selectedDates.value
+  } else if (selectedDates.value.length === 1) {
+    // Une seule date dans selectedDates
+    datesToProcess = selectedDates.value
+  } else if (selectedDate.value) {
+    // Une seule date via selectedDate
+    datesToProcess = [selectedDate.value]
+  } else {
+    // Aucune date sélectionnée
+    showErrorToast('Aucune date sélectionnée')
     return
   }
   
-  // Comportement normal pour les congés (et événements normaux si besoin)
-  const datesToProcess = selectedDates.value.length > 1 
-    ? selectedDates.value 
-    : [selectedDate.value]
+  // Filtrer les dates nulles/undefined
+  datesToProcess = datesToProcess.filter(date => date != null)
   
-  // Filtrer les weekends et jours fériés
+  if (datesToProcess.length === 0) {
+    showErrorToast('Aucune date valide sélectionnée')
+    return
+  }
+  
+  // Filtrer les weekends et jours fériés (pour congés et événements)
   const validDates = datesToProcess.filter(date => !isWeekendOrHoliday(date))
   
   if (validDates.length === 0) {
-    showErrorToast('Aucune date valide sélectionnée. Les weekends et jours fériés ne peuvent pas avoir de congés.')
+    showErrorToast('Aucune date valide sélectionnée. Les weekends et jours fériés ne peuvent pas avoir de congés ou événements.')
     return
   }
   
@@ -367,9 +379,26 @@ async function selectLeaveType(typeId) {
 
 
 async function handleRemoveLeave() {
-  const datesToProcess = selectedDates.value.length > 1 
-    ? selectedDates.value 
-    : [selectedDate.value]
+  // Déterminer les dates à traiter
+  let datesToProcess = []
+  if (selectedDates.value.length > 1) {
+    datesToProcess = selectedDates.value
+  } else if (selectedDates.value.length === 1) {
+    datesToProcess = selectedDates.value
+  } else if (selectedDate.value) {
+    datesToProcess = [selectedDate.value]
+  } else {
+    showErrorToast('Aucune date sélectionnée')
+    return
+  }
+  
+  // Filtrer les dates nulles/undefined
+  datesToProcess = datesToProcess.filter(date => date != null)
+  
+  if (datesToProcess.length === 0) {
+    showErrorToast('Aucune date valide sélectionnée')
+    return
+  }
   
   try {
     for (const date of datesToProcess) {
@@ -419,11 +448,7 @@ watch(leaveInfo, (newInfo) => {
 </script>
 
 <style scoped>
-.modal-content {
-  padding: 20px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
+/* Le padding est déjà géré par le composant Modal */
 
 .selected-date-info {
   margin-bottom: 20px;
