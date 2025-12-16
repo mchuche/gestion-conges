@@ -9,8 +9,7 @@
     >
       <option value="semester">Vue Annuelle</option>
       <option value="columns">Vue Annuelle (Colonnes)</option>
-      <option value="presence">Matrice de Présence (Horizontale)</option>
-      <option value="presence-vertical">Matrice de Présence (Verticale)</option>
+      <option value="presence-vertical">Matrice de Présence</option>
     </select>
   </div>
 </template>

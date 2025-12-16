@@ -12,9 +12,10 @@ export const useUIStore = defineStore('ui', () => {
   const selectedDate = ref(null)
   const selectedDates = ref([]) // Pour la sélection multiple
   const selectedPeriod = ref('full') // 'full', 'morning', 'afternoon'
+  const selectedTargetUserId = ref(null) // Pour modifier les événements d'un autre utilisateur
   const multiSelectMode = ref(false)
   const viewMode = ref('year') // 'year', 'month', etc.
-  const yearViewFormat = ref('columns') // 'semester', 'columns', 'presence', 'presence-vertical'
+  const yearViewFormat = ref('columns') // 'semester', 'columns', 'presence-vertical'
   const configYear = ref(new Date().getFullYear())
   const selectedCountry = ref('FR')
   const weekStartDay = ref(0) // 0 = Dimanche, 1 = Lundi, etc.
@@ -51,6 +52,10 @@ export const useUIStore = defineStore('ui', () => {
 
   function setSelectedDate(date) {
     selectedDate.value = date
+  }
+
+  function setSelectedTargetUserId(userId) {
+    selectedTargetUserId.value = userId
   }
 
   function addSelectedDate(date) {
@@ -581,6 +586,7 @@ export const useUIStore = defineStore('ui', () => {
   function closeModal() {
     showModal.value = false
     selectedDate.value = null
+    selectedTargetUserId.value = null
     clearSelectedDates()
   }
 
@@ -635,6 +641,7 @@ export const useUIStore = defineStore('ui', () => {
     selectedDate.value = null
     selectedDates.value = []
     selectedPeriod.value = 'full'
+    selectedTargetUserId.value = null
     multiSelectMode.value = false
     viewMode.value = 'year'
     yearViewFormat.value = 'columns'
@@ -662,6 +669,7 @@ export const useUIStore = defineStore('ui', () => {
     selectedDate,
     selectedDates,
     selectedPeriod,
+    selectedTargetUserId,
     multiSelectMode,
     viewMode,
     yearViewFormat,
@@ -685,6 +693,7 @@ export const useUIStore = defineStore('ui', () => {
     // Actions
     setCurrentDate,
     setSelectedDate,
+    setSelectedTargetUserId,
     addSelectedDate,
     removeSelectedDate,
     clearSelectedDates,

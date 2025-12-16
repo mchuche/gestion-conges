@@ -23,7 +23,7 @@
         </div>
         <div class="calendar-header-options">
           <ViewFormatSelector id="yearViewFormatSelect" />
-          <TeamSelector v-if="yearViewFormat === 'presence' || yearViewFormat === 'presence-vertical'" />
+          <TeamSelector v-if="yearViewFormat === 'presence-vertical'" />
         </div>
       </div>
     </div>
@@ -41,11 +41,6 @@
       />
       <YearViewColumns
         v-if="yearViewFormat === 'columns'"
-        @day-click="handleDayClick"
-        @day-mousedown="handleDayMouseDown"
-      />
-      <YearViewPresence
-        v-if="yearViewFormat === 'presence'"
         @day-click="handleDayClick"
         @day-mousedown="handleDayMouseDown"
       />
@@ -79,8 +74,7 @@ import { getYear, addYears, getDay } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
 
-// Lazy loading des vues de présence (chargées uniquement quand nécessaires)
-const YearViewPresence = defineAsyncComponent(() => import('./YearViewPresence.vue'))
+// Lazy loading de la vue de présence verticale (chargée uniquement quand nécessaire)
 const YearViewPresenceVertical = defineAsyncComponent(() => import('./YearViewPresenceVertical.vue'))
 
 const uiStore = useUIStore()
@@ -104,10 +98,8 @@ const currentYear = computed(() => {
 const currentYearTitle = computed(() => `Année ${currentYear.value}`)
 
 const calendarTitle = computed(() => {
-  if (yearViewFormat.value === 'presence') {
+  if (yearViewFormat.value === 'presence-vertical') {
     return `Matrice de Présence ${currentYear.value}`
-  } else if (yearViewFormat.value === 'presence-vertical') {
-    return `Matrice de Présence ${currentYear.value} (Verticale)`
   } else if (yearViewFormat.value === 'columns') {
     return `Vue Annuelle (Colonnes) ${currentYear.value}`
   }
@@ -115,9 +107,7 @@ const calendarTitle = computed(() => {
 })
 
 const calendarViewClass = computed(() => {
-  if (yearViewFormat.value === 'presence') {
-    return 'year-presence-view'
-  } else if (yearViewFormat.value === 'presence-vertical') {
+  if (yearViewFormat.value === 'presence-vertical') {
     return 'year-presence-vertical-view'
   }
   return ''
@@ -154,7 +144,7 @@ function toggleMinimizeHeader() {
   uiStore.toggleMinimizeHeader()
 }
 
-function handleDayClick(date, event) {
+function handleDayClick(date, event, user = null) {
   // Vérifier si c'est un weekend ou un jour férié
   const dayOfWeek = getDay(date)
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
@@ -166,6 +156,14 @@ function handleDayClick(date, event) {
   if (isWeekend || isHoliday) {
     // Ne pas ouvrir la modale pour les weekends et jours fériés
     return
+  }
+  
+  // Si un utilisateur est passé (vue matrice), le stocker dans le store
+  if (user && user.id) {
+    uiStore.setSelectedTargetUserId(user.id)
+  } else {
+    // Sinon, réinitialiser à l'utilisateur actuel
+    uiStore.setSelectedTargetUserId(null)
   }
   
   // Si on est en mode sélection multiple avec des dates déjà sélectionnées,
@@ -193,7 +191,7 @@ function handleDayClick(date, event) {
   }
 }
 
-function handleDayMouseDown(date, event) {
+function handleDayMouseDown(date, event, user = null) {
   // Vérifier si c'est un weekend ou un jour férié
   const dayOfWeek = getDay(date)
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
@@ -205,6 +203,14 @@ function handleDayMouseDown(date, event) {
   if (isWeekend || isHoliday) {
     // Ne pas permettre la sélection des weekends et jours fériés
     return
+  }
+  
+  // Si un utilisateur est passé (vue matrice), le stocker dans le store
+  if (user && user.id) {
+    uiStore.setSelectedTargetUserId(user.id)
+  } else {
+    // Sinon, réinitialiser à l'utilisateur actuel
+    uiStore.setSelectedTargetUserId(null)
   }
   
   // Gérer la sélection multiple avec Ctrl/Cmd
@@ -360,11 +366,6 @@ onMounted(async () => {
   width: 100%;
   overflow-x: auto;
   overflow-y: visible;
-}
-
-#semesterCalendar.year-presence-view {
-  overflow-x: auto;
-  overflow-y: auto;
 }
 
 #semesterCalendar.year-presence-vertical-view {
