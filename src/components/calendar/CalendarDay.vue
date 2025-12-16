@@ -371,31 +371,21 @@ function handleMouseDown(event) {
 
 .calendar-day.past-day,
 .year-view-day.past-day {
+  opacity: 0.7;
+}
+
+/* Weekends - Harmonisé avec vue colonnes */
+.calendar-day.weekend,
+.year-view-day.weekend {
+  background: var(--bg-color);
   opacity: 0.6;
 }
 
-/* Weekends - Mode clair */
-.calendar-day.weekend,
-.year-view-day.weekend {
-  background: v-bind('weekendColor');
-}
-
-/* Jours fériés - Mode clair */
+/* Jours fériés - Harmonisé avec vue colonnes */
 .calendar-day.public-holiday,
 .year-view-day.public-holiday {
-  background: v-bind('holidayColor');
-}
-
-/* Weekends - Mode sombre */
-[data-theme="dark"] .calendar-day.weekend,
-[data-theme="dark"] .year-view-day.weekend {
-  background: v-bind('weekendColorDark');
-}
-
-/* Jours fériés - Mode sombre */
-[data-theme="dark"] .calendar-day.public-holiday,
-[data-theme="dark"] .year-view-day.public-holiday {
-  background: v-bind('holidayColorDark');
+  border-color: #ffc107;
+  border-width: 2px;
 }
 
 .calendar-day.selected,

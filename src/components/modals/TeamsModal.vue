@@ -1,6 +1,7 @@
 <template>
-  <Modal :model-value="showModal" @close="closeModal" title="Gestion des équipes" content-class="teams-modal">
-    <div class="teams-modal-content">
+  <Modal :model-value="showModal" @close="closeModal" title="Gestion des équipes">
+    <template #body>
+      <div class="teams-content">
       <!-- Vue principale : Liste des équipes et création -->
       <div v-if="!selectedTeam" class="teams-main-view">
         <!-- Section création d'équipe -->
@@ -181,7 +182,8 @@
           </div>
         </Form>
       </div>
-    </div>
+      </div>
+    </template>
   </Modal>
 </template>
 
@@ -427,7 +429,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.teams-modal-content {
+.teams-content {
   min-width: 600px;
   max-width: 900px;
 }

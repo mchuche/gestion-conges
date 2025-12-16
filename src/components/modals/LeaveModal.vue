@@ -5,7 +5,7 @@
     </template>
     
     <template #body>
-      <div v-if="selectedDate" class="modal-content">
+      <div v-if="selectedDate">
         <div class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
           <div v-if="selectedDates.length > 1" class="selection-info">

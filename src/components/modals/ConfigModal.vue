@@ -618,10 +618,7 @@ function closeModal() {
 </script>
 
 <style scoped>
-.config-modal-content {
-  padding: 20px;
-  max-width: 100%;
-}
+/* Le padding est déjà géré par le composant Modal */
 
 .year-selector {
   margin-bottom: 30px;

@@ -77,12 +77,7 @@ function closeModal() {
 </script>
 
 <style scoped>
-.help-modal-content {
-  padding: 20px;
-  max-width: 100%;
-  max-height: 70vh;
-  overflow-y: auto;
-}
+/* Le padding et le scroll sont déjà gérés par le composant Modal */
 
 .help-modal-content h3 {
   margin-top: 0;

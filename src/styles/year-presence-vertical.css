@@ -132,7 +132,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7em;
+    font-size: 0.75em;
     font-weight: 600;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
@@ -146,9 +146,8 @@
 }
 
 .year-presence-vertical-day-header.public-holiday {
-    background: #ffc107;
-    color: #000;
-    font-weight: bold;
+    background: var(--bg-color);
+    opacity: 0.7;
 }
 
 /* Réutiliser les styles de la vue présence normale pour les cellules */
@@ -188,8 +187,8 @@
 }
 
 .year-presence-vertical-view .year-presence-day-cell.public-holiday {
-    border-color: #ffc107;
-    border-width: 2px;
+    background: var(--bg-color);
+    opacity: 0.6;
 }
 
 .year-presence-vertical-view .year-presence-day-cell.present {
@@ -225,7 +224,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7em;
+    font-size: 0.75em;
     font-weight: bold;
     color: white;
     border: 1px solid var(--border-color);
@@ -258,10 +257,11 @@
 }
     .year-presence-vertical-view .year-presence-vertical-day-header,
     .year-presence-vertical-view .year-presence-day-cell,
-    .year-presence-vertical-view .year-presence-stats-cell {
+    .year-presence-vertical-view .year-presence-stats-cell,
+    .year-presence-vertical-total-cell {
         min-width: 16px;
         min-height: 16px;
-        font-size: 0.6em;
+        font-size: 0.8em;
     }
     
     .year-presence-vertical-user-label,
@@ -286,16 +286,62 @@
     
     .year-presence-vertical-view .year-presence-vertical-day-header,
     .year-presence-vertical-view .year-presence-day-cell,
-    .year-presence-vertical-view .year-presence-stats-cell {
+    .year-presence-vertical-view .year-presence-stats-cell,
+    .year-presence-vertical-total-cell {
         min-width: 12px;
         min-height: 12px;
-        font-size: 0.5em;
+        font-size: 0.7em;
     }
     
     .year-presence-vertical-month-header {
         font-size: 0.95em;
         padding: 8px;
     }
+}
+
+.year-presence-vertical-total-row {
+    display: flex;
+    gap: 2px;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 2px solid var(--border-color);
+    margin-bottom: 2px;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Le label de la ligne de total utilise maintenant year-presence-vertical-user-name */
+
+.year-presence-vertical-total-cell {
+    aspect-ratio: 1;
+    min-width: 20px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    cursor: default;
+    transition: none;
+    font-size: 0.95em;
+    font-weight: 600;
+    background: var(--bg-color);
+    position: relative;
+    color: var(--text-color);
+}
+
+.year-presence-vertical-total-cell.weekend {
+    background: var(--bg-color);
+    opacity: 0.6;
+}
+
+.year-presence-vertical-total-cell.public-holiday {
+    background: var(--bg-color);
+    opacity: 0.6;
+}
+
+.year-presence-vertical-total-cell.past-day {
+    opacity: 0.7;
 }
 
 /* Mode sombre */

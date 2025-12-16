@@ -153,9 +153,8 @@
 }
 
 .year-presence-day-header.public-holiday {
-    background: #ffc107;
-    color: #000;
-    font-weight: bold;
+    background: var(--bg-color);
+    opacity: 0.7;
 }
 
 .year-presence-day-cell {
@@ -194,8 +193,8 @@
 }
 
 .year-presence-day-cell.public-holiday {
-    border-color: #ffc107;
-    border-width: 2px;
+    background: var(--bg-color);
+    opacity: 0.6;
 }
 
 .year-presence-day-cell.present {
@@ -238,6 +237,64 @@
     cursor: help;
 }
 
+.year-presence-total-row {
+    display: flex;
+    gap: 2px;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 2px solid var(--border-color);
+}
+
+.year-presence-total-label {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    padding: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.year-presence-total-cell {
+    aspect-ratio: 1;
+    min-width: 20px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    background: var(--bg-color);
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-color);
+    position: relative;
+    cursor: default;
+    transition: none;
+}
+
+.year-presence-total-cell.weekend {
+    background: var(--bg-color);
+    opacity: 0.6;
+}
+
+.year-presence-total-cell.public-holiday {
+    background: var(--bg-color);
+    opacity: 0.6;
+}
+
+.year-presence-total-cell.past-day {
+    opacity: 0.7;
+}
+
 /* Responsive pour Matrice de Présence */
 @media (max-width: 1200px) {
     .year-presence-day-header,
@@ -246,6 +303,10 @@
         min-width: 16px;
         min-height: 16px;
         font-size: 0.6em;
+    }
+    
+    .year-presence-total-cell {
+        font-size: 0.75em;
     }
     
     .year-presence-month-column {
@@ -267,6 +328,10 @@
         min-width: 12px;
         min-height: 12px;
         font-size: 0.5em;
+    }
+    
+    .year-presence-total-cell {
+        font-size: 0.7em;
     }
     
     .year-presence-month-column {

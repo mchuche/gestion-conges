@@ -45,6 +45,25 @@
           />
         </div>
       </div>
+
+      <!-- Ligne de total : nombre de personnes présentes par jour -->
+      <div class="year-presence-vertical-total-row">
+        <div class="year-presence-vertical-user-name">Total présences</div>
+        <div class="year-presence-vertical-days-container">
+          <div
+            v-for="day in month.days"
+            :key="`total-${day.dateKey}`"
+            class="year-presence-vertical-total-cell"
+            :class="{ 
+              weekend: day.isWeekend, 
+              'public-holiday': day.isHoliday,
+              'past-day': isPastDay(day.date)
+            }"
+          >
+            {{ getPresentCountForDay(day) }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -54,6 +73,7 @@ import { computed, onMounted, nextTick, ref, watch } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
 import { useTeamsStore } from '../../stores/teams'
+import { useLeavesStore } from '../../stores/leaves'
 import PresenceDayCell from './PresenceDayCell.vue'
 import * as teamsService from '../../services/teams'
 import {
@@ -64,15 +84,18 @@ import {
   createDate,
   today
 } from '../../services/dateUtils'
-import { getDateKey } from '../../services/utils'
+import { getDateKey, getDateKeys } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
 import logger from '../../services/logger'
+import { useLeaves } from '../../composables/useLeaves'
 
 const emit = defineEmits(['day-click', 'day-mousedown'])
 
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 const teamsStore = useTeamsStore()
+const leavesStore = useLeavesStore()
+const { getLeaveTypeConfig } = useLeaves()
 
 const year = computed(() => getYear(uiStore.currentDate))
 const currentYear = computed(() => getYear(today()))
@@ -176,6 +199,67 @@ const months = computed(() => {
 
   return monthsData
 })
+
+// Fonction pour compter le nombre de personnes présentes un jour donné
+function getPresentCountForDay(day) {
+  // Pour les weekends et jours fériés, retourner une chaîne vide
+  if (day.isWeekend || day.isHoliday) {
+    return ''
+  }
+  
+  let presentCount = 0
+  
+  // Parcourir tous les utilisateurs
+  users.value.forEach(user => {
+    // Obtenir les leaves de l'utilisateur
+    const userLeaves = (user.id === authStore.user?.id) 
+      ? leavesStore.leaves 
+      : (user.leaves || {})
+    
+    // Vérifier si l'utilisateur a un congé (et non un événement) ce jour-là
+    const keys = getDateKeys(day.date)
+    const fullLeave = userLeaves[keys.full]
+    const morningLeave = userLeaves[keys.morning]
+    const afternoonLeave = userLeaves[keys.afternoon]
+    
+    // Vérifier si l'utilisateur a un congé (category === 'leave'), pas un événement
+    let hasLeave = false
+    if (fullLeave) {
+      const config = getLeaveTypeConfig(fullLeave)
+      if (config?.category === 'leave') {
+        hasLeave = true
+      }
+    }
+    if (!hasLeave && morningLeave) {
+      const config = getLeaveTypeConfig(morningLeave)
+      if (config?.category === 'leave') {
+        hasLeave = true
+      }
+    }
+    if (!hasLeave && afternoonLeave) {
+      const config = getLeaveTypeConfig(afternoonLeave)
+      if (config?.category === 'leave') {
+        hasLeave = true
+      }
+    }
+    
+    // Si pas de congé (même s'il a un événement), c'est une présence
+    if (!hasLeave) {
+      presentCount++
+    }
+  })
+  
+  return presentCount
+}
+
+// Vérifier si un jour est dans le passé
+function isPastDay(date) {
+  const todayDate = today()
+  todayDate.setHours(0, 0, 0, 0)
+  const compareDate = new Date(date)
+  compareDate.setHours(0, 0, 0, 0)
+  return compareDate < todayDate
+}
 
 // Scroll automatique vers le mois courant
 onMounted(async () => {

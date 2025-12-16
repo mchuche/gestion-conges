@@ -168,13 +168,13 @@ export const useUIStore = defineStore('ui', () => {
         weekStartDay.value = data.week_start_day
       } else {
         weekStartDay.value = 0
-    eventOpacity.value = 0.15
-        await saveWeekStartDay()
+        // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
+        // await saveWeekStartDay()
       }
     } catch (err) {
       logger.error('Erreur lors du chargement du jour de début de semaine:', err)
       weekStartDay.value = 0
-    eventOpacity.value = 0.15
+      // Ne pas essayer de sauvegarder si le chargement a échoué
     }
   }
 
@@ -195,8 +195,9 @@ export const useUIStore = defineStore('ui', () => {
 
       if (error) throw error
     } catch (err) {
+      // Ne pas bloquer l'application si la sauvegarde échoue (problème RLS ou autre)
       logger.error('Erreur lors de la sauvegarde du jour de début de semaine:', err)
-      throw err
+      // Ne pas throw pour permettre à l'application de continuer
     }
   }
 
@@ -227,15 +228,18 @@ export const useUIStore = defineStore('ui', () => {
           eventOpacity.value = opacity
         } else {
           eventOpacity.value = 0.15
-          await saveEventOpacity()
+          // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
+          // await saveEventOpacity()
         }
       } else {
         eventOpacity.value = 0.15
-        await saveEventOpacity()
+        // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
+        // await saveEventOpacity()
       }
     } catch (err) {
       logger.error('Erreur lors du chargement de event_opacity:', err)
       eventOpacity.value = 0.15
+      // Ne pas essayer de sauvegarder si le chargement a échoué
     }
   }
 
@@ -256,8 +260,9 @@ export const useUIStore = defineStore('ui', () => {
 
       if (error) throw error
     } catch (err) {
+      // Ne pas bloquer l'application si la sauvegarde échoue (problème RLS ou autre)
       logger.error('Erreur lors de la sauvegarde de event_opacity:', err)
-      throw err
+      // Ne pas throw pour permettre à l'application de continuer
     }
   }
 
@@ -289,11 +294,13 @@ export const useUIStore = defineStore('ui', () => {
         holidayWeekendIntensity.value = data.holiday_weekend_intensity
       } else {
         holidayWeekendIntensity.value = 'normal'
-        await saveHolidayWeekendIntensity()
+        // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
+        // await saveHolidayWeekendIntensity()
       }
     } catch (err) {
       logger.error('Erreur lors du chargement de holiday_weekend_intensity:', err)
       holidayWeekendIntensity.value = 'normal'
+      // Ne pas essayer de sauvegarder si le chargement a échoué
     }
   }
 
@@ -314,8 +321,9 @@ export const useUIStore = defineStore('ui', () => {
 
       if (error) throw error
     } catch (err) {
+      // Ne pas bloquer l'application si la sauvegarde échoue (problème RLS ou autre)
       logger.error('Erreur lors de la sauvegarde de holiday_weekend_intensity:', err)
-      throw err
+      // Ne pas throw pour permettre à l'application de continuer
     }
   }
 

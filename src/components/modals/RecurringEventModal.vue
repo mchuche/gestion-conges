@@ -5,7 +5,7 @@
     </template>
     
     <template #body>
-      <div class="modal-content">
+      <div>
         <div v-if="selectedDate" class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
           <div v-if="recurringDateRange" class="date-range-info">
