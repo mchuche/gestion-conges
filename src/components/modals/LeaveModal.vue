@@ -5,7 +5,7 @@
     </template>
     
     <template #body>
-      <div v-if="selectedDate">
+      <div v-if="selectedDate" class="modal-content">
         <div class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
           <div v-if="selectedDates.length > 1" class="selection-info">
@@ -318,7 +318,6 @@ function getTypeTooltip(type) {
 
 async function selectLeaveType(typeId) {
   // Comportement unifié pour les congés et événements : poser directement
-  
   // Déterminer les dates à traiter
   let datesToProcess = []
   if (selectedDates.value.length > 1) {
@@ -614,6 +613,7 @@ watch(leaveInfo, (newInfo) => {
   margin-top: 20px;
 }
 
+.btn-primary,
 .btn-secondary,
 .btn-danger {
   padding: 10px 20px;
@@ -622,6 +622,15 @@ watch(leaveInfo, (newInfo) => {
   cursor: pointer;
   font-size: 0.9em;
   transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #357abd;
 }
 
 .btn-secondary {
