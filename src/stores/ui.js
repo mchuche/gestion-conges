@@ -580,6 +580,10 @@ export const useUIStore = defineStore('ui', () => {
 
   // Modales
   function openModal() {
+    // Fermer la modale d'événements récurrents si elle est ouverte
+    if (showRecurringEventModal.value) {
+      showRecurringEventModal.value = false
+    }
     showModal.value = true
   }
 
@@ -625,6 +629,10 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function openRecurringEventModal(eventTypeId, dateRange = null) {
+    // Fermer la modale de sélection de congé si elle est ouverte
+    if (showModal.value) {
+      showModal.value = false
+    }
     selectedEventTypeId.value = eventTypeId
     recurringEventDateRange.value = dateRange
     showRecurringEventModal.value = true

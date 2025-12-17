@@ -54,6 +54,7 @@ import { computed, onMounted, nextTick, ref, watch } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
 import { useTeamsStore } from '../../stores/teams'
+import { useLeavesStore } from '../../stores/leaves'
 import PresenceDayCell from './PresenceDayCell.vue'
 import * as teamsService from '../../services/teams'
 import {
@@ -73,6 +74,7 @@ const emit = defineEmits(['day-click', 'day-mousedown'])
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 const teamsStore = useTeamsStore()
+const leavesStore = useLeavesStore()
 
 const year = computed(() => getYear(uiStore.currentDate))
 const currentYear = computed(() => getYear(today()))
@@ -103,11 +105,35 @@ async function loadTeamMembers() {
       leaves: {}
     }))
     logger.debug('[YearViewPresenceVertical] Membres chargés:', teamMembers.value.length)
+    
+    // Charger les congés de tous les membres de l'équipe
+    await loadTeamLeaves()
   } catch (err) {
     logger.error('[YearViewPresenceVertical] Erreur lors du chargement des membres:', err)
     teamMembers.value = []
   } finally {
     loadingMembers.value = false
+  }
+}
+
+// Charger les congés de tous les membres de l'équipe
+async function loadTeamLeaves() {
+  if (!teamsStore.currentTeamId || teamMembers.value.length === 0) {
+    return
+  }
+
+  try {
+    const userIds = teamMembers.value.map(member => member.id)
+    const teamLeaves = await leavesStore.loadTeamLeaves(userIds)
+    
+    // Assigner les congés à chaque membre
+    teamMembers.value.forEach(member => {
+      member.leaves = teamLeaves[member.id] || {}
+    })
+    
+    logger.debug('[YearViewPresenceVertical] Congés d\'équipe chargés pour', Object.keys(teamLeaves).length, 'membres')
+  } catch (err) {
+    logger.error('[YearViewPresenceVertical] Erreur lors du chargement des congés d\'équipe:', err)
   }
 }
 
@@ -138,6 +164,36 @@ watch(() => teamsStore.currentTeamId, async (newTeamId) => {
     teamMembers.value = []
   }
 }, { immediate: true })
+
+// Watcher pour recharger les congés quand l'année change (si une équipe est sélectionnée)
+watch(() => year.value, async () => {
+  if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
+    await loadTeamLeaves()
+  }
+})
+
+// Watcher pour recharger les congés quand les membres de l'équipe changent
+watch(() => teamMembers.value.length, async () => {
+  if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
+    await loadTeamLeaves()
+  }
+})
+
+// Watcher pour recharger les congés d'équipe quand les congés de l'utilisateur actuel changent
+// (pour détecter les changements via realtime)
+watch(() => leavesStore.leavesCount, async () => {
+  if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
+    // Recharger seulement si on est en mode équipe
+    await loadTeamLeaves()
+  }
+})
+
+// Watcher pour recharger les congés quand l'année change (si une équipe est sélectionnée)
+watch(() => year.value, async () => {
+  if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
+    await loadTeamLeaves()
+  }
+})
 
 // Créer la structure des mois avec leurs jours
 const months = computed(() => {

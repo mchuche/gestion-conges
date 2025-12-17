@@ -5,7 +5,7 @@
     </template>
     
     <template #body>
-      <div class="modal-content">
+      <div>
         <div v-if="selectedDate" class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
           <div v-if="recurringDateRange" class="date-range-info">
@@ -731,10 +731,6 @@ function closeModal() {
 
 .recurrence-section {
   margin-bottom: 20px;
-  padding: 15px;
-  background: var(--bg-color, #f5f5f5);
-  border-radius: 8px;
-  border: 1px solid var(--border-color, #e0e0e0);
 }
 
 .recurrence-type-selector {
@@ -864,10 +860,7 @@ function closeModal() {
 
 .recurrence-preview {
   margin-top: 15px;
-  padding: 12px;
-  background: var(--card-bg);
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
+  padding: 8px 0;
 }
 
 .recurrence-preview p {
@@ -939,11 +932,7 @@ function closeModal() {
   background: #d0d0d0;
 }
 
-/* Mode sombre */
-[data-theme="dark"] .recurrence-section {
-  background: var(--card-bg, #2d2d2d);
-  border-color: var(--border-color, #404040);
-}
+/* Mode sombre - styles supprimés pour simplifier */
 
 [data-theme="dark"] .day-checkbox {
   background: var(--card-bg, #2d2d2d);

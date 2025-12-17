@@ -116,7 +116,7 @@ function handleBackdropClick() {
   position: relative;
   background: var(--card-bg, white);
   border-radius: 8px;
-  padding: 24px;
+  padding: 20px;
   max-width: 700px;
   width: 90%;
   max-height: calc(100vh - 32px);
@@ -141,7 +141,6 @@ function handleBackdropClick() {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
 }
 
 .modal-title {
@@ -187,7 +186,6 @@ function handleBackdropClick() {
 .modal-footer {
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 1px solid var(--border-color, #e0e0e0);
   display: flex;
   justify-content: flex-end;
   gap: 10px;

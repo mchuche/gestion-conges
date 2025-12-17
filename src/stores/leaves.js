@@ -80,6 +80,45 @@ export const useLeavesStore = defineStore('leaves', () => {
     }
   }
 
+  /**
+   * Charger les congés de tous les membres d'une équipe
+   * @param {string[]} userIds - Liste des IDs des membres de l'équipe
+   * @returns {Promise<Object>} - Objet avec userId comme clé et { date_key: leave_type_id } comme valeur
+   */
+  async function loadTeamLeaves(userIds) {
+    if (!userIds || userIds.length === 0 || !supabase) {
+      return {}
+    }
+
+    try {
+      logger.debug('[LeavesStore] Chargement des congés pour l\'équipe:', userIds.length, 'membres')
+      
+      const { data, error: fetchError } = await supabase
+        .from('leaves')
+        .select('*')
+        .in('user_id', userIds)
+
+      if (fetchError) throw fetchError
+
+      // Organiser les congés par utilisateur
+      const teamLeaves = {}
+      if (data) {
+        data.forEach(leave => {
+          if (!teamLeaves[leave.user_id]) {
+            teamLeaves[leave.user_id] = {}
+          }
+          teamLeaves[leave.user_id][leave.date_key] = leave.leave_type_id
+        })
+      }
+
+      logger.log('[LeavesStore] Congés d\'équipe chargés:', Object.keys(teamLeaves).length, 'utilisateurs')
+      return teamLeaves
+    } catch (err) {
+      logger.error('[LeavesStore] Erreur lors du chargement des congés d\'équipe:', err)
+      return {}
+    }
+  }
+
   // Configuration Realtime
   function setupRealtime() {
     const authStore = useAuthStore()
@@ -354,6 +393,7 @@ export const useLeavesStore = defineStore('leaves', () => {
     hasLeave,
     // Actions
     loadLeaves,
+    loadTeamLeaves,
     saveLeaves,
     setLeave,
     removeLeave,

@@ -56,6 +56,47 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
   }
 
   /**
+   * Charger les événements récurrents de tous les membres d'une équipe
+   * @param {string[]} userIds - Liste des IDs des membres de l'équipe
+   * @returns {Promise<Object>} - Objet avec userId comme clé et array d'événements récurrents comme valeur
+   */
+  async function loadTeamRecurringEvents(userIds) {
+    if (!userIds || userIds.length === 0 || !supabase) {
+      return {}
+    }
+
+    try {
+      logger.debug('[RecurringEventsStore] Chargement des événements récurrents pour l\'équipe:', userIds.length, 'membres')
+      
+      const { data, error: fetchError } = await supabase
+        .from('recurring_events')
+        .select('*')
+        .in('user_id', userIds)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+
+      if (fetchError) throw fetchError
+
+      // Organiser les événements récurrents par utilisateur
+      const teamRecurringEvents = {}
+      if (data) {
+        data.forEach(event => {
+          if (!teamRecurringEvents[event.user_id]) {
+            teamRecurringEvents[event.user_id] = []
+          }
+          teamRecurringEvents[event.user_id].push(event)
+        })
+      }
+
+      logger.log('[RecurringEventsStore] Événements récurrents d\'équipe chargés pour', Object.keys(teamRecurringEvents).length, 'membres')
+      return teamRecurringEvents
+    } catch (err) {
+      logger.error('[RecurringEventsStore] Erreur lors du chargement des événements récurrents d\'équipe:', err)
+      return {}
+    }
+  }
+
+  /**
    * Crée un événement récurrent et génère les occurrences
    */
   async function createRecurringEvent(eventData) {
@@ -409,6 +450,7 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
     activeRecurringEvents,
     // Actions
     loadRecurringEvents,
+    loadTeamRecurringEvents,
     createRecurringEvent,
     updateRecurringEvent,
     deleteRecurringEvent,

@@ -5,7 +5,7 @@
     </template>
     
     <template #body>
-      <div v-if="selectedDate" class="modal-content">
+      <div v-if="selectedDate">
         <div class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
           <div v-if="selectedDates.length > 1" class="selection-info">
@@ -426,9 +426,14 @@ function openSelectionModal() {
 }
 
 function openRecurringEventModal() {
-  // Ouvrir la modale d'événements récurrents sans type d'événement pré-sélectionné
+  // Fermer d'abord la modale de sélection de congé
+  closeModal()
+  // Puis ouvrir la modale d'événements récurrents sans type d'événement pré-sélectionné
   // L'utilisateur choisira le type dans la modale
-  uiStore.openRecurringEventModal(null)
+  // Utiliser un petit délai pour éviter les conflits de rendu
+  setTimeout(() => {
+    uiStore.openRecurringEventModal(null)
+  }, 100)
 }
 
 // Ajuster la période selon le congé existant
@@ -450,7 +455,7 @@ watch(leaveInfo, (newInfo) => {
 /* Le padding est déjà géré par le composant Modal */
 
 .selected-date-info {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   text-align: center;
 }
 
@@ -467,10 +472,6 @@ watch(leaveInfo, (newInfo) => {
 
 .selected-dates-list {
   margin-top: 10px;
-  padding: 10px;
-  background: var(--card-bg, white);
-  border: 1px solid var(--border-color, #e0e0e0);
-  border-radius: 4px;
   max-height: 200px;
   overflow-y: auto;
 }
@@ -492,7 +493,7 @@ watch(leaveInfo, (newInfo) => {
 }
 
 .period-selection {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .period-selection h4 {
@@ -504,7 +505,7 @@ watch(leaveInfo, (newInfo) => {
 .leave-types-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .leave-types-section {
@@ -515,12 +516,11 @@ watch(leaveInfo, (newInfo) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
-  font-size: 1em;
+  margin-bottom: 10px;
+  margin-top: 12px;
+  font-size: 0.95em;
   color: var(--text-color);
   font-weight: 600;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--border-color);
 }
 
 .section-icon {
@@ -558,11 +558,11 @@ watch(leaveInfo, (newInfo) => {
 }
 
 .working-days-info {
-  margin-bottom: 20px;
-  padding: 10px;
-  background: var(--bg-color);
-  border-radius: 4px;
+  margin-bottom: 16px;
   text-align: center;
+  font-size: 0.85em;
+  color: var(--text-color);
+  opacity: 0.7;
 }
 
 .leave-buttons-grid {
@@ -657,10 +657,6 @@ watch(leaveInfo, (newInfo) => {
 
 .date-picker-container {
   margin-top: 15px;
-  padding: 15px;
-  background: var(--bg-color, #f5f5f5);
-  border-radius: 8px;
-  border: 1px solid var(--border-color, #e0e0e0);
 }
 
 .date-picker-container :deep(.dp__main) {
@@ -688,8 +684,7 @@ watch(leaveInfo, (newInfo) => {
 
 .recurring-event-button-section {
   margin-top: 20px;
-  padding: 15px 0;
-  border-top: 1px solid var(--border-color, #e0e0e0);
+  padding-top: 15px;
 }
 
 .btn-recurring-event {
