@@ -10,16 +10,14 @@
       v-if="hasSplit"
       class="presence-cell-half presence-cell-morning"
       :class="{ 'is-event': isMorningEvent }"
-      :style="{ backgroundColor: isMorningEvent ? '#4caf50' : morningColor }"
+      :style="{ backgroundColor: isMorningEvent && morningColor ? colorWithOpacity(morningColor, uiStore.eventOpacity ?? 0.15) : morningColor }"
     ></div>
     <div
       v-if="hasSplit"
       class="presence-cell-half presence-cell-afternoon"
       :class="{ 'is-event': isAfternoonEvent }"
-      :style="{ backgroundColor: isAfternoonEvent ? '#4caf50' : afternoonColor }"
+      :style="{ backgroundColor: isAfternoonEvent && afternoonColor ? colorWithOpacity(afternoonColor, uiStore.eventOpacity ?? 0.15) : afternoonColor }"
     ></div>
-    <!-- Afficher la première lettre du label pour les événements -->
-    <span v-if="eventLabelLetter" class="event-label-letter">{{ eventLabelLetter }}</span>
   </div>
 </template>
 
@@ -185,24 +183,9 @@ const weekendOpacity = computed(() => {
   return opacities[intensity] || opacities.normal
 })
 
-const holidayBorderColor = computed(() => {
-  const intensity = uiStore.holidayWeekendIntensity || 'normal'
-  const colors = {
-    light: '#ffc107',
-    normal: '#ffc107',
-    strong: '#ff9800'
-  }
-  return colors[intensity] || colors.normal
-})
-
-const holidayBorderWidth = computed(() => {
-  const intensity = uiStore.holidayWeekendIntensity || 'normal'
-  const widths = {
-    light: '1px',
-    normal: '2px',
-    strong: '3px'
-  }
-  return widths[intensity] || widths.normal
+// Utiliser la même opacité que les weekends pour les jours fériés (plus discret)
+const holidayOpacity = computed(() => {
+  return weekendOpacity.value
 })
 
 const cellClasses = computed(() => {
@@ -214,8 +197,7 @@ const cellClasses = computed(() => {
   if (isHoliday.value) classes.push('public-holiday')
   if (hasLeave.value) classes.push('has-leave')
   if (hasSplit.value) classes.push('has-split')
-  // Ajouter "present" si pas de congé OU si c'est un événement (les événements ont la même couleur que présence)
-  if ((!hasLeave.value || isEvent.value) && !isWeekend.value && !isHoliday.value) classes.push('present')
+  if (!hasLeave.value && !isWeekend.value && !isHoliday.value) classes.push('present')
   if (isInMultiSelect.value) classes.push('multi-selected')
   if (isEvent.value) classes.push('is-event')
   
@@ -236,43 +218,6 @@ const cellTitle = computed(() => {
   } else {
     return `${userName} - Présent`
   }
-})
-
-// Obtenir la première lettre du label pour les événements
-const eventLabelLetter = computed(() => {
-  if (!hasLeave.value) return null
-  
-  // Si c'est un split, on prend le premier événement trouvé (matin ou après-midi)
-  if (hasSplit.value) {
-    if (isMorningEvent.value && leaveInfo.value.morning) {
-      const config = getLeaveTypeConfig(leaveInfo.value.morning)
-      return config?.label ? config.label.charAt(0).toUpperCase() : null
-    }
-    if (isAfternoonEvent.value && leaveInfo.value.afternoon) {
-      const config = getLeaveTypeConfig(leaveInfo.value.afternoon)
-      return config?.label ? config.label.charAt(0).toUpperCase() : null
-    }
-    return null
-  }
-  
-  // Si c'est un événement complet
-  if (isFullEvent.value && leaveInfo.value.full) {
-    const config = getLeaveTypeConfig(leaveInfo.value.full)
-    return config?.label ? config.label.charAt(0).toUpperCase() : null
-  }
-  
-  // Si c'est une demi-journée d'événement
-  if (leaveInfo.value.morning && !leaveInfo.value.afternoon && isMorningEvent.value) {
-    const config = getLeaveTypeConfig(leaveInfo.value.morning)
-    return config?.label ? config.label.charAt(0).toUpperCase() : null
-  }
-  
-  if (leaveInfo.value.afternoon && !leaveInfo.value.morning && isAfternoonEvent.value) {
-    const config = getLeaveTypeConfig(leaveInfo.value.afternoon)
-    return config?.label ? config.label.charAt(0).toUpperCase() : null
-  }
-  
-  return null
 })
 
 // Fonction pour convertir une couleur hex en rgba avec opacité
@@ -300,27 +245,36 @@ const cellStyle = computed(() => {
     style.overflow = 'hidden'
     style.background = 'transparent'
   } else if (fullColor.value) {
-    // Pour les événements, on ne modifie pas la couleur de fond (reste par défaut/présent)
-    if (!isFullEvent.value) {
+    if (isFullEvent.value) {
+      const opacity = uiStore.eventOpacity ?? 0.15
+      style.backgroundColor = colorWithOpacity(fullColor.value, opacity)
+      style.color = 'white'
+    } else {
       style.backgroundColor = fullColor.value
       style.color = 'white'
     }
   } else if (morningColor.value && !leaveInfo.value.afternoon) {
-    // Pour les événements, on ne modifie pas la couleur de fond (reste par défaut/présent)
-    if (!isMorningEvent.value) {
+    if (isMorningEvent.value) {
+      const opacity = uiStore.eventOpacity ?? 0.15
+      style.backgroundColor = colorWithOpacity(morningColor.value, opacity)
+      style.color = 'white'
+    } else {
       style.backgroundColor = morningColor.value
       style.color = 'white'
-      style.borderTopWidth = '3px'
-      style.borderTopColor = 'white'
     }
+    style.borderTopWidth = '3px'
+    style.borderTopColor = 'white'
   } else if (afternoonColor.value && !leaveInfo.value.morning) {
-    // Pour les événements, on ne modifie pas la couleur de fond (reste par défaut/présent)
-    if (!isAfternoonEvent.value) {
+    if (isAfternoonEvent.value) {
+      const opacity = uiStore.eventOpacity ?? 0.15
+      style.backgroundColor = colorWithOpacity(afternoonColor.value, opacity)
+      style.color = 'white'
+    } else {
       style.backgroundColor = afternoonColor.value
       style.color = 'white'
-      style.borderBottomWidth = '3px'
-      style.borderBottomColor = 'white'
     }
+    style.borderBottomWidth = '3px'
+    style.borderBottomColor = 'white'
   }
   
   return style
@@ -380,10 +334,10 @@ function handleMouseDown(event) {
   opacity: v-bind('weekendOpacity');
 }
 
-/* Jours fériés - Vue présence */
+/* Jours fériés - Vue présence (plus discrets, comme les weekends) */
 .year-presence-day-cell.public-holiday {
   background: var(--bg-color);
-  opacity: 0.6;
+  opacity: v-bind('holidayOpacity');
 }
 
 .year-presence-day-cell.present {
@@ -443,21 +397,6 @@ function handleMouseDown(event) {
 }
 
 /* L'opacité des couleurs d'événements dans les demi-journées est gérée par le style inline */
-
-/* Style pour la lettre du label des événements */
-.event-label-letter {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 0.7em;
-  font-weight: 700;
-  color: white;
-  z-index: 2;
-  pointer-events: none;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  line-height: 1;
-}
 </style>
 
 

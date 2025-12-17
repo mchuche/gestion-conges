@@ -100,6 +100,53 @@
           </div>
           </TabPanel>
 
+          <!-- Onglet Types de congés -->
+          <TabPanel class="admin-tab-panel">
+          <div v-if="loadingLeaveTypes" class="loading">Chargement...</div>
+          <div v-else class="admin-leave-types">
+            <div class="admin-leave-types-header">
+              <p class="admin-hint">Gérez les labels (noms et abréviations) des types de congés et événements. Les utilisateurs peuvent personnaliser les couleurs.</p>
+              <button class="btn-primary" @click="handleAddGlobalLeaveType">
+                + Ajouter un type
+              </button>
+            </div>
+            
+            <div v-if="globalLeaveTypes.length === 0" class="no-data">Aucun type de congé défini</div>
+            <div v-else class="admin-leave-types-list">
+              <div
+                v-for="type in globalLeaveTypes"
+                :key="type.id"
+                class="admin-leave-type-card"
+              >
+                <div class="admin-leave-type-info">
+                  <div class="admin-leave-type-name">{{ type.name }}</div>
+                  <div class="admin-leave-type-meta">
+                    <span>Label: <strong>{{ type.label }}</strong></span>
+                    <span>•</span>
+                    <span>Catégorie: <strong>{{ type.category === 'leave' ? 'Congé' : 'Événement' }}</strong></span>
+                  </div>
+                </div>
+                <div class="admin-leave-type-actions">
+                  <button
+                    @click="handleEditGlobalLeaveType(type)"
+                    class="btn-secondary"
+                    title="Modifier"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    @click="handleDeleteGlobalLeaveType(type)"
+                    class="btn-danger"
+                    title="Supprimer"
+                  >
+                    ⌧
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          </TabPanel>
+
           <!-- Onglet Paramètres -->
           <TabPanel class="admin-tab-panel">
           <div v-if="loadingSettings" class="loading">Chargement...</div>
@@ -250,6 +297,7 @@ const activeTab = ref('users')
 const tabs = [
   { id: 'users', label: 'Utilisateurs' },
   { id: 'teams', label: 'Équipes' },
+  { id: 'leave-types', label: 'Types de congés' },
   { id: 'settings', label: 'Paramètres' },
   { id: 'stats', label: 'Statistiques' },
   { id: 'audit', label: 'Logs d\'audit' }
@@ -273,8 +321,10 @@ function handleTabChange(index) {
 
 const users = ref([])
 const teams = ref([])
+const globalLeaveTypes = ref([])
 const loadingUsers = ref(false)
 const loadingTeams = ref(false)
+const loadingLeaveTypes = ref(false)
 const loadingSettings = ref(false)
 const loadingAudit = ref(false)
 const userSearch = ref('')
@@ -310,6 +360,9 @@ function switchTab(tabId) {
   } else if (tabId === 'teams') {
     devLogger.log('[AdminView] Chargement des équipes...')
     loadTeams()
+  } else if (tabId === 'leave-types') {
+    devLogger.log('[AdminView] Chargement des types de congés...')
+    loadGlobalLeaveTypes()
   } else if (tabId === 'settings') {
     devLogger.log('[AdminView] Chargement des paramètres...')
     loadSettings()
@@ -558,6 +611,188 @@ async function onSaveSettingsSubmit(values) {
       showErrorToast('Le JSON est invalide. Vérifiez la syntaxe (virgules, guillemets, accolades, etc.).')
     } else {
       showErrorToast('Erreur lors de la sauvegarde: ' + (err.message || err))
+    }
+  }
+}
+
+async function loadGlobalLeaveTypes() {
+  if (!authStore.isAdmin) {
+    devLogger.warn('[AdminView] loadGlobalLeaveTypes: Utilisateur n\'est pas admin')
+    return
+  }
+
+  try {
+    loadingLeaveTypes.value = true
+    const { data, error } = await supabase
+      .from('global_leave_types')
+      .select('*')
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+
+    globalLeaveTypes.value = (data || []).map(t => ({
+      id: t.id,
+      name: t.name,
+      label: t.label,
+      category: t.category || 'leave'
+    }))
+    
+    devLogger.log('[AdminView] Types de congés globaux chargés:', globalLeaveTypes.value.length)
+  } catch (err) {
+    logger.error('[AdminView] Erreur lors du chargement des types de congés globaux:', err)
+    showErrorToast('Impossible de charger les types de congés: ' + (err.message || err))
+  } finally {
+    loadingLeaveTypes.value = false
+  }
+}
+
+async function handleAddGlobalLeaveType() {
+  const { value: formValues } = await Swal.fire({
+    title: 'Ajouter un type de congé',
+    html: `
+      <input id="swal-name" class="swal2-input" placeholder="Nom (ex: Congé Payé)" required>
+      <input id="swal-label" class="swal2-input" placeholder="Label (ex: CP)" maxlength="10" required>
+      <select id="swal-category" class="swal2-select">
+        <option value="leave">Congé</option>
+        <option value="event">Événement</option>
+      </select>
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'Ajouter',
+    cancelButtonText: 'Annuler',
+    preConfirm: () => {
+      const name = document.getElementById('swal-name').value
+      const label = document.getElementById('swal-label').value
+      const category = document.getElementById('swal-category').value
+      
+      if (!name || !label) {
+        Swal.showValidationMessage('Le nom et le label sont requis')
+        return false
+      }
+      
+      return { name, label, category }
+    }
+  })
+
+  if (formValues) {
+    try {
+      // Générer un ID unique basé sur le nom
+      const id = formValues.name.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+
+      const { error } = await supabase
+        .from('global_leave_types')
+        .insert({
+          id: id,
+          name: formValues.name,
+          label: formValues.label,
+          category: formValues.category || 'leave'
+        })
+
+      if (error) throw error
+
+      success('Type de congé ajouté avec succès')
+      await loadGlobalLeaveTypes()
+    } catch (err) {
+      logger.error('[AdminView] Erreur lors de l\'ajout du type:', err)
+      showErrorToast('Erreur lors de l\'ajout: ' + (err.message || err))
+    }
+  }
+}
+
+async function handleEditGlobalLeaveType(type) {
+  const { value: formValues } = await Swal.fire({
+    title: 'Modifier le type de congé',
+    html: `
+      <input id="swal-name" class="swal2-input" value="${type.name}" placeholder="Nom" required>
+      <input id="swal-label" class="swal2-input" value="${type.label}" placeholder="Label" maxlength="10" required>
+      <select id="swal-category" class="swal2-select">
+        <option value="leave" ${type.category === 'leave' ? 'selected' : ''}>Congé</option>
+        <option value="event" ${type.category === 'event' ? 'selected' : ''}>Événement</option>
+      </select>
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'Modifier',
+    cancelButtonText: 'Annuler',
+    preConfirm: () => {
+      const name = document.getElementById('swal-name').value
+      const label = document.getElementById('swal-label').value
+      const category = document.getElementById('swal-category').value
+      
+      if (!name || !label) {
+        Swal.showValidationMessage('Le nom et le label sont requis')
+        return false
+      }
+      
+      return { name, label, category }
+    }
+  })
+
+  if (formValues) {
+    try {
+      const { error } = await supabase
+        .from('global_leave_types')
+        .update({
+          name: formValues.name,
+          label: formValues.label,
+          category: formValues.category || 'leave',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', type.id)
+
+      if (error) throw error
+
+      success('Type de congé modifié avec succès')
+      await loadGlobalLeaveTypes()
+    } catch (err) {
+      logger.error('[AdminView] Erreur lors de la modification du type:', err)
+      showErrorToast('Erreur lors de la modification: ' + (err.message || err))
+    }
+  }
+}
+
+async function handleDeleteGlobalLeaveType(type) {
+  // Vérifier si le type est utilisé
+  const { count } = await supabase
+    .from('leaves')
+    .select('id', { count: 'exact', head: true })
+    .eq('leave_type_id', type.id)
+    .limit(1)
+
+  let confirmMessage = `Êtes-vous sûr de vouloir supprimer le type "<strong>${type.name}</strong>" ?`
+  if (count > 0) {
+    confirmMessage += `<br><br>⚠️ <strong>Attention</strong> : Ce type est utilisé dans ${count} jour(s) de congé. Ces congés seront également supprimés.`
+  }
+
+  const result = await Swal.fire({
+    title: 'Supprimer le type de congé ?',
+    html: confirmMessage,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, supprimer',
+    cancelButtonText: 'Annuler',
+    confirmButtonColor: '#d33'
+  })
+
+  if (result.isConfirmed) {
+    try {
+      const { error } = await supabase
+        .from('global_leave_types')
+        .delete()
+        .eq('id', type.id)
+
+      if (error) throw error
+
+      success('Type de congé supprimé avec succès')
+      await loadGlobalLeaveTypes()
+    } catch (err) {
+      logger.error('[AdminView] Erreur lors de la suppression du type:', err)
+      showErrorToast('Erreur lors de la suppression: ' + (err.message || err))
     }
   }
 }
@@ -908,6 +1143,84 @@ onMounted(() => {
 
 .btn-danger:hover {
   background: #c0392b;
+}
+
+.btn-secondary {
+  background: var(--primary-color, #4a90e2);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2em;
+  transition: background 0.2s ease;
+  margin-right: 8px;
+}
+
+.btn-secondary:hover {
+  background: #357abd;
+}
+
+/* Styles pour l'onglet Types de congés */
+.admin-leave-types {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-leave-types-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.admin-leave-types-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-leave-type-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.admin-leave-type-card:hover {
+  background: var(--hover-bg, rgba(0, 0, 0, 0.02));
+  border-color: var(--primary-color);
+}
+
+.admin-leave-type-info {
+  flex: 1;
+}
+
+.admin-leave-type-name {
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 5px;
+  font-size: 1.1em;
+}
+
+.admin-leave-type-meta {
+  font-size: 0.85em;
+  color: var(--text-color);
+  opacity: 0.7;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-leave-type-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .admin-stats {

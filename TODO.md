@@ -8,15 +8,17 @@
 - [ ] 
 
 ### Corrections de bugs
-- [ ] Affichage du calendrier disparait quand calendrier perso
-- [ ] 
-- [ ] 
+- [x] probleme d'enregistrement des jours de congé
+- [x] Affichage du calendrier disparait quand calendrier perso
+- [ ] pour les jours récurrents il y a un probleme de calcule sur la modale avant validation (jours off)
+- [ ] Impossible de supprimer un evenement dans la matrice de presence
 
 ### Améliorations UI/UX
 - [ ] sur une resolution petit telephone en mode header caché: le titre de la vue et les controlers d'année ne sont plus sur la meme ligne  
 - [ ] en mode largeur limité si la fenetre est trop grande les colonnes des mois ne se place pas bien
-- [ ] Revoir les vues Matrice de presence
-- [ ] améioration reglage visibilité pour les jours férier et weekend
+- [ ] 
+- [x] améioration reglage visibilité pour les jours férier et weekend
+- [ ] dans les matrices de presence supprimer le type de congé. 
 
 ### Optimisations
 - [ ] 
@@ -35,7 +37,7 @@
 
 ## En cours
 
-- [ ] 
+- [ ] Revoir les vues Matrice de presence
 
 ## Terminé
 

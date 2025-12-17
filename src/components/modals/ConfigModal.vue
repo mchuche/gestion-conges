@@ -73,43 +73,28 @@
 
         <!-- Liste des types de congés -->
         <div class="leave-types-config">
-          <h4>Types de congés :</h4>
+          <h4>Personnalisation des types de congés :</h4>
+          <p class="config-hint">Les labels sont gérés par l'administrateur. Vous pouvez personnaliser les couleurs et les quotas.</p>
           <div 
             v-for="(type, index) in leaveTypes" 
             :key="type.id"
             class="leave-type-item"
           >
             <div class="leave-type-inputs">
-              <input
-                v-model="type.name"
-                type="text"
-                class="leave-type-name"
-                placeholder="Nom du type"
-                @input="handleTypeChange(index)"
-              />
-              <input
-                v-model="type.label"
-                type="text"
-                class="leave-type-label"
-                placeholder="Label (ex: P)"
-                maxlength="10"
-                @input="handleTypeChange(index)"
-              />
+              <div class="leave-type-info">
+                <div class="leave-type-name-display">{{ type.name }}</div>
+                <div class="leave-type-label-display">{{ type.label }}</div>
+                <div class="leave-type-category-display">
+                  {{ type.category === 'event' ? 'Événement' : 'Congé' }}
+                </div>
+              </div>
               <input
                 v-model="type.color"
                 type="color"
                 class="leave-type-color"
                 @change="handleTypeChange(index)"
+                title="Couleur personnalisée"
               />
-              <select
-                v-model="type.category"
-                class="leave-type-category"
-                @change="handleCategoryChange(index)"
-                :title="type.category === 'event' ? 'Événement (sans quota)' : 'Congé (avec quota)'"
-              >
-                <option value="leave">Congé</option>
-                <option value="event">Événement</option>
-              </select>
               <input
                 v-model.number="quotas[type.id]"
                 type="number"
@@ -120,21 +105,8 @@
                 :title="type.category === 'event' ? 'Les événements n\'ont pas de quota' : 'Quota pour ce congé'"
                 @input="handleQuotaChange(type.id)"
               />
-              <button
-                class="delete-type-btn"
-                @click="handleDeleteType(index)"
-                title="Supprimer ce type"
-                aria-label="Supprimer"
-              >
-                ⌧
-              </button>
             </div>
           </div>
-
-          <!-- Bouton pour ajouter un type -->
-          <button class="add-type-btn" @click="handleAddType">
-            + Ajouter un type
-          </button>
         </div>
 
         <!-- Actions -->
@@ -353,19 +325,8 @@ function handleHolidayWeekendIntensityChange() {
 }
 
 function handleTypeChange(index) {
-  // Les changements sont réactifs grâce à v-model
+  // Seule la couleur peut être modifiée par l'utilisateur
   // On sauvegarde automatiquement
-  saveLeaveTypes()
-}
-
-function handleCategoryChange(index) {
-  const type = leaveTypes.value[index]
-  if (type.category === 'event') {
-    // Désactiver le quota pour les événements
-    quotas.value[type.id] = ''
-    // Supprimer le quota de la base de données
-    quotasStore.removeQuota(configYear.value, type.id)
-  }
   saveLeaveTypes()
 }
 
@@ -378,74 +339,8 @@ function handleQuotaChange(typeId) {
   }
 }
 
-async function handleDeleteType(index) {
-  const typeToDelete = leaveTypes.value[index]
-  
-  // Vérifier si ce type est utilisé
-  const isUsed = isLeaveTypeUsed(typeToDelete.id)
-  
-  let confirmMessage = `Êtes-vous sûr de vouloir supprimer le type "<strong>${typeToDelete.name}</strong>" ?`
-  if (isUsed) {
-    const usageCount = countLeaveTypeUsage(typeToDelete.id)
-    confirmMessage += `<br><br>⚠️ <strong>Attention</strong> : Ce type est utilisé dans ${usageCount} jour(s) de congé. Ces congés seront également supprimés.`
-  }
-  if (leaveTypes.value.length === 1) {
-    confirmMessage += `<br><br>⚠️ <strong>Attention</strong> : C'est le dernier type de congé. Vous devrez en créer un nouveau.`
-  }
-  
-  // Utiliser SweetAlert2 pour la confirmation
-  const result = await Swal.fire({
-    title: 'Supprimer le type de congé ?',
-    html: confirmMessage,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Oui, supprimer',
-    cancelButtonText: 'Annuler',
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    zIndex: 10001 // Au-dessus de la modale (z-index: 10000)
-  })
-  
-  if (result.isConfirmed) {
-    // Supprimer les congés de ce type si nécessaire
-    if (isUsed) {
-      await leavesStore.removeLeavesByType(typeToDelete.id)
-      await leavesStore.saveLeaves()
-    }
-    
-    // Supprimer le type
-    leaveTypesStore.removeLeaveType(typeToDelete.id)
-    await leaveTypesStore.saveLeaveTypes()
-    
-    // Si c'était le dernier type, en créer un par défaut
-    if (leaveTypes.value.length === 0) {
-      leaveTypesStore.addLeaveType({
-        id: `type-${Date.now()}`,
-        name: 'Congé',
-        label: 'C',
-        color: '#4a90e2',
-        category: 'leave'
-      })
-      await leaveTypesStore.saveLeaveTypes()
-    }
-    
-    await loadQuotas()
-  }
-}
-
-async function handleAddType() {
-  const newType = {
-    id: `type-${Date.now()}`,
-    name: 'Nouveau type',
-    label: 'N',
-    color: '#4a90e2',
-    category: 'leave'
-  }
-  
-  leaveTypesStore.addLeaveType(newType)
-  await leaveTypesStore.saveLeaveTypes()
-  await loadQuotas()
-}
+// Les utilisateurs ne peuvent plus supprimer ou ajouter de types
+// Ces fonctions sont désactivées car la gestion est faite par l'admin
 
 async function handleResetLeavesForCurrentYear() {
   const currentYear = uiStore.currentYear
@@ -733,13 +628,49 @@ function closeModal() {
 
 .leave-type-inputs {
   display: grid;
-  grid-template-columns: 2fr 1fr 60px 1fr 1fr auto;
+  grid-template-columns: 2fr 60px 1fr;
   gap: 10px;
   align-items: center;
 }
 
-.leave-type-name,
-.leave-type-label,
+.leave-type-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.leave-type-name-display {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 1em;
+}
+
+.leave-type-label-display {
+  font-size: 0.85em;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.leave-type-category-display {
+  font-size: 0.8em;
+  color: var(--text-color);
+  opacity: 0.6;
+  padding: 2px 8px;
+  background: var(--bg-color);
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.config-hint {
+  font-size: 0.9em;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-style: italic;
+  margin-bottom: 15px;
+}
+
 .leave-type-quota {
   padding: 8px;
   border: 1px solid var(--border-color);
@@ -747,10 +678,6 @@ function closeModal() {
   background: var(--card-bg);
   color: var(--text-color);
   font-size: 0.9em;
-}
-
-.leave-type-label {
-  max-width: 80px;
 }
 
 .leave-type-color {
@@ -761,52 +688,12 @@ function closeModal() {
   cursor: pointer;
 }
 
-.leave-type-category {
-  padding: 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  background: var(--card-bg);
-  color: var(--text-color);
-  font-size: 0.9em;
-  cursor: pointer;
-}
 
 .leave-type-quota:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.delete-type-btn {
-  padding: 8px 12px;
-  background: var(--danger-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1.2em;
-  transition: background 0.2s;
-}
-
-.delete-type-btn:hover {
-  background: #c0392b;
-}
-
-.add-type-btn {
-  width: 100%;
-  padding: 12px;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1em;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-.add-type-btn:hover {
-  background: #357abd;
-}
 
 .reset-buttons {
   display: flex;
@@ -885,6 +772,18 @@ function closeModal() {
   .leave-type-inputs {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+  
+  .leave-type-info {
+    order: 1;
+  }
+  
+  .leave-type-color {
+    order: 2;
+  }
+  
+  .leave-type-quota {
+    order: 3;
   }
   
   .config-actions {
