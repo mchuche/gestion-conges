@@ -5,19 +5,46 @@
     @click="handleClick"
     @mousedown="handleMouseDown"
     :title="cellTitle"
+    :style="cellStyle"
   >
+    <!-- Demi-journées : barres horizontales haut/bas -->
     <div
       v-if="hasSplit"
       class="presence-cell-half presence-cell-morning"
-      :class="{ 'is-event': isMorningEvent }"
-      :style="{ backgroundColor: isMorningEvent && morningColor ? colorWithOpacity(morningColor, uiStore.eventOpacity ?? 0.15) : morningColor }"
-    ></div>
+      :class="{ 'is-event': morningIsKnownEvent }"
+      :style="{ 
+        backgroundColor: morningIsKnownEvent ? '#4caf50' : (leaveInfo.morning ? null : '#4caf50')
+      }"
+    >
+      <span 
+        v-if="leaveInfo && leaveInfo.morning && morningIsKnownEvent" 
+        class="presence-cell-letter presence-cell-letter-morning"
+      >
+        {{ getFirstLetter(leaveInfo.morning) }}
+      </span>
+    </div>
     <div
       v-if="hasSplit"
       class="presence-cell-half presence-cell-afternoon"
-      :class="{ 'is-event': isAfternoonEvent }"
-      :style="{ backgroundColor: isAfternoonEvent && afternoonColor ? colorWithOpacity(afternoonColor, uiStore.eventOpacity ?? 0.15) : afternoonColor }"
-    ></div>
+      :class="{ 'is-event': afternoonIsKnownEvent }"
+      :style="{ 
+        backgroundColor: afternoonIsKnownEvent ? '#4caf50' : (leaveInfo.afternoon ? null : '#4caf50')
+      }"
+    >
+      <span 
+        v-if="leaveInfo && leaveInfo.afternoon && afternoonIsKnownEvent" 
+        class="presence-cell-letter presence-cell-letter-afternoon"
+      >
+        {{ getFirstLetter(leaveInfo.afternoon) }}
+      </span>
+    </div>
+    <!-- Lettre pour les événements journée complète -->
+    <span 
+      v-if="hasLeave && !hasSplit && leaveInfo && leaveInfo.full && checkIsEvent(leaveInfo.full)" 
+      class="presence-cell-letter"
+    >
+      {{ getFirstLetter(leaveInfo.full) }}
+    </span>
   </div>
 </template>
 
@@ -26,11 +53,13 @@ import { computed } from 'vue'
 import { useLeavesStore } from '../../stores/leaves'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useUIStore } from '../../stores/ui'
+import { useTeamsStore } from '../../stores/teams'
 import { useLeaves } from '../../composables/useLeaves'
 import { useAuthStore } from '../../stores/auth'
 import { today, isSameDay, isBefore, getDay, getYear } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
+import logger from '../../services/logger'
 
 const props = defineProps({
   date: {
@@ -48,6 +77,7 @@ const emit = defineEmits(['click', 'mousedown'])
 const leavesStore = useLeavesStore()
 const leaveTypesStore = useLeaveTypesStore()
 const uiStore = useUIStore()
+const teamsStore = useTeamsStore()
 const authStore = useAuthStore()
 const { getLeaveForDate, getLeaveTypeConfig } = useLeaves()
 
@@ -70,12 +100,16 @@ const leaveInfo = computed(() => {
       afternoon: `${dateKey.value}-afternoon`
     }
     return {
-      full: userLeaves.value[keys.full] || null,
-      morning: userLeaves.value[keys.morning] || null,
-      afternoon: userLeaves.value[keys.afternoon] || null
+      full: userLeaves.value?.[keys.full] || null,
+      morning: userLeaves.value?.[keys.morning] || null,
+      afternoon: userLeaves.value?.[keys.afternoon] || null
     }
   }
-  return getLeaveForDate(props.date)
+  try {
+    return getLeaveForDate(props.date) || { full: null, morning: null, afternoon: null }
+  } catch (e) {
+    return { full: null, morning: null, afternoon: null }
+  }
 })
 
 const hasLeave = computed(() => {
@@ -83,9 +117,9 @@ const hasLeave = computed(() => {
 })
 
 const hasSplit = computed(() => {
-  return leaveInfo.value.morning && 
-         leaveInfo.value.afternoon && 
-         leaveInfo.value.morning !== leaveInfo.value.afternoon
+  // Afficher la division en deux barres dès qu'il y a une demi-journée (matin OU après-midi)
+  return (leaveInfo.value.morning && !leaveInfo.value.full) || 
+         (leaveInfo.value.afternoon && !leaveInfo.value.full)
 })
 
 const morningColor = computed(() => {
@@ -113,35 +147,35 @@ const fullColor = computed(() => {
 })
 
 const isEvent = computed(() => {
-  if (!hasLeave.value) return false
+  if (!hasLeave.value || !leaveInfo.value) return false
   const leaveType = leaveInfo.value.full || leaveInfo.value.morning || leaveInfo.value.afternoon
   if (!leaveType) return false
-  const config = getLeaveTypeConfig(leaveType)
-  return config?.category === 'event'
+  return checkIsEvent(leaveType)
 })
 
 const isMorningEvent = computed(() => {
-  if (leaveInfo.value.morning) {
-    const config = getLeaveTypeConfig(leaveInfo.value.morning)
-    return config?.category === 'event'
+  if (!leaveInfo.value || !leaveInfo.value.morning) return false
+  const config = getLeaveTypeConfig(leaveInfo.value.morning)
+  // Si la config n'est pas trouvée, utiliser le fallback pour les types connus
+  if (!config) {
+    return isKnownEventType(leaveInfo.value.morning)
   }
-  return false
+  return config.category === 'event'
 })
 
 const isAfternoonEvent = computed(() => {
-  if (leaveInfo.value.afternoon) {
-    const config = getLeaveTypeConfig(leaveInfo.value.afternoon)
-    return config?.category === 'event'
+  if (!leaveInfo.value || !leaveInfo.value.afternoon) return false
+  const config = getLeaveTypeConfig(leaveInfo.value.afternoon)
+  // Si la config n'est pas trouvée, utiliser le fallback pour les types connus
+  if (!config) {
+    return isKnownEventType(leaveInfo.value.afternoon)
   }
-  return false
+  return config.category === 'event'
 })
 
 const isFullEvent = computed(() => {
-  if (leaveInfo.value.full) {
-    const config = getLeaveTypeConfig(leaveInfo.value.full)
-    return config?.category === 'event'
-  }
-  return false
+  if (!leaveInfo.value || !leaveInfo.value.full) return false
+  return checkIsEvent(leaveInfo.value.full)
 })
 
 const isToday = computed(() => isSameDay(props.date, today()))
@@ -237,6 +271,94 @@ function colorWithOpacity(color, opacity = 0.3) {
   return color
 }
 
+// Liste des types d'événements connus (fallback si le type n'est pas trouvé dans la config)
+// Ces types sont définis comme événements dans global_leave_types avec category='event'
+const KNOWN_EVENT_TYPES = ['permanence', 'télétravail', 'maladie', 'formation', 'grève']
+
+// Fonction helper pour vérifier si un type est un événement connu
+function isKnownEventType(leaveTypeId) {
+  if (!leaveTypeId || typeof leaveTypeId !== 'string') {
+    return false
+  }
+  return KNOWN_EVENT_TYPES.includes(leaveTypeId)
+}
+
+// Fonction pour vérifier si un type est un événement (avec fallback)
+function checkIsEvent(leaveTypeId) {
+  if (!leaveTypeId) return false
+  
+  // D'abord, essayer de trouver la config
+  const config = getLeaveTypeConfig(leaveTypeId)
+  if (config) {
+    const isEvent = config.category === 'event'
+    logger.debug(`[PresenceDayCell] checkIsEvent: type=${leaveTypeId}, config trouvée, category=${config.category}, isEvent=${isEvent}`)
+    return isEvent
+  }
+  
+  // Si la config n'est pas trouvée, utiliser le fallback
+  const isKnown = isKnownEventType(leaveTypeId)
+  logger.debug(`[PresenceDayCell] checkIsEvent: type=${leaveTypeId}, config non trouvée, isKnownEvent=${isKnown}, KNOWN_EVENT_TYPES=${KNOWN_EVENT_TYPES.join(', ')}`)
+  return isKnown
+}
+
+// Computed properties pour vérifier si les demi-journées sont des événements
+const morningIsKnownEvent = computed(() => {
+  if (!leaveInfo.value || !leaveInfo.value.morning) return false
+  return checkIsEvent(leaveInfo.value.morning)
+})
+
+const afternoonIsKnownEvent = computed(() => {
+  if (!leaveInfo.value || !leaveInfo.value.afternoon) return false
+  return checkIsEvent(leaveInfo.value.afternoon)
+})
+
+// Computed property pour vérifier si on doit afficher la lettre (pour les événements uniquement)
+const shouldShowLetter = computed(() => {
+  if (!hasLeave.value || !leaveInfo.value) {
+    return false
+  }
+  
+  // Pour les cellules avec split, vérifier chaque demi-journée
+  if (hasSplit.value) {
+    const morningType = leaveInfo.value.morning
+    const afternoonType = leaveInfo.value.afternoon
+    const morningIsEvent = morningType ? checkIsEvent(morningType) : false
+    const afternoonIsEvent = afternoonType ? checkIsEvent(afternoonType) : false
+    return morningIsEvent || afternoonIsEvent
+  }
+  
+  // Pour les cellules complètes, vérifier directement avec checkIsEvent
+  const leaveType = leaveInfo.value.full || leaveInfo.value.morning || leaveInfo.value.afternoon
+  if (!leaveType) return false
+  
+  const result = checkIsEvent(leaveType)
+  logger.debug(`[PresenceDayCell] shouldShowLetter: type=${leaveType}, result=${result}, user=${props.user?.name || 'moi'}, dateKey=${dateKey.value}`)
+  return result
+})
+
+// Afficher la lettre pour tous les événements (utilisateur actuel et membres de l'équipe)
+const showLetter = computed(() => {
+  return shouldShowLetter.value
+})
+
+// Fonction pour obtenir la première lettre du type de congé/événement
+function getFirstLetter(leaveTypeId) {
+  if (!leaveTypeId) return ''
+  // Retourner la première lettre en majuscule
+  return leaveTypeId.charAt(0).toUpperCase()
+}
+
+// Vérifier si c'est un événement (avec fallback pour les types connus)
+function isEventType(leaveTypeId) {
+  if (!leaveTypeId) return false
+  const config = getLeaveTypeConfig(leaveTypeId)
+  if (config) {
+    return config.category === 'event'
+  }
+  // Fallback : vérifier si c'est un type d'événement connu
+  return isKnownEventType(leaveTypeId)
+}
+
 const cellStyle = computed(() => {
   const style = {}
   
@@ -244,56 +366,89 @@ const cellStyle = computed(() => {
     style.position = 'relative'
     style.overflow = 'hidden'
     style.background = 'transparent'
-  } else if (fullColor.value) {
-    if (isFullEvent.value) {
-      const opacity = uiStore.eventOpacity ?? 0.15
-      style.backgroundColor = colorWithOpacity(fullColor.value, opacity)
-      style.color = 'white'
-    } else {
-      style.backgroundColor = fullColor.value
-      style.color = 'white'
+  } else {
+    if (!leaveInfo.value) {
+      // Si leaveInfo n'est pas encore chargé, retourner un style vide
+      return style
     }
-  } else if (morningColor.value && !leaveInfo.value.afternoon) {
-    if (isMorningEvent.value) {
-      const opacity = uiStore.eventOpacity ?? 0.15
-      style.backgroundColor = colorWithOpacity(morningColor.value, opacity)
+    
+    const leaveType = leaveInfo.value.full || leaveInfo.value.morning || leaveInfo.value.afternoon
+    const isEvent = checkIsEvent(leaveType)
+    
+    if (isEvent && leaveInfo.value.full) {
+      // Pour les événements complets : couleur verte comme les jours de présence
+      style.backgroundColor = '#4caf50'
+      style.borderColor = '#4caf50'
       style.color = 'white'
-    } else {
-      style.backgroundColor = morningColor.value
+    } else if (isEvent && leaveInfo.value.morning && !leaveInfo.value.afternoon) {
+      // Pour les événements matin : couleur verte comme les jours de présence
+      style.backgroundColor = '#4caf50'
+      style.borderColor = '#4caf50'
       style.color = 'white'
+      style.borderTopWidth = '3px'
+      style.borderTopColor = 'white'
+    } else if (isEvent && leaveInfo.value.afternoon && !leaveInfo.value.morning) {
+      // Pour les événements après-midi : couleur verte comme les jours de présence
+      style.backgroundColor = '#4caf50'
+      style.borderColor = '#4caf50'
+      style.color = 'white'
+      style.borderBottomWidth = '3px'
+      style.borderBottomColor = 'white'
+    } else if (!hasLeave.value && !isWeekend.value && !isHoliday.value) {
+      // Pour les jours de présence normale : couleur verte
+      style.backgroundColor = '#4caf50'
+      style.borderColor = '#4caf50'
     }
-    style.borderTopWidth = '3px'
-    style.borderTopColor = 'white'
-  } else if (afternoonColor.value && !leaveInfo.value.morning) {
-    if (isAfternoonEvent.value) {
-      const opacity = uiStore.eventOpacity ?? 0.15
-      style.backgroundColor = colorWithOpacity(afternoonColor.value, opacity)
-      style.color = 'white'
-    } else {
-      style.backgroundColor = afternoonColor.value
-      style.color = 'white'
-    }
-    style.borderBottomWidth = '3px'
-    style.borderBottomColor = 'white'
+    // Pour les congés : pas de couleur de fond, juste la bordure (has-leave)
   }
   
   return style
 })
 
+// Vérifier si l'utilisateur peut modifier cette cellule
+const canEditCell = computed(() => {
+  // Si c'est la cellule de l'utilisateur actuel, on peut toujours modifier
+  if (!props.user || props.user.id === authStore.user?.id) {
+    return true
+  }
+  
+  // Si l'utilisateur actuel est propriétaire de l'équipe
+  const isOwner = teamsStore.isCurrentTeamOwner
+  if (!isOwner) {
+    return false
+  }
+  
+  // Le propriétaire peut uniquement modifier les ÉVÉNEMENTS, pas les congés
+  // Si la cellule contient déjà un congé (non-événement), bloquer la modification
+  if (hasLeave.value && !isEvent.value) {
+    logger.debug(`[PresenceDayCell] Modification bloquée: la cellule contient un congé (non-événement) pour user=${props.user?.name}`)
+    return false
+  }
+  
+  logger.debug(`[PresenceDayCell] canEditCell: user=${props.user?.name}, isOwner=${isOwner}, hasLeave=${hasLeave.value}, isEvent=${isEvent.value}`)
+  return true
+})
+
 function handleClick(event) {
-  // Seulement pour l'utilisateur actuel
-  if (props.user && props.user.id !== authStore.user?.id) {
+  // Vérifier si l'utilisateur peut modifier cette cellule
+  logger.debug(`[PresenceDayCell] handleClick: canEditCell=${canEditCell.value}, user=${props.user?.name}, date=${dateKey.value}`)
+  if (!canEditCell.value) {
+    logger.warn(`[PresenceDayCell] Modification non autorisée pour user=${props.user?.name}`)
     return
   }
-  emit('click', props.date, event)
+  // Émettre l'événement avec l'userId cible (pour les modifications de membres d'équipe)
+  const targetUserId = props.user?.id || authStore.user?.id
+  logger.log(`[PresenceDayCell] Émission clic pour targetUserId=${targetUserId}`)
+  emit('click', props.date, event, targetUserId)
 }
 
 function handleMouseDown(event) {
-  // Seulement pour l'utilisateur actuel
-  if (props.user && props.user.id !== authStore.user?.id) {
+  // Vérifier si l'utilisateur peut modifier cette cellule
+  if (!canEditCell.value) {
     return
   }
-  emit('mousedown', props.date, event)
+  const targetUserId = props.user?.id || authStore.user?.id
+  emit('mousedown', props.date, event, targetUserId)
 }
 </script>
 
@@ -351,23 +506,27 @@ function handleMouseDown(event) {
 
 .year-presence-day-cell.has-split {
   background: transparent !important;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
 }
 
 .presence-cell-half {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 100%;
-  height: 100%;
+  height: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1;
 }
 
 .presence-cell-morning {
-  clip-path: polygon(0 0, 100% 0, 0 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .presence-cell-afternoon {
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  /* Pas de bordure pour le bas */
 }
 
 .year-presence-day-cell.multi-selected {
@@ -397,9 +556,22 @@ function handleMouseDown(event) {
 }
 
 /* L'opacité des couleurs d'événements dans les demi-journées est gérée par le style inline */
+
+/* Lettre affichée dans les cellules pour les événements */
+.presence-cell-letter {
+  font-size: 10px;
+  font-weight: 700;
+  color: white !important;
+  z-index: 20 !important;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.presence-cell-letter-morning {
+  font-size: 8px;
+}
+
+.presence-cell-letter-afternoon {
+  font-size: 8px;
+}
 </style>
-
-
-
-
-

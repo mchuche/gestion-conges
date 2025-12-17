@@ -4,7 +4,11 @@ import { supabase } from '../services/supabase'
 import logger from '../services/logger'
 import { handleError } from '../services/errorHandler'
 import { useAuthStore } from './auth'
+import { useLeaveTypesStore } from './leaveTypes'
+import { useNotificationsStore } from './notifications'
 import { useLeavesRealtime } from '../composables/useRealtime'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
 export const useLeavesStore = defineStore('leaves', () => {
   // State
@@ -14,6 +18,7 @@ export const useLeavesStore = defineStore('leaves', () => {
   const error = ref(null)
   const realtimeEnabled = ref(false)
   const realtimeSubscription = ref(null) // Référence à la subscription Realtime
+  const teamLeavesUpdateTrigger = ref(0) // Compteur pour déclencher le rechargement des congés d'équipe
 
   // Getters
   const leavesCount = computed(() => Object.keys(leaves.value).length)
@@ -103,15 +108,19 @@ export const useLeavesStore = defineStore('leaves', () => {
       // Organiser les congés par utilisateur
       const teamLeaves = {}
       if (data) {
+        logger.debug('[LeavesStore] Données brutes reçues:', data.length, 'entrées')
         data.forEach(leave => {
           if (!teamLeaves[leave.user_id]) {
             teamLeaves[leave.user_id] = {}
           }
           teamLeaves[leave.user_id][leave.date_key] = leave.leave_type_id
         })
+      } else {
+        logger.warn('[LeavesStore] Aucune donnée reçue pour les congés d\'équipe')
       }
 
-      logger.log('[LeavesStore] Congés d\'équipe chargés:', Object.keys(teamLeaves).length, 'utilisateurs')
+      const totalLeaves = Object.values(teamLeaves).reduce((sum, leaves) => sum + Object.keys(leaves).length, 0)
+      logger.log('[LeavesStore] Congés d\'équipe chargés:', Object.keys(teamLeaves).length, 'utilisateurs,', totalLeaves, 'congés/événements')
       return teamLeaves
     } catch (err) {
       logger.error('[LeavesStore] Erreur lors du chargement des congés d\'équipe:', err)
@@ -289,6 +298,182 @@ export const useLeavesStore = defineStore('leaves', () => {
     leaves.value[dateKey] = leaveTypeId
   }
 
+  // Sauvegarder un congé pour un utilisateur spécifique (utilisé par les propriétaires d'équipe)
+  /**
+   * Créer une notification pour informer l'utilisateur qu'un événement a été modifié
+   */
+  async function createNotificationForLeaveChange(currentUser, targetUserId, dateKey, leaveTypeId) {
+    try {
+      const notificationsStore = useNotificationsStore()
+      const leaveTypesStore = useLeaveTypesStore()
+      
+      // Déterminer le type de modification
+      let actionText = ''
+      let leaveTypeName = ''
+      
+      if (leaveTypeId) {
+        const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
+        leaveTypeName = leaveType?.label || leaveType?.name || 'événement'
+        
+        // Extraire la date du dateKey (format: YYYY-MM-DD ou YYYY-MM-DD-period)
+        const dateParts = dateKey.split('-')
+        const year = parseInt(dateParts[0])
+        const month = parseInt(dateParts[1]) - 1
+        const day = parseInt(dateParts[2])
+        const period = dateParts[3] // 'morning' ou 'afternoon' si présent
+        
+        const date = new Date(year, month, day)
+        const dateFormatted = format(date, 'dd MMMM yyyy', { locale: fr })
+        
+        let periodText = ''
+        if (period === 'morning') {
+          periodText = ' (matin)'
+        } else if (period === 'afternoon') {
+          periodText = ' (après-midi)'
+        }
+        
+        actionText = `a ajouté "${leaveTypeName}" le ${dateFormatted}${periodText}`
+      } else {
+        // Suppression
+        const dateParts = dateKey.split('-')
+        const year = parseInt(dateParts[0])
+        const month = parseInt(dateParts[1]) - 1
+        const day = parseInt(dateParts[2])
+        const date = new Date(year, month, day)
+        const dateFormatted = format(date, 'dd MMMM yyyy', { locale: fr })
+        
+        actionText = `a supprimé un événement le ${dateFormatted}`
+      }
+      
+      await notificationsStore.createNotification(
+        targetUserId,
+        'event_modified',
+        'Événement modifié',
+        `${currentUser.email} ${actionText}`,
+        {
+          date_key: dateKey,
+          leave_type_id: leaveTypeId,
+          modified_by: currentUser.email
+        }
+      )
+      
+      logger.log('[LeavesStore] Notification créée pour:', targetUserId)
+    } catch (error) {
+      // Ne pas bloquer l'opération principale si la notification échoue
+      logger.error('[LeavesStore] Erreur lors de la création de notification:', error)
+    }
+  }
+
+  async function saveLeaveForUser(targetUserId, dateKey, leaveTypeId) {
+    if (!targetUserId || !supabase) {
+      logger.error('[LeavesStore] saveLeaveForUser: paramètres invalides', { targetUserId, hasSupabase: !!supabase })
+      throw new Error('Utilisateur cible non spécifié')
+    }
+
+    logger.log('[LeavesStore] saveLeaveForUser DÉBUT:', { targetUserId, dateKey, leaveTypeId })
+
+    try {
+      loading.value = true
+      error.value = null
+
+      // Vérifier que le propriétaire d'équipe ne modifie que les événements
+      const authStore = useAuthStore()
+      if (leaveTypeId && targetUserId !== authStore.user?.id) {
+        const leaveTypesStore = useLeaveTypesStore()
+        const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
+        if (leaveType && leaveType.category !== 'event') {
+          logger.warn('[LeavesStore] Tentative de modification d\'un congé pour un autre utilisateur bloquée')
+          throw new Error('Vous ne pouvez modifier que les événements des autres utilisateurs, pas les congés.')
+        }
+      }
+
+      // Vérifier si un congé existe déjà pour cette date et cet utilisateur
+      logger.debug('[LeavesStore] Recherche congé existant...')
+      const { data: existingLeave, error: fetchError } = await supabase
+        .from('leaves')
+        .select('id')
+        .eq('user_id', targetUserId)
+        .eq('date_key', dateKey)
+        .maybeSingle()
+
+      if (fetchError) {
+        logger.error('[LeavesStore] Erreur lors de la recherche:', fetchError)
+        throw fetchError
+      }
+
+      logger.debug('[LeavesStore] Congé existant:', existingLeave)
+
+      if (leaveTypeId) {
+        // Ajouter ou mettre à jour
+        if (existingLeave) {
+          // Mettre à jour
+          logger.log('[LeavesStore] Mise à jour du congé existant:', existingLeave.id)
+          const { error: updateError } = await supabase
+            .from('leaves')
+            .update({ leave_type_id: leaveTypeId })
+            .eq('id', existingLeave.id)
+          
+          if (updateError) {
+            logger.error('[LeavesStore] Erreur UPDATE:', updateError)
+            throw updateError
+          }
+          logger.log('[LeavesStore] ✅ Congé mis à jour avec succès')
+        } else {
+          // Insérer
+          logger.log('[LeavesStore] Insertion nouveau congé...')
+          const { error: insertError } = await supabase
+            .from('leaves')
+            .insert({
+              user_id: targetUserId,
+              date_key: dateKey,
+              leave_type_id: leaveTypeId
+            })
+          
+          if (insertError) {
+            logger.error('[LeavesStore] Erreur INSERT:', insertError)
+            throw insertError
+          }
+          logger.log('[LeavesStore] ✅ Congé inséré avec succès')
+        }
+      } else {
+        // Supprimer
+        if (existingLeave) {
+          logger.log('[LeavesStore] Suppression du congé:', existingLeave.id)
+          const { error: deleteError } = await supabase
+            .from('leaves')
+            .delete()
+            .eq('id', existingLeave.id)
+          
+          if (deleteError) {
+            logger.error('[LeavesStore] Erreur DELETE:', deleteError)
+            throw deleteError
+          }
+          logger.log('[LeavesStore] ✅ Congé supprimé avec succès')
+        }
+      }
+
+      logger.log('[LeavesStore] ✅ saveLeaveForUser TERMINÉ avec succès')
+      
+      // Créer une notification si un propriétaire modifie l'événement d'un membre
+      if (targetUserId !== authStore.user?.id) {
+        await createNotificationForLeaveChange(authStore.user, targetUserId, dateKey, leaveTypeId)
+      }
+      
+      // Incrémenter le compteur pour déclencher le rechargement dans les composants
+      teamLeavesUpdateTrigger.value++
+    } catch (err) {
+      logger.error('[LeavesStore] ❌ saveLeaveForUser ÉCHEC:', err)
+      const errorMessage = handleError(err, {
+        context: 'LeavesStore.saveLeaveForUser',
+        showToast: true
+      })
+      error.value = errorMessage
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function removeLeave(dateKey) {
     // Créer un nouvel objet pour forcer la réactivité Vue
     const newLeaves = { ...leaves.value }
@@ -387,6 +572,7 @@ export const useLeavesStore = defineStore('leaves', () => {
     loading,
     error,
     realtimeEnabled,
+    teamLeavesUpdateTrigger,
     // Getters
     leavesCount,
     getLeaveForDate,
@@ -395,6 +581,7 @@ export const useLeavesStore = defineStore('leaves', () => {
     loadLeaves,
     loadTeamLeaves,
     saveLeaves,
+    saveLeaveForUser,
     setLeave,
     removeLeave,
     removeLeavesByType,
@@ -406,4 +593,3 @@ export const useLeavesStore = defineStore('leaves', () => {
     reset
   }
 })
-

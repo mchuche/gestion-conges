@@ -145,6 +145,7 @@ import { VueDatePicker as Datepicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { fr } from 'date-fns/locale/fr'
 import { useUIStore } from '../../stores/ui'
+import { useAuthStore } from '../../stores/auth'
 import { useLeavesStore } from '../../stores/leaves'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useLeaves } from '../../composables/useLeaves'
@@ -166,6 +167,7 @@ function formatDate(date, options = {}) {
 }
 
 const uiStore = useUIStore()
+const authStore = useAuthStore()
 const leavesStore = useLeavesStore()
 const leaveTypesStore = useLeaveTypesStore()
 const { getLeaveForDate, getLeaveTypeConfig, setLeave, removeLeave: removeLeaveForDate, isWeekendOrHoliday } = useLeaves()
@@ -357,6 +359,14 @@ async function selectLeaveType(typeId) {
   }
   
   const period = selectedPeriod.value || 'full'
+  const targetUserId = uiStore.selectedTargetUserId
+  
+  logger.log('[LeaveModal] Sélection de congé:', {
+    typeId,
+    period,
+    dates: validDates.length,
+    targetUserId: targetUserId || 'utilisateur actuel'
+  })
   
   try {
     for (const date of validDates) {
@@ -698,4 +708,3 @@ watch(leaveInfo, (newInfo) => {
   gap: 8px;
 }
 </style>
-

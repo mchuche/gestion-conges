@@ -13,6 +13,14 @@
       <h1>Gestionnaire de Congés</h1>
       <div class="header-right">
         <button
+          class="notifications-toggle"
+          @click="toggleNotifications"
+          title="Notifications"
+        >
+          🔔
+          <span v-if="unreadCount > 0" class="notifications-badge">{{ unreadCount }}</span>
+        </button>
+        <button
           class="theme-toggle"
           @click="toggleTheme"
           :title="themeTitle"
@@ -87,23 +95,36 @@
         </Menu>
       </div>
     </div>
+
+    <!-- Panel de notifications -->
+    <NotificationsPanel 
+      v-if="showNotifications" 
+      @close="toggleNotifications"
+    />
   </header>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
+import { useNotificationsStore } from '../../stores/notifications'
 import { useToast } from '../../composables/useToast'
 import logger from '../../services/logger'
 import Icon from '../common/Icon.vue'
+import NotificationsPanel from '../notifications/NotificationsPanel.vue'
 
 const router = useRouter()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+const notificationsStore = useNotificationsStore()
 const { error: showErrorToast } = useToast()
+
+const { unreadCount } = storeToRefs(notificationsStore)
+const showNotifications = ref(false)
 
 const theme = computed(() => uiStore.theme)
 const themeMode = computed(() => uiStore.themeMode)
@@ -127,6 +148,10 @@ function toggleFullWidth() {
 
 function toggleMinimizeHeader() {
   uiStore.toggleMinimizeHeader()
+}
+
+function toggleNotifications() {
+  showNotifications.value = !showNotifications.value
 }
 
 function openConfig() {
@@ -181,6 +206,12 @@ async function logout() {
 onMounted(() => {
   if (typeof uiStore.loadMinimizeHeader === 'function') {
     uiStore.loadMinimizeHeader()
+  }
+  
+  // Charger les notifications et s'abonner aux mises à jour
+  if (authStore.isAuthenticated) {
+    notificationsStore.loadNotifications()
+    notificationsStore.subscribeToNotifications()
   }
 })
 </script>
@@ -241,6 +272,7 @@ onMounted(() => {
   gap: 15px;
 }
 
+.notifications-toggle,
 .theme-toggle,
 .full-width-toggle {
   background: var(--primary-color);
@@ -256,13 +288,32 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  position: relative;
 }
 
+.notifications-toggle:hover,
 .theme-toggle:hover,
 .full-width-toggle:hover {
   background: #357abd;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+}
+
+.notifications-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #f44336;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65em;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .full-width-toggle.active {

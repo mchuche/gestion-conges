@@ -1,25 +1,127 @@
 import { computed } from 'vue'
 import { useLeavesStore } from '../stores/leaves'
-import { useLeaveTypesStore } from '../stores/leaveTypes'
 import { useUIStore } from '../stores/ui'
-import { getDateKey, getDateKeyWithPeriod, getDateKeys } from '../services/utils'
+import { useLeaveTypesStore } from '../stores/leaveTypes'
+import { getDateKey } from '../services/utils'
 import { getDay } from '../services/dateUtils'
 import { getPublicHolidays } from '../services/holidays'
 import logger from '../services/logger'
 
 export function useLeaves() {
   const leavesStore = useLeavesStore()
-  const leaveTypesStore = useLeaveTypesStore()
   const uiStore = useUIStore()
+  const leaveTypesStore = useLeaveTypesStore()
 
-  // Obtenir les informations de congé pour une date
+  const leaves = computed(() => leavesStore.leaves)
+  const loading = computed(() => leavesStore.loading)
+  const leavesCount = computed(() => leavesStore.leavesCount)
+
   function getLeaveForDate(date) {
-    const keys = getDateKeys(date)
+    // Retourner un objet structuré avec full, morning, afternoon
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    const morningKey = `${dateKey}-morning`
+    const afternoonKey = `${dateKey}-afternoon`
+    
     return {
-      full: leavesStore.leaves[keys.full] || null,
-      morning: leavesStore.leaves[keys.morning] || null,
-      afternoon: leavesStore.leaves[keys.afternoon] || null
+      full: leavesStore.leaves[dateKey] || null,
+      morning: leavesStore.leaves[morningKey] || null,
+      afternoon: leavesStore.leaves[afternoonKey] || null
     }
+  }
+
+  async function loadLeaves() {
+    await leavesStore.loadLeaves()
+  }
+
+  async function setLeave(date, leaveTypeId, period = 'full') {
+    const targetUserId = uiStore.selectedTargetUserId
+    
+    logger.log('[useLeaves] setLeave:', {
+      date: date.toISOString().split('T')[0],
+      leaveTypeId,
+      period,
+      targetUserId: targetUserId || 'utilisateur actuel'
+    })
+
+    // Si on modifie le congé d'un autre utilisateur (en tant que propriétaire d'équipe)
+    if (targetUserId) {
+      // Vérifier si c'est un événement ou un congé
+      const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
+      if (leaveType && leaveType.category !== 'event') {
+        logger.warn('[useLeaves] Tentative de modification d\'un congé pour un autre utilisateur bloquée')
+        throw new Error('Vous ne pouvez modifier que les événements des autres utilisateurs, pas les congés.')
+      }
+      
+      const dateKey = period === 'full'
+        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}-${period}`
+      
+      logger.log('[useLeaves] Appel saveLeaveForUser:', { targetUserId, dateKey, leaveTypeId })
+      await leavesStore.saveLeaveForUser(targetUserId, dateKey, leaveTypeId)
+      return
+    }
+
+    // Sinon, modification pour l'utilisateur actuel
+    const dateKey = period === 'full'
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}-${period}`
+    
+    leavesStore.setLeave(dateKey, leaveTypeId)
+    await leavesStore.saveLeaves()
+  }
+
+  async function removeLeave(date, period = 'full') {
+    const targetUserId = uiStore.selectedTargetUserId
+    
+    logger.log('[useLeaves] removeLeave:', {
+      date: date.toISOString().split('T')[0],
+      period,
+      targetUserId: targetUserId || 'utilisateur actuel'
+    })
+
+    // Si on supprime le congé d'un autre utilisateur (en tant que propriétaire d'équipe)
+    if (targetUserId) {
+      const dateKey = period === 'full'
+        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}-${period}`
+      
+      logger.log('[useLeaves] Appel saveLeaveForUser (suppression):', { targetUserId, dateKey })
+      await leavesStore.saveLeaveForUser(targetUserId, dateKey, null) // null = suppression
+      return
+    }
+
+    // Sinon, suppression pour l'utilisateur actuel
+    const dateKey = period === 'full'
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}-${period}`
+    
+    leavesStore.removeLeave(dateKey)
+    await leavesStore.saveLeaves()
+  }
+
+  function clearAllLeaves() {
+    leavesStore.clearAllLeaves()
+  }
+
+  // Supprimer tous les congés (catégorie 'leave') pour une année donnée
+  async function clearLeavesForYear(year) {
+    leavesStore.clearLeavesForYear(year, leaveTypesStore)
+    await leavesStore.saveLeaves()
+  }
+
+  // Supprimer tous les événements (catégorie 'event') pour une année donnée
+  async function clearEventsForYear(year) {
+    leavesStore.clearEventsForYear(year, leaveTypesStore)
+    await leavesStore.saveLeaves()
+  }
+
+  function openLeaveModal(date, period = 'full') {
+    uiStore.openModal(date, period)
+  }
+  
+  // Fonction helper pour obtenir la configuration d'un type de congé
+  function getLeaveTypeConfig(leaveTypeId) {
+    return leaveTypesStore.getLeaveType(leaveTypeId)
   }
 
   // Vérifier si une date est un weekend ou un jour férié
@@ -31,121 +133,25 @@ export function useLeaves() {
     // Vérifier si c'est un jour férié
     const year = date.getFullYear()
     const holidays = getPublicHolidays(uiStore.selectedCountry, year)
-    const dateKey = getDateKey(date)
-    const isHoliday = holidays[dateKey] !== undefined
+    const dateKeyVal = getDateKey(date)
+    const isHoliday = holidays[dateKeyVal] !== undefined
     
     return isWeekend || isHoliday
   }
 
-  // Définir un congé pour une date et une période
-  async function setLeave(date, leaveTypeId, period = 'full') {
-    // Empêcher l'ajout de congés sur les weekends et jours fériés
-    if (isWeekendOrHoliday(date)) {
-      const dayOfWeek = getDay(date)
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-      const year = date.getFullYear()
-      const holidays = getPublicHolidays(uiStore.selectedCountry, year)
-      const dateKey = getDateKey(date)
-      const isHoliday = holidays[dateKey] !== undefined
-      
-      let errorMessage = 'Impossible de poser un congé sur '
-      if (isWeekend && isHoliday) {
-        errorMessage += 'un weekend et jour férié'
-      } else if (isWeekend) {
-        errorMessage += 'un weekend'
-      } else {
-        errorMessage += 'un jour férié'
-      }
-      
-      const error = new Error(errorMessage)
-      error.code = 'WEEKEND_OR_HOLIDAY'
-      throw error
-    }
-    
-    const keys = getDateKeys(date)
-    const dateKey = period === 'full' ? keys.full : keys[period]
-
-    // Si on définit une journée complète, supprimer les demi-journées
-    if (period === 'full') {
-      if (leavesStore.leaves[keys.morning]) {
-        leavesStore.removeLeave(keys.morning)
-      }
-      if (leavesStore.leaves[keys.afternoon]) {
-        leavesStore.removeLeave(keys.afternoon)
-      }
-      leavesStore.setLeave(keys.full, leaveTypeId)
-    } else {
-      // Si on définit une demi-journée, supprimer la journée complète si elle existe
-      // (mais on garde l'autre demi-journée si elle existe pour permettre matin+après-midi)
-      if (leavesStore.leaves[keys.full]) {
-        leavesStore.removeLeave(keys.full)
-      }
-      // Utiliser la clé de la période spécifique
-      leavesStore.setLeave(keys[period], leaveTypeId)
-    }
-
-    // Sauvegarder dans Supabase
-    try {
-      await leavesStore.saveLeaves()
-    } catch (err) {
-      logger.error('Erreur lors de la sauvegarde du congé:', err)
-      throw err
-    }
-  }
-
-  // Supprimer un congé pour une date
-  async function removeLeave(date, period = null) {
-    const keys = getDateKeys(date)
-
-    if (period) {
-      // Supprimer une période spécifique
-      const dateKey = period === 'full' ? keys.full : keys[period]
-      leavesStore.removeLeave(dateKey)
-    } else {
-      // Supprimer toutes les périodes pour cette date
-      if (leavesStore.leaves[keys.full]) {
-        leavesStore.removeLeave(keys.full)
-      }
-      if (leavesStore.leaves[keys.morning]) {
-        leavesStore.removeLeave(keys.morning)
-      }
-      if (leavesStore.leaves[keys.afternoon]) {
-        leavesStore.removeLeave(keys.afternoon)
-      }
-    }
-
-    // Sauvegarder dans Supabase
-    try {
-      await leavesStore.saveLeaves()
-    } catch (err) {
-      logger.error('Erreur lors de la suppression du congé:', err)
-      throw err
-    }
-  }
-
-  // Vérifier si un type de congé est utilisé
-  function isLeaveTypeUsed(leaveTypeId) {
-    return Object.values(leavesStore.leaves).includes(leaveTypeId)
-  }
-
-  // Compter l'utilisation d'un type de congé
-  function countLeaveTypeUsage(leaveTypeId) {
-    return Object.values(leavesStore.leaves).filter(id => id === leaveTypeId).length
-  }
-
-  // Obtenir la configuration d'un type de congé
-  function getLeaveTypeConfig(leaveTypeId) {
-    return leaveTypesStore.getLeaveType(leaveTypeId)
-  }
-
   return {
+    leaves,
+    loading,
+    leavesCount,
     getLeaveForDate,
+    getLeaveTypeConfig,
+    isWeekendOrHoliday,
+    loadLeaves,
     setLeave,
     removeLeave,
-    isLeaveTypeUsed,
-    countLeaveTypeUsage,
-    getLeaveTypeConfig,
-    isWeekendOrHoliday
+    clearAllLeaves,
+    clearLeavesForYear,
+    clearEventsForYear,
+    openLeaveModal
   }
 }
-

@@ -19,6 +19,17 @@ export const useTeamsStore = defineStore('teams', () => {
     if (!currentTeamId.value) return null
     return userTeams.value.find(t => t.id === currentTeamId.value)
   })
+  
+  // Vérifier si l'utilisateur actuel est propriétaire de l'équipe courante
+  const isCurrentTeamOwner = computed(() => {
+    if (!currentTeam.value) {
+      logger.debug('[TeamsStore] isCurrentTeamOwner: false (pas d\'équipe courante)')
+      return false
+    }
+    const isOwner = currentTeam.value.role === 'owner'
+    logger.debug(`[TeamsStore] isCurrentTeamOwner: ${isOwner} (role=${currentTeam.value.role}, team=${currentTeam.value.name})`)
+    return isOwner
+  })
 
   // Actions
   async function loadUserTeams() {
@@ -91,10 +102,10 @@ export const useTeamsStore = defineStore('teams', () => {
     // Getters
     hasTeams,
     currentTeam,
+    isCurrentTeamOwner,
     // Actions
     loadUserTeams,
     createTeam,
     setCurrentTeam
   }
 })
-

@@ -40,8 +40,8 @@
             :key="`${user.id}-${day.dateKey}`"
             :date="day.date"
             :user="user"
-            @click="(date, event) => emit('day-click', date, event)"
-            @mousedown="(date, event) => emit('day-mousedown', date, event)"
+            @click="(date, event, targetUserId) => emit('day-click', date, event, targetUserId)"
+            @mousedown="(date, event, targetUserId) => emit('day-mousedown', date, event, targetUserId)"
           />
         </div>
       </div>
@@ -124,14 +124,20 @@ async function loadTeamLeaves() {
 
   try {
     const userIds = teamMembers.value.map(member => member.id)
+    logger.debug('[YearViewPresenceVertical] Chargement des congés pour les membres:', userIds)
     const teamLeaves = await leavesStore.loadTeamLeaves(userIds)
     
     // Assigner les congés à chaque membre
     teamMembers.value.forEach(member => {
       member.leaves = teamLeaves[member.id] || {}
+      const leavesCount = Object.keys(member.leaves).length
+      if (leavesCount > 0) {
+        logger.debug(`[YearViewPresenceVertical] Membre ${member.name}: ${leavesCount} congé(s)/événement(s) chargé(s)`, member.leaves)
+      }
     })
     
-    logger.debug('[YearViewPresenceVertical] Congés d\'équipe chargés pour', Object.keys(teamLeaves).length, 'membres')
+    const totalLeaves = Object.values(teamLeaves).reduce((sum, leaves) => sum + Object.keys(leaves).length, 0)
+    logger.log('[YearViewPresenceVertical] Congés d\'équipe chargés:', Object.keys(teamLeaves).length, 'membres,', totalLeaves, 'congés/événements au total')
   } catch (err) {
     logger.error('[YearViewPresenceVertical] Erreur lors du chargement des congés d\'équipe:', err)
   }
@@ -141,6 +147,14 @@ async function loadTeamLeaves() {
 const users = computed(() => {
   // Si une équipe est sélectionnée, utiliser ses membres
   if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
+    // Log pour déboguer
+    const membersWithLeaves = teamMembers.value.filter(m => Object.keys(m.leaves || {}).length > 0)
+    if (membersWithLeaves.length > 0) {
+      logger.debug('[YearViewPresenceVertical] Membres avec congés:', membersWithLeaves.map(m => ({
+        name: m.name,
+        leavesCount: Object.keys(m.leaves).length
+      })))
+    }
     return teamMembers.value
   }
   
@@ -184,6 +198,15 @@ watch(() => teamMembers.value.length, async () => {
 watch(() => leavesStore.leavesCount, async () => {
   if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
     // Recharger seulement si on est en mode équipe
+    await loadTeamLeaves()
+  }
+})
+
+// Watcher pour recharger les congés d'équipe quand un membre d'équipe est modifié
+// (via saveLeaveForUser par un propriétaire d'équipe)
+watch(() => leavesStore.teamLeavesUpdateTrigger, async () => {
+  if (teamsStore.currentTeamId && teamMembers.value.length > 0) {
+    logger.debug('[YearViewPresenceVertical] Rechargement des congés d\'équipe suite à une modification')
     await loadTeamLeaves()
   }
 })

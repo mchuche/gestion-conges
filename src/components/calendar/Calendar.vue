@@ -61,9 +61,9 @@ import logger from '../../services/logger'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useAuthStore } from '../../stores/auth'
-import { defineAsyncComponent } from 'vue'
 import YearViewSemester from './YearViewSemester.vue'
 import YearViewColumns from './YearViewColumns.vue'
+import YearViewPresenceVertical from './YearViewPresenceVertical.vue'
 import ViewFormatSelector from './ViewFormatSelector.vue'
 import TeamSelector from '../common/TeamSelector.vue'
 import Stats from '../stats/Stats.vue'
@@ -73,9 +73,6 @@ import Icon from '../common/Icon.vue'
 import { getYear, addYears, getDay } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
-
-// Lazy loading de la vue de présence verticale (chargée uniquement quand nécessaire)
-const YearViewPresenceVertical = defineAsyncComponent(() => import('./YearViewPresenceVertical.vue'))
 
 const uiStore = useUIStore()
 const leavesStore = useLeavesStore()
@@ -144,7 +141,7 @@ function toggleMinimizeHeader() {
   uiStore.toggleMinimizeHeader()
 }
 
-function handleDayClick(date, event, user = null) {
+function handleDayClick(date, event, targetUserId = null) {
   // Vérifier si c'est un weekend ou un jour férié
   const dayOfWeek = getDay(date)
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
@@ -158,9 +155,11 @@ function handleDayClick(date, event, user = null) {
     return
   }
   
-  // Si un utilisateur est passé (vue matrice), le stocker dans le store
-  if (user && user.id) {
-    uiStore.setSelectedTargetUserId(user.id)
+  // Stocker l'utilisateur cible (peut être un membre d'équipe si le propriétaire modifie)
+  // targetUserId peut être un string (userId) ou un objet user (pour compatibilité)
+  if (targetUserId) {
+    const userId = typeof targetUserId === 'string' ? targetUserId : targetUserId.id
+    uiStore.setSelectedTargetUserId(userId)
   } else {
     // Sinon, réinitialiser à l'utilisateur actuel
     uiStore.setSelectedTargetUserId(null)
@@ -191,7 +190,7 @@ function handleDayClick(date, event, user = null) {
   }
 }
 
-function handleDayMouseDown(date, event, user = null) {
+function handleDayMouseDown(date, event, targetUserId = null) {
   // Vérifier si c'est un weekend ou un jour férié
   const dayOfWeek = getDay(date)
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
@@ -205,9 +204,10 @@ function handleDayMouseDown(date, event, user = null) {
     return
   }
   
-  // Si un utilisateur est passé (vue matrice), le stocker dans le store
-  if (user && user.id) {
-    uiStore.setSelectedTargetUserId(user.id)
+  // Stocker l'utilisateur cible (peut être un membre d'équipe si le propriétaire modifie)
+  if (targetUserId) {
+    const userId = typeof targetUserId === 'string' ? targetUserId : targetUserId.id
+    uiStore.setSelectedTargetUserId(userId)
   } else {
     // Sinon, réinitialiser à l'utilisateur actuel
     uiStore.setSelectedTargetUserId(null)
@@ -423,4 +423,3 @@ onMounted(async () => {
   }
 }
 </style>
-
