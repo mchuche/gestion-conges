@@ -34,11 +34,6 @@
     <HelpHint />
     
     <div id="semesterCalendar" :class="calendarViewClass">
-      <YearViewSemester
-        v-if="yearViewFormat === 'semester'"
-        @day-click="handleDayClick"
-        @day-mousedown="handleDayMouseDown"
-      />
       <YearViewColumns
         v-if="yearViewFormat === 'columns'"
         @day-click="handleDayClick"
@@ -61,7 +56,6 @@ import logger from '../../services/logger'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useAuthStore } from '../../stores/auth'
-import YearViewSemester from './YearViewSemester.vue'
 import YearViewColumns from './YearViewColumns.vue'
 import YearViewPresenceVertical from './YearViewPresenceVertical.vue'
 import ViewFormatSelector from './ViewFormatSelector.vue'

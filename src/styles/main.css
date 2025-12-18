@@ -332,7 +332,6 @@ body.minimal-header .header-controls .team-select {
     display: none !important;
 }
 
-/* Cacher le sélecteur de vue annuelle quand on est en vue annuelle (semester) */
 body.minimal-header .header-controls #yearViewFormatSelect {
     display: none !important;
 }
@@ -730,39 +729,6 @@ body.minimal-header #currentMonth {
 .calendar-container {
     position: relative;
     width: 100%;
-}
-
-/* Vue Semestrielle */
-.semester-view {
-    overflow-x: auto;
-    padding: 10px 0;
-}
-
-.semester-calendar {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 15px;
-    min-width: 900px;
-}
-
-.semester-month-column {
-    display: flex;
-    flex-direction: column;
-    min-width: 120px;
-}
-
-.semester-month-header {
-    background: var(--primary-color);
-    color: white;
-    padding: 10px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 0.9em;
-    border-radius: 0;
-    margin-bottom: 5px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 /* Vue Annuelle - Mini-calendriers (format 16/9 ou 16/10) */
@@ -1745,11 +1711,6 @@ body.minimal-header #currentMonth {
         min-width: 100%;
         grid-template-columns: repeat(6, 1fr);
     }
-
-    .semester-calendar {
-        min-width: 100%;
-        grid-template-columns: repeat(3, 1fr);
-    }
 }
 
 @media (max-width: 768px) {
@@ -1807,11 +1768,6 @@ body.minimal-header #currentMonth {
 
     .year-calendar {
         grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-    }
-
-    .semester-calendar {
-        grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }
 
@@ -1954,11 +1910,6 @@ body.minimal-header #currentMonth {
 
     .year-calendar {
         grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-    }
-
-    .semester-calendar {
-        grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }
 

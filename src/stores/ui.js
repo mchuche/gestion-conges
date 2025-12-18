@@ -15,7 +15,7 @@ export const useUIStore = defineStore('ui', () => {
   const selectedTargetUserId = ref(null) // Pour modifier les événements d'un autre utilisateur
   const multiSelectMode = ref(false)
   const viewMode = ref('year') // 'year', 'month', etc.
-  const yearViewFormat = ref('columns') // 'semester', 'columns', 'presence-vertical'
+  const yearViewFormat = ref('columns') // 'columns', 'presence-vertical'
   const configYear = ref(new Date().getFullYear())
   const selectedCountry = ref('FR')
   const weekStartDay = ref(0) // 0 = Dimanche, 1 = Lundi, etc.
@@ -26,6 +26,9 @@ export const useUIStore = defineStore('ui', () => {
   const themeMode = ref('auto') // 'auto', 'light' ou 'dark' (préférence utilisateur)
   const fullWidth = ref(true)
   const minimizeHeader = ref(false) // Mode header minimal
+
+  // Formats de vue annuelle autorisés
+  const ALLOWED_YEAR_VIEW_FORMATS = ['columns', 'presence-vertical']
   
   // Modales
   const showModal = ref(false)
@@ -90,7 +93,8 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function setYearViewFormat(format) {
-    yearViewFormat.value = format
+    // Fallback: si une ancienne valeur ('semester') traîne, revenir sur 'columns'
+    yearViewFormat.value = ALLOWED_YEAR_VIEW_FORMATS.includes(format) ? format : 'columns'
   }
 
   function setConfigYear(year) {

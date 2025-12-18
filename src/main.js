@@ -7,7 +7,6 @@ import App from './App.vue'
 import router from './router'
 import './styles/main.css'
 import './styles/year-view.css'
-import './styles/year-semester.css'
 import './styles/year-presence-vertical.css'
 
 const app = createApp(App)
