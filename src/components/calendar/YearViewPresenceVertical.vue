@@ -27,6 +27,25 @@
         </div>
       </div>
 
+      <!-- Ligne pour chaque utilisateur -->
+      <div
+        v-for="user in users"
+        :key="`${user.id}-${month.index}`"
+        class="year-presence-vertical-user-row"
+      >
+        <div class="year-presence-vertical-user-name">{{ user.name }}</div>
+        <div class="year-presence-vertical-days-container">
+          <PresenceDayCell
+            v-for="day in month.days"
+            :key="`${user.id}-${day.dateKey}`"
+            :date="day.date"
+            :user="user"
+            @click="(date, event, targetUserId) => emit('day-click', date, event, targetUserId)"
+            @mousedown="(date, event, targetUserId) => emit('day-mousedown', date, event, targetUserId)"
+          />
+        </div>
+      </div>
+
       <!-- Synthèse : Présents (ETP) -->
       <div
         v-if="teamsStore.currentTeamId && teamMembers.length > 0"
@@ -44,25 +63,6 @@
           >
             {{ formatEtp(getPresenceEtpForDay(day.dateKey)) }}
           </div>
-        </div>
-      </div>
-
-      <!-- Ligne pour chaque utilisateur -->
-      <div
-        v-for="user in users"
-        :key="`${user.id}-${month.index}`"
-        class="year-presence-vertical-user-row"
-      >
-        <div class="year-presence-vertical-user-name">{{ user.name }}</div>
-        <div class="year-presence-vertical-days-container">
-          <PresenceDayCell
-            v-for="day in month.days"
-            :key="`${user.id}-${day.dateKey}`"
-            :date="day.date"
-            :user="user"
-            @click="(date, event, targetUserId) => emit('day-click', date, event, targetUserId)"
-            @mousedown="(date, event, targetUserId) => emit('day-mousedown', date, event, targetUserId)"
-          />
         </div>
       </div>
     </div>

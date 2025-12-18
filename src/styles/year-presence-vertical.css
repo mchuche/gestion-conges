@@ -312,12 +312,12 @@
 
 /* Ligne de synthèse "Présents (ETP)" : plus visible et placée sous l'en-tête */
 .year-presence-vertical-total-row.presence-summary-row {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--border-color);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 2px solid var(--border-color);
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
 }
 
 .presence-summary-label {
