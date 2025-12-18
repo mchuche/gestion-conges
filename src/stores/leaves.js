@@ -302,19 +302,19 @@ export const useLeavesStore = defineStore('leaves', () => {
   /**
    * Créer une notification pour informer l'utilisateur qu'un événement a été modifié
    */
-  async function createNotificationForLeaveChange(currentUser, targetUserId, dateKey, leaveTypeId) {
+  async function createNotificationForLeaveChange(currentUser, targetUserId, dateKey, leaveTypeId, previousLeaveTypeId = null) {
     try {
       const notificationsStore = useNotificationsStore()
       const leaveTypesStore = useLeaveTypesStore()
       
       // Déterminer le type de modification
       let actionText = ''
-      let leaveTypeName = ''
+      const effectiveLeaveTypeId = leaveTypeId || previousLeaveTypeId || null
+      const leaveType = effectiveLeaveTypeId ? leaveTypesStore.getLeaveType(effectiveLeaveTypeId) : null
+      // IMPORTANT: on veut le nom complet (pas l'abréviation/label)
+      const leaveTypeFullName = leaveType?.name || effectiveLeaveTypeId || 'événement'
       
       if (leaveTypeId) {
-        const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
-        leaveTypeName = leaveType?.label || leaveType?.name || 'événement'
-        
         // Extraire la date du dateKey (format: YYYY-MM-DD ou YYYY-MM-DD-period)
         const dateParts = dateKey.split('-')
         const year = parseInt(dateParts[0])
@@ -332,7 +332,7 @@ export const useLeavesStore = defineStore('leaves', () => {
           periodText = ' (après-midi)'
         }
         
-        actionText = `a ajouté "${leaveTypeName}" le ${dateFormatted}${periodText}`
+        actionText = `a ajouté "${leaveTypeFullName}" le ${dateFormatted}${periodText}`
       } else {
         // Suppression
         const dateParts = dateKey.split('-')
@@ -342,17 +342,17 @@ export const useLeavesStore = defineStore('leaves', () => {
         const date = new Date(year, month, day)
         const dateFormatted = format(date, 'dd MMMM yyyy', { locale: fr })
         
-        actionText = `a supprimé un événement le ${dateFormatted}`
+        actionText = `a supprimé "${leaveTypeFullName}" le ${dateFormatted}`
       }
       
       await notificationsStore.createNotification(
         targetUserId,
         'event_modified',
-        'Événement modifié',
+        `Événement modifié : ${leaveTypeFullName}`,
         `${currentUser.email} ${actionText}`,
         {
           date_key: dateKey,
-          leave_type_id: leaveTypeId,
+          leave_type_id: effectiveLeaveTypeId,
           modified_by: currentUser.email
         }
       )
@@ -391,7 +391,7 @@ export const useLeavesStore = defineStore('leaves', () => {
       logger.debug('[LeavesStore] Recherche congé existant...')
       const { data: existingLeave, error: fetchError } = await supabase
         .from('leaves')
-        .select('id')
+        .select('id, leave_type_id')
         .eq('user_id', targetUserId)
         .eq('date_key', dateKey)
         .maybeSingle()
@@ -456,7 +456,13 @@ export const useLeavesStore = defineStore('leaves', () => {
       
       // Créer une notification si un propriétaire modifie l'événement d'un membre
       if (targetUserId !== authStore.user?.id) {
-        await createNotificationForLeaveChange(authStore.user, targetUserId, dateKey, leaveTypeId)
+        await createNotificationForLeaveChange(
+          authStore.user,
+          targetUserId,
+          dateKey,
+          leaveTypeId,
+          existingLeave?.leave_type_id || null
+        )
       }
       
       // Incrémenter le compteur pour déclencher le rechargement dans les composants
