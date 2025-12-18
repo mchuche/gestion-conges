@@ -8,6 +8,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const notifications = ref([])
   const loading = ref(false)
   const realtimeSubscription = ref(null)
+  // Certains environnements n'ont pas (encore) la colonne `data` (migration non exécutée / cache PostgREST).
+  // On garde un flag pour éviter de spammer des erreurs 400.
+  const supportsDataColumn = ref(true)
 
   // Compteur de notifications non lues
   const unreadCount = computed(() => {
@@ -45,16 +48,28 @@ export const useNotificationsStore = defineStore('notifications', () => {
   // Créer une notification
   async function createNotification(targetUserId, type, title, message, data = null) {
     try {
-      const { error } = await supabase
+      const basePayload = {
+        user_id: targetUserId,
+        type,
+        title,
+        message,
+        read: false
+      }
+
+      // N'envoyer `data` que si la colonne est supportée ET si on a une valeur non nulle.
+      const payload = (supportsDataColumn.value && data != null)
+        ? { ...basePayload, data }
+        : basePayload
+
+      let { error } = await supabase
         .from('notifications')
-        .insert({
-          user_id: targetUserId,
-          type,
-          title,
-          message,
-          data,
-          read: false
-        })
+        .insert(payload)
+
+      // Fallback: si la colonne `data` n'existe pas (PGRST204), retenter sans `data` et mémoriser.
+      if (error && error.code === 'PGRST204' && String(error.message || '').includes("'data'")) {
+        supportsDataColumn.value = false
+        ;({ error } = await supabase.from('notifications').insert(basePayload))
+      }
 
       if (error) throw error
 
