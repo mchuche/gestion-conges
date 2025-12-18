@@ -3,15 +3,14 @@
  * Les erreurs sont toujours loggées via le logger principal
  */
 
-const isDev = import.meta.env.DEV
-import logger from '../services/logger'
+import logger, { getConsoleDebugLogsEnabled } from '../services/logger'
 
 export const devLogger = {
   /**
    * Log en mode développement uniquement
    */
   log: (...args) => {
-    if (isDev) {
+    if (getConsoleDebugLogsEnabled()) {
       console.log('[DEV]', ...args)
     }
   },
@@ -23,7 +22,7 @@ export const devLogger = {
     // Toujours logger les erreurs en production
     logger.error(...args)
     // Aussi dans la console en dev
-    if (isDev) {
+    if (getConsoleDebugLogsEnabled()) {
       console.error('[DEV ERROR]', ...args)
     }
   },
@@ -32,7 +31,7 @@ export const devLogger = {
    * Warning en mode développement uniquement
    */
   warn: (...args) => {
-    if (isDev) {
+    if (getConsoleDebugLogsEnabled()) {
       console.warn('[DEV WARN]', ...args)
     }
   },
@@ -41,7 +40,7 @@ export const devLogger = {
    * Debug - log en mode développement uniquement
    */
   debug: (...args) => {
-    if (isDev) {
+    if (getConsoleDebugLogsEnabled()) {
       console.debug('[DEV DEBUG]', ...args)
     }
   }

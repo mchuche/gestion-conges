@@ -191,6 +191,21 @@
                   <ErrorMessage name="defaultQuotas" class="field-error" />
                 </Field>
               </div>
+
+              <div class="admin-settings-section">
+                <h3>Débogage</h3>
+                <label style="display:flex; align-items:center; gap:10px;">
+                  <input
+                    type="checkbox"
+                    v-model="consoleDebugLogsEnabled"
+                    @change="applyConsoleDebugLogs"
+                  />
+                  Activer les logs debug dans la console (log/debug)
+                </label>
+                <p class="admin-hint">
+                  Ce réglage est local à ce navigateur (localStorage). Les warn/error restent affichés.
+                </p>
+              </div>
               
               <div class="admin-settings-actions">
                 <button type="submit" class="btn-primary" :disabled="!meta.valid">
@@ -279,7 +294,7 @@ import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useAuthStore } from '../../stores/auth'
 import { supabase } from '../../services/supabase'
 import Swal from 'sweetalert2'
-import logger from '../../services/logger'
+import logger, { getConsoleDebugLogsEnabled, setConsoleDebugLogsEnabled } from '../../services/logger'
 import { useToast } from '../../composables/useToast'
 import devLogger from '../../utils/devLogger'
 
@@ -292,6 +307,13 @@ const { success, error: showErrorToast, info } = useToast()
 devLogger.log('[AdminView] AuthStore:', authStore)
 devLogger.log('[AdminView] isAdmin:', authStore.isAdmin)
 devLogger.log('[AdminView] user:', authStore.user)
+
+const consoleDebugLogsEnabled = ref(getConsoleDebugLogsEnabled())
+
+function applyConsoleDebugLogs() {
+  setConsoleDebugLogsEnabled(consoleDebugLogsEnabled.value)
+  success(`Logs console debug: ${consoleDebugLogsEnabled.value ? 'activés' : 'désactivés'}`)
+}
 
 const activeTab = ref('users')
 const tabs = [
