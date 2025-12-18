@@ -313,36 +313,37 @@ export const useLeavesStore = defineStore('leaves', () => {
       const leaveType = effectiveLeaveTypeId ? leaveTypesStore.getLeaveType(effectiveLeaveTypeId) : null
       // IMPORTANT: on veut le nom complet (pas l'abréviation/label)
       const leaveTypeFullName = leaveType?.name || effectiveLeaveTypeId || 'événement'
+
+      const previousType = previousLeaveTypeId ? leaveTypesStore.getLeaveType(previousLeaveTypeId) : null
+      const previousFullName = previousType?.name || previousLeaveTypeId || null
       
+      // Extraire la date du dateKey (format: YYYY-MM-DD ou YYYY-MM-DD-period)
+      const dateParts = dateKey.split('-')
+      const year = parseInt(dateParts[0])
+      const month = parseInt(dateParts[1]) - 1
+      const day = parseInt(dateParts[2])
+      const period = dateParts[3] // 'morning' ou 'afternoon' si présent
+
+      const date = new Date(year, month, day)
+      const dateFormatted = format(date, 'dd MMMM yyyy', { locale: fr })
+
+      let periodText = ''
+      if (period === 'morning') {
+        periodText = ' (matin)'
+      } else if (period === 'afternoon') {
+        periodText = ' (après-midi)'
+      }
+
       if (leaveTypeId) {
         // Extraire la date du dateKey (format: YYYY-MM-DD ou YYYY-MM-DD-period)
-        const dateParts = dateKey.split('-')
-        const year = parseInt(dateParts[0])
-        const month = parseInt(dateParts[1]) - 1
-        const day = parseInt(dateParts[2])
-        const period = dateParts[3] // 'morning' ou 'afternoon' si présent
-        
-        const date = new Date(year, month, day)
-        const dateFormatted = format(date, 'dd MMMM yyyy', { locale: fr })
-        
-        let periodText = ''
-        if (period === 'morning') {
-          periodText = ' (matin)'
-        } else if (period === 'afternoon') {
-          periodText = ' (après-midi)'
+        if (previousFullName && previousLeaveTypeId && previousLeaveTypeId !== leaveTypeId) {
+          actionText = `a remplacé "${previousFullName}" par "${leaveTypeFullName}" le ${dateFormatted}${periodText}`
+        } else {
+          actionText = `a ajouté "${leaveTypeFullName}" le ${dateFormatted}${periodText}`
         }
-        
-        actionText = `a ajouté "${leaveTypeFullName}" le ${dateFormatted}${periodText}`
       } else {
         // Suppression
-        const dateParts = dateKey.split('-')
-        const year = parseInt(dateParts[0])
-        const month = parseInt(dateParts[1]) - 1
-        const day = parseInt(dateParts[2])
-        const date = new Date(year, month, day)
-        const dateFormatted = format(date, 'dd MMMM yyyy', { locale: fr })
-        
-        actionText = `a supprimé "${leaveTypeFullName}" le ${dateFormatted}`
+        actionText = `a supprimé "${leaveTypeFullName}" le ${dateFormatted}${periodText}`
       }
       
       await notificationsStore.createNotification(
@@ -403,9 +404,16 @@ export const useLeavesStore = defineStore('leaves', () => {
 
       logger.debug('[LeavesStore] Congé existant:', existingLeave)
 
+      const previousLeaveTypeId = existingLeave?.leave_type_id || null
+
       if (leaveTypeId) {
         // Ajouter ou mettre à jour
         if (existingLeave) {
+          // No-op: si le type est identique, ne rien faire (et éviter une notification "fantôme")
+          if (previousLeaveTypeId && previousLeaveTypeId === leaveTypeId) {
+            logger.debug('[LeavesStore] Aucun changement (même type) - skip update:', { targetUserId, dateKey, leaveTypeId })
+            return
+          }
           // Mettre à jour
           logger.log('[LeavesStore] Mise à jour du congé existant:', existingLeave.id)
           const { error: updateError } = await supabase
@@ -437,6 +445,11 @@ export const useLeavesStore = defineStore('leaves', () => {
         }
       } else {
         // Supprimer
+        // Si rien n'existe, ne rien faire (et ne pas notifier)
+        if (!existingLeave) {
+          logger.debug('[LeavesStore] Suppression demandée mais aucun congé trouvé - skip:', { targetUserId, dateKey })
+          return
+        }
         if (existingLeave) {
           logger.log('[LeavesStore] Suppression du congé:', existingLeave.id)
           const { error: deleteError } = await supabase
@@ -461,7 +474,7 @@ export const useLeavesStore = defineStore('leaves', () => {
           targetUserId,
           dateKey,
           leaveTypeId,
-          existingLeave?.leave_type_id || null
+          previousLeaveTypeId
         )
       }
       

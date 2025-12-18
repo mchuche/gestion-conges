@@ -458,9 +458,31 @@ async function handleRemoveLeave() {
   
   try {
     const period = selectedPeriod.value || 'full'
-    // Pour être robuste, supprimer full + demi-journées quand on est en "full"
-    // (utile notamment pour les membres d'équipe où on veut retirer l'événement quel que soit le segment)
-    const periodsToRemove = period === 'full' ? ['full', 'morning', 'afternoon'] : [period, 'full']
+
+    // Pour une seule date, supprimer uniquement ce qui existe réellement (évite les notifications "fantômes")
+    // et garantit qu'on récupère le bon type lors de la suppression (pour les notifications).
+    let periodsToRemove = []
+    if (datesToProcess.length === 1 && leaveInfo.value) {
+      if (period === 'full') {
+        if (leaveInfo.value.full) {
+          periodsToRemove = ['full']
+        } else {
+          if (leaveInfo.value.morning) periodsToRemove.push('morning')
+          if (leaveInfo.value.afternoon) periodsToRemove.push('afternoon')
+        }
+      } else {
+        if (leaveInfo.value[period]) {
+          periodsToRemove = [period]
+        } else if (leaveInfo.value.full) {
+          periodsToRemove = ['full']
+        } else {
+          periodsToRemove = [period]
+        }
+      }
+    } else {
+      // Multi-date: fallback conservateur
+      periodsToRemove = period === 'full' ? ['full', 'morning', 'afternoon'] : [period, 'full']
+    }
 
     for (const date of datesToProcess) {
       for (const p of periodsToRemove) {
