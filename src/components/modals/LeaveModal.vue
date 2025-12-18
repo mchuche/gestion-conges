@@ -155,6 +155,7 @@ import logger from '../../services/logger'
 import { handleError } from '../../services/errorHandler'
 import { getDateKey, calculateWorkingDaysFromDates } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
+import { supabase } from '../../services/supabase'
 // Formatage de date en français
 function formatDate(date, options = {}) {
   return date.toLocaleDateString('fr-FR', {
@@ -178,6 +179,48 @@ const selectedDate = computed(() => uiStore.selectedDate)
 const selectedDates = computed(() => uiStore.selectedDates)
 const selectedPeriod = computed(() => uiStore.selectedPeriod)
 const leaveTypes = computed(() => leaveTypesStore.leaveTypes)
+const targetUserId = computed(() => uiStore.selectedTargetUserId)
+
+// Quand un propriétaire modifie un membre d'équipe, les leaves affichés dans la matrice
+// viennent de user.leaves (pas de leavesStore.leaves). Pour afficher le bouton "Supprimer"
+// dans la modale, on recharge donc l'info du leave ciblé depuis Supabase.
+const targetLeaveInfo = ref(null) // { full, morning, afternoon }
+const targetLeaveLoading = ref(false)
+
+async function loadTargetLeaveInfoForDate(date) {
+  if (!targetUserId.value || !date || !supabase) {
+    targetLeaveInfo.value = null
+    return
+  }
+
+  const baseKey = getDateKey(date) // YYYY-MM-DD
+  const keys = [baseKey, `${baseKey}-morning`, `${baseKey}-afternoon`]
+
+  targetLeaveLoading.value = true
+  try {
+    const { data, error } = await supabase
+      .from('leaves')
+      .select('date_key, leave_type_id')
+      .eq('user_id', targetUserId.value)
+      .in('date_key', keys)
+
+    if (error) throw error
+
+    const info = { full: null, morning: null, afternoon: null }
+    ;(data || []).forEach((row) => {
+      if (row.date_key.endsWith('-morning')) info.morning = row.leave_type_id
+      else if (row.date_key.endsWith('-afternoon')) info.afternoon = row.leave_type_id
+      else info.full = row.leave_type_id
+    })
+    targetLeaveInfo.value = info
+  } catch (err) {
+    logger.error('[LeaveModal] Erreur chargement leave du membre:', err)
+    // Fallback safe: pas de leave
+    targetLeaveInfo.value = { full: null, morning: null, afternoon: null }
+  } finally {
+    targetLeaveLoading.value = false
+  }
+}
 
 // Séparer les types en congés et événements
 const leaveTypesList = computed(() => {
@@ -200,6 +243,10 @@ const formattedDate = computed(() => {
 
 const leaveInfo = computed(() => {
   if (!selectedDate.value) return null
+  // Mode propriétaire: afficher l'info du membre ciblé
+  if (targetUserId.value) {
+    return targetLeaveInfo.value || { full: null, morning: null, afternoon: null }
+  }
   return getLeaveForDate(selectedDate.value)
 })
 
@@ -410,8 +457,15 @@ async function handleRemoveLeave() {
   }
   
   try {
+    const period = selectedPeriod.value || 'full'
+    // Pour être robuste, supprimer full + demi-journées quand on est en "full"
+    // (utile notamment pour les membres d'équipe où on veut retirer l'événement quel que soit le segment)
+    const periodsToRemove = period === 'full' ? ['full', 'morning', 'afternoon'] : [period, 'full']
+
     for (const date of datesToProcess) {
-      await removeLeaveForDate(date)
+      for (const p of periodsToRemove) {
+        await removeLeaveForDate(date, p)
+      }
     }
     closeModal()
   } catch (error) {
@@ -421,6 +475,19 @@ async function handleRemoveLeave() {
     })
   }
 }
+
+// Recharger l'info du membre ciblé à l'ouverture / changement de date / changement de cible
+watch(
+  [showModal, selectedDate, targetUserId],
+  async ([isOpen, date, userId]) => {
+    if (isOpen && date && userId) {
+      await loadTargetLeaveInfoForDate(date)
+    } else if (!userId) {
+      targetLeaveInfo.value = null
+    }
+  },
+  { immediate: true }
+)
 
 function closeModal() {
   uiStore.closeModal()
