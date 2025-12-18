@@ -199,11 +199,80 @@ export async function inviteTeamMember(teamId, inviterId, email) {
 
     if (error) throw error
 
+    // Optionnel: créer une notification si l'utilisateur existe déjà dans user_emails.
+    // (ne bloque pas l'invitation si la notification échoue)
+    try {
+      const [{ data: targetUser }, { data: team }, { data: inviterEmailRow }] = await Promise.all([
+        supabase.from('user_emails').select('user_id').eq('email', trimmedEmail).maybeSingle(),
+        supabase.from('teams').select('name').eq('id', teamId).maybeSingle(),
+        supabase.from('user_emails').select('email').eq('user_id', inviterId).maybeSingle()
+      ])
+
+      if (targetUser?.user_id) {
+        const teamName = team?.name || 'une équipe'
+        const inviterEmail = inviterEmailRow?.email || 'Un utilisateur'
+        await supabase.from('notifications').insert({
+          user_id: targetUser.user_id,
+          type: 'team_invite',
+          title: `Invitation à rejoindre "${teamName}"`,
+          message: `${inviterEmail} vous a invité à rejoindre l'équipe "${teamName}". Ouvrez “Équipes” pour accepter.`,
+          read: false
+        })
+      }
+    } catch (notifErr) {
+      logger.debug('[inviteTeamMember] Notification d\'invitation non envoyée (non bloquant):', notifErr)
+    }
+
     return data
   } catch (e) {
     logger.error('[inviteTeamMember] Erreur:', e)
     throw e
   }
+}
+
+/**
+ * Charger les invitations reçues par l'utilisateur courant (avec infos équipe)
+ * Nécessite la RPC `list_my_team_invitations()`.
+ */
+export async function loadMyTeamInvitations() {
+  if (!supabase) return []
+
+  try {
+    const { data, error } = await supabase.rpc('list_my_team_invitations')
+    if (error) throw error
+    return data || []
+  } catch (e) {
+    logger.error('[loadMyTeamInvitations] Erreur:', e)
+    return []
+  }
+}
+
+/**
+ * Accepter une invitation reçue (ajoute team_members + marque accepted)
+ * Nécessite la RPC `accept_team_invitation(invitation_id uuid)`.
+ */
+export async function acceptTeamInvitation(invitationId) {
+  if (!invitationId || !supabase) {
+    throw new Error('Paramètres manquants')
+  }
+
+  const { data, error } = await supabase.rpc('accept_team_invitation', { invitation_id: invitationId })
+  if (error) throw error
+  return data
+}
+
+/**
+ * Refuser une invitation reçue
+ * Nécessite la RPC `decline_team_invitation(invitation_id uuid)`.
+ */
+export async function declineTeamInvitation(invitationId) {
+  if (!invitationId || !supabase) {
+    throw new Error('Paramètres manquants')
+  }
+
+  const { data, error } = await supabase.rpc('decline_team_invitation', { invitation_id: invitationId })
+  if (error) throw error
+  return data
 }
 
 /**

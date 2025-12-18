@@ -4,6 +4,52 @@
       <div class="teams-content">
       <!-- Vue principale : Liste des équipes et création -->
       <div v-if="!selectedTeam" class="teams-main-view">
+        <!-- Invitations reçues -->
+        <div class="invitations-received-section">
+          <h4>Invitations reçues</h4>
+
+          <div v-if="loadingMyInvitations" class="loading">Chargement des invitations...</div>
+
+          <div v-else-if="pendingMyInvitations.length === 0" class="no-invitations">
+            <p>Aucune invitation en attente.</p>
+          </div>
+
+          <div v-else class="invitations-list">
+            <div
+              v-for="inv in pendingMyInvitations"
+              :key="inv.id"
+              class="invitation-received-card"
+            >
+              <div class="invitation-received-main">
+                <div class="invitation-received-title">
+                  <strong>{{ inv.team_name || 'Équipe' }}</strong>
+                  <span v-if="inv.invited_by_email" class="invitation-received-sub">
+                    Invité par {{ inv.invited_by_email }}
+                  </span>
+                </div>
+                <p v-if="inv.team_description" class="team-description">{{ inv.team_description }}</p>
+              </div>
+
+              <div class="invitation-received-actions">
+                <button
+                  class="btn-secondary"
+                  :disabled="invitationActionLoadingId === inv.id"
+                  @click="declineInvitation(inv)"
+                >
+                  Refuser
+                </button>
+                <button
+                  class="btn-primary"
+                  :disabled="invitationActionLoadingId === inv.id"
+                  @click="acceptInvitation(inv)"
+                >
+                  {{ invitationActionLoadingId === inv.id ? 'Traitement...' : 'Accepter' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Section création d'équipe -->
         <div class="create-team-section">
           <h4>Créer une nouvelle équipe</h4>
@@ -214,6 +260,15 @@ const creating = ref(false)
 const showAddMember = ref(false)
 const inviting = ref(false)
 
+// Invitations reçues par l'utilisateur connecté
+const myInvitations = ref([])
+const loadingMyInvitations = ref(false)
+const invitationActionLoadingId = ref(null)
+
+const pendingMyInvitations = computed(() => {
+  return (myInvitations.value || []).filter(i => i.status === 'pending')
+})
+
 const canDeleteTeam = computed(() => {
   return selectedTeam.value && selectedTeam.value.createdBy === authStore.user?.id
 })
@@ -389,6 +444,79 @@ async function onInviteMemberSubmit(values) {
   }
 }
 
+async function loadMyInvitations() {
+  if (!authStore.user?.id) {
+    myInvitations.value = []
+    return
+  }
+
+  loadingMyInvitations.value = true
+  try {
+    myInvitations.value = await teamsService.loadMyTeamInvitations()
+  } catch (err) {
+    // service retourne déjà [] en cas d'erreur, mais on garde un toast soft
+    devLogger.warn('[TeamsModal] Impossible de charger les invitations reçues:', err)
+  } finally {
+    loadingMyInvitations.value = false
+  }
+}
+
+async function acceptInvitation(inv) {
+  if (!inv?.id) return
+  const result = await Swal.fire({
+    title: 'Accepter l\'invitation ?',
+    text: `Rejoindre l'équipe "${inv.team_name || 'Équipe'}" ?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, rejoindre',
+    cancelButtonText: 'Annuler'
+  })
+
+  if (!result.isConfirmed) return
+
+  try {
+    invitationActionLoadingId.value = inv.id
+    const res = await teamsService.acceptTeamInvitation(inv.id)
+    success('Invitation acceptée')
+
+    // Recharger les équipes + invitations, et sélectionner l'équipe jointe
+    await teamsStore.loadUserTeams()
+    if (res?.team_id) {
+      teamsStore.setCurrentTeam(res.team_id)
+    }
+    await loadMyInvitations()
+  } catch (err) {
+    showErrorToast(err.message || 'Erreur lors de l\'acceptation')
+  } finally {
+    invitationActionLoadingId.value = null
+  }
+}
+
+async function declineInvitation(inv) {
+  if (!inv?.id) return
+  const result = await Swal.fire({
+    title: 'Refuser l\'invitation ?',
+    text: `Refuser l'équipe "${inv.team_name || 'Équipe'}" ?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, refuser',
+    cancelButtonText: 'Annuler'
+  })
+
+  if (!result.isConfirmed) return
+
+  try {
+    invitationActionLoadingId.value = inv.id
+    await teamsService.declineTeamInvitation(inv.id)
+    success('Invitation refusée')
+    await loadMyInvitations()
+  } catch (err) {
+    showErrorToast(err.message || 'Erreur lors du refus')
+  } finally {
+    invitationActionLoadingId.value = null
+  }
+}
+
 async function handleDeleteInvitation(invitation) {
   try {
     await teamsService.deleteTeamInvitation(invitation.id)
@@ -408,6 +536,7 @@ watch(showModal, async (isOpen) => {
     }
     try {
       await teamsStore.loadUserTeams()
+      await loadMyInvitations()
       devLogger.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
     } catch (err) {
       logger.error('[TeamsModal] Erreur lors du chargement:', err)
@@ -420,6 +549,7 @@ onMounted(async () => {
     devLogger.log('[TeamsModal] Composant monté, chargement des équipes...')
     try {
       await teamsStore.loadUserTeams()
+      await loadMyInvitations()
       devLogger.log('[TeamsModal] Équipes chargées:', teamsStore.userTeams.length)
     } catch (err) {
       logger.error('[TeamsModal] Erreur lors du chargement:', err)
@@ -438,6 +568,51 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 30px;
+}
+
+.invitations-received-section {
+  padding: 20px;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.no-invitations {
+  opacity: 0.8;
+}
+
+.invitations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invitation-received-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.invitation-received-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.invitation-received-sub {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+.invitation-received-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .create-team-section {
