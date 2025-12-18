@@ -59,9 +59,9 @@
             v-for="day in month.days"
             :key="`present-${month.index}-${day.dateKey}`"
             :class="['year-presence-vertical-total-cell', { weekend: day.isWeekend, 'public-holiday': day.isHoliday }]"
-            :title="getPresenceTitle(day.dateKey)"
+            :title="(day.isWeekend || day.isHoliday) ? '' : getPresenceTitle(day.dateKey)"
           >
-            {{ formatEtp(getPresenceEtpForDay(day.dateKey)) }}
+            {{ (day.isWeekend || day.isHoliday) ? '' : formatEtp(getPresenceEtpForDay(day.dateKey)) }}
           </div>
         </div>
       </div>
