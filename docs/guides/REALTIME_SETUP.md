@@ -22,7 +22,7 @@ Ce document explique comment activer Supabase Realtime pour la synchronisation e
 
 #### Option B : Via SQL
 
-Exécutez le script `supabase-realtime-enable.sql` dans **Supabase > SQL Editor** :
+Exécutez le script `supabase/ops/supabase-realtime-enable.sql` dans **Supabase > SQL Editor** :
 
 ```sql
 -- Activer Realtime sur la table leaves
@@ -57,7 +57,7 @@ WHERE pubname = 'supabase_realtime'
 ORDER BY tablename;
 ```
 
-Vous devriez voir `leaves`, `leave_types`, et `leave_quotas` dans les résultats.
+Vous devriez voir `leaves`, `leave_types`, `leave_quotas`, et `notifications` dans les résultats.
 
 ## ✅ Fonctionnalités activées
 

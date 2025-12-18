@@ -33,8 +33,9 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 ### Configuration
 
 1. **Créer les tables dans Supabase** :
-   - Allez dans SQL Editor dans votre projet Supabase
-   - Exécutez le script SQL fourni (voir section "Base de données" ci-dessous)
+   - Allez dans **SQL Editor** dans votre projet Supabase
+   - Exécutez le script : `supabase/sql/00_fresh_install.sql`
+   - (Optionnel) Activez Realtime : `supabase/ops/supabase-realtime-enable.sql`
 
 2. **Configurer les clés API** :
 
@@ -58,6 +59,9 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
    ```
    
    L'application sera accessible sur `http://localhost:5173`
+
+👉 Guide pas-à-pas (plus simple) : `docs/INSTALL.md`
+👉 Créer le premier admin : `docs/guides/CREATE_FIRST_ADMIN.md`
 
 ## 📖 Utilisation
 
@@ -133,8 +137,12 @@ gestion-conges/
 ├── .github/workflows/      # Workflows GitHub Actions
 │   └── deploy.yml         # Déploiement automatique
 ├── .env.example            # Exemple de variables d'environnement
-├── supabase-schema.sql     # Script SQL pour créer les tables
-├── supabase-admin-schema.sql  # Script SQL pour l'administration
+├── supabase/                # Scripts Supabase (fresh install, migrations, ops)
+│   ├── sql/
+│   │   └── 00_fresh_install.sql
+│   ├── migrations/
+│   ├── ops/
+│   └── legacy/
 └── README.md               # Ce fichier
 ```
 

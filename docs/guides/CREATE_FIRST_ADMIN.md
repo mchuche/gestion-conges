@@ -1,16 +1,10 @@
 # Guide : Créer le premier administrateur
 
-## Étape 1 : Exécuter le script SQL d'administration
+## Pré-requis
+Assure-toi d’avoir exécuté le script Supabase “fresh install” :
+- `supabase/sql/00_fresh_install.sql`
 
-1. Allez dans votre projet Supabase
-2. Ouvrez **SQL Editor**
-3. Copiez-collez le contenu du fichier `supabase-admin-schema.sql`
-4. Cliquez sur **Run** pour exécuter le script
-
-Ce script va créer :
-- La table `app_admins`
-- La table `app_settings`
-- Les fonctions et politiques de sécurité nécessaires
+(Il crée déjà `app_admins`, `app_settings` + les fonctions/policies.)
 
 ## Étape 2 : Trouver votre User ID
 
@@ -63,7 +57,7 @@ VALUES ('123e4567-e89b-12d3-a456-426614174000', 'super_admin', '123e4567-e89b-12
 ## Dépannage
 
 Si le bouton admin n'apparaît pas :
-1. Vérifiez que vous avez bien exécuté le script `supabase-admin-schema.sql`
+1. Vérifiez que vous avez bien exécuté `supabase/sql/00_fresh_install.sql`
 2. Vérifiez que votre `user_id` est correct dans la table `app_admins`
 3. Déconnectez-vous et reconnectez-vous à l'application
 4. Videz le cache du navigateur (Ctrl+Shift+R)

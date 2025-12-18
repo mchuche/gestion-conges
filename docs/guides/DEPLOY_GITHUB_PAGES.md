@@ -85,25 +85,23 @@ Si vous devez changer vos clés Supabase :
 
 1. Ouvrez la console du navigateur (F12)
 2. Vérifiez s'il y a des erreurs liées à Supabase
-3. Vérifiez que `config.js` est bien présent dans le code source déployé
-4. Vérifiez que les secrets GitHub sont corrects
+3. Vérifiez que les secrets GitHub sont corrects
 
 ## 💻 Développement local
 
-Pour développer localement, vous devez créer un fichier `config.js` manuellement :
+Pour développer localement, vous devez créer un fichier `.env` :
 
 **Windows :**
 ```bash
-setup-local.bat
+copy .env.example .env
 ```
 
 **Linux/Mac :**
 ```bash
-chmod +x setup-local.sh
-./setup-local.sh
+cp .env.example .env
 ```
 
-Puis modifiez `config.js` avec vos clés Supabase.
+Puis modifiez `.env` avec vos clés Supabase.
 
 ## ✅ Vérification
 
@@ -116,7 +114,7 @@ Une fois déployé, vérifiez que :
 
 ---
 
-**Note** : Le fichier `config.js` est généré automatiquement lors du déploiement et n'est **jamais** commité dans le dépôt. Vos secrets restent sécurisés dans GitHub Secrets.
+**Note** : Le workflow GitHub Actions crée automatiquement `.env` pendant le build à partir des GitHub Secrets. Vos secrets restent sécurisés dans GitHub Secrets.
 
 
 
