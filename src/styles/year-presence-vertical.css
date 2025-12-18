@@ -314,7 +314,7 @@
 .year-presence-vertical-total-row.presence-summary-row {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 2px solid var(--border-color);
+    border-top: none;
     margin-bottom: 0;
     padding-bottom: 0;
     border-bottom: none;
