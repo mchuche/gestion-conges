@@ -141,6 +141,10 @@ ON CONFLICT (user_id, global_type_id) DO NOTHING;
 
 -- Garder la table de sauvegarde pour référence, mais on peut la supprimer après vérification
 -- DROP TABLE IF EXISTS leave_types_backup;
+-- Sécuriser la table de backup si elle reste (évite alertes Supabase "RLS disabled in public")
+ALTER TABLE IF EXISTS leave_types_backup ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS leave_types_backup FORCE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE leave_types_backup FROM anon, authenticated;
 
 -- ===== ÉTAPE 9 : Créer une vue pour faciliter les requêtes =====
 
@@ -157,6 +161,10 @@ SELECT
     lt.updated_at
 FROM leave_types lt
 JOIN global_leave_types glt ON lt.global_type_id = glt.id;
+
+-- Recommandé : s'assurer que la vue s'exécute en "security invoker" (et non SECURITY DEFINER)
+-- (évite l'alerte Supabase "Security Definer View").
+ALTER VIEW leave_types_with_global SET (security_invoker = true);
 
 -- Permettre à tous les utilisateurs de lire cette vue
 GRANT SELECT ON leave_types_with_global TO authenticated;

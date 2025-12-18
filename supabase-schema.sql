@@ -292,6 +292,10 @@ CREATE TABLE IF NOT EXISTS team_invitations (
 -- Activer RLS pour les équipes
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+-- IMPORTANT : team_invitations a des policies -> RLS DOIT être activé, sinon les policies ne s'appliquent pas.
+ALTER TABLE team_invitations ENABLE ROW LEVEL SECURITY;
+-- Optionnel mais recommandé : éviter les bypass (y compris owner) et forcer le passage par les policies.
+ALTER TABLE team_invitations FORCE ROW LEVEL SECURITY;
 
 -- IMPORTANT : Créer les fonctions SECURITY DEFINER AVANT les politiques qui les utilisent
 -- pour éviter la récursion infinie dans les politiques RLS
