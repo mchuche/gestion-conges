@@ -27,6 +27,26 @@
         </div>
       </div>
 
+      <!-- Synthèse : Présents (ETP) -->
+      <div
+        v-if="teamsStore.currentTeamId && teamMembers.length > 0"
+        class="year-presence-vertical-total-row presence-summary-row"
+      >
+        <div class="year-presence-vertical-user-name presence-summary-label" title="Présents (ETP) = 1 - congés (catégorie leave). Les événements (catégorie event) ne retirent pas de présence.">
+          Présents (ETP)
+        </div>
+        <div class="year-presence-vertical-days-container">
+          <div
+            v-for="day in month.days"
+            :key="`present-${month.index}-${day.dateKey}`"
+            :class="['year-presence-vertical-total-cell', { weekend: day.isWeekend, 'public-holiday': day.isHoliday }]"
+            :title="getPresenceTitle(day.dateKey)"
+          >
+            {{ formatEtp(getPresenceEtpForDay(day.dateKey)) }}
+          </div>
+        </div>
+      </div>
+
       <!-- Ligne pour chaque utilisateur -->
       <div
         v-for="user in users"
@@ -55,6 +75,7 @@ import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
 import { useTeamsStore } from '../../stores/teams'
 import { useLeavesStore } from '../../stores/leaves'
+import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import PresenceDayCell from './PresenceDayCell.vue'
 import * as teamsService from '../../services/teams'
 import {
@@ -75,6 +96,7 @@ const uiStore = useUIStore()
 const authStore = useAuthStore()
 const teamsStore = useTeamsStore()
 const leavesStore = useLeavesStore()
+const leaveTypesStore = useLeaveTypesStore()
 
 const year = computed(() => getYear(uiStore.currentDate))
 const currentYear = computed(() => getYear(today()))
@@ -88,6 +110,60 @@ const monthNames = [
 
 const teamMembers = ref([])
 const loadingMembers = ref(false)
+
+function isLeaveCategoryLeave(leaveTypeId) {
+  // "Présent = pas en congé" : on retire uniquement les types de catégorie 'leave'.
+  // Les événements (category='event') ne retirent rien.
+  const t = leaveTypesStore.getLeaveType(leaveTypeId)
+  if (!t) {
+    // Si on ne trouve pas le type, on considère conservateur: c'est un congé (donc non présent).
+    return true
+  }
+  return (t.category || 'leave') === 'leave'
+}
+
+function getPresenceEtpForDay(dateKey) {
+  // ETP: 1 = présent, 0.5 = demi-journée de congé, 0 = journée de congé
+  if (!teamsStore.currentTeamId || !teamMembers.value || teamMembers.value.length === 0) return 0
+
+  let total = 0
+  for (const member of teamMembers.value) {
+    const leaves = member?.leaves || {}
+
+    const fullType = leaves[dateKey] || null
+    const morningType = leaves[`${dateKey}-morning`] || null
+    const afternoonType = leaves[`${dateKey}-afternoon`] || null
+
+    let etp = 1
+
+    if (fullType) {
+      etp = isLeaveCategoryLeave(fullType) ? 0 : 1
+    } else {
+      const morningIsLeave = morningType ? isLeaveCategoryLeave(morningType) : false
+      const afternoonIsLeave = afternoonType ? isLeaveCategoryLeave(afternoonType) : false
+      etp = 1 - (morningIsLeave ? 0.5 : 0) - (afternoonIsLeave ? 0.5 : 0)
+      if (etp < 0) etp = 0
+    }
+
+    total += etp
+  }
+
+  // Arrondir aux 0.5 pour éviter les soucis de float
+  return Math.round(total * 2) / 2
+}
+
+function formatEtp(value) {
+  if (value == null) return '0'
+  const rounded = Math.round(Number(value) * 2) / 2
+  if (Number.isInteger(rounded)) return String(rounded)
+  return rounded.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+}
+
+function getPresenceTitle(dateKey) {
+  const count = getPresenceEtpForDay(dateKey)
+  const n = teamMembers.value?.length || 0
+  return `Présents (ETP) : ${formatEtp(count)} / ${n}`
+}
 
 // Charger les membres de l'équipe sélectionnée
 async function loadTeamMembers() {

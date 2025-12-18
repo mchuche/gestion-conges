@@ -310,6 +310,25 @@
     min-width: 0;
 }
 
+/* Ligne de synthèse "Présents (ETP)" : plus visible et placée sous l'en-tête */
+.year-presence-vertical-total-row.presence-summary-row {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.presence-summary-label {
+    font-weight: 700;
+}
+
+.year-presence-vertical-total-row.presence-summary-row .year-presence-vertical-total-cell {
+    font-size: 0.8em;
+    font-weight: 700;
+}
+
 /* Le label de la ligne de total utilise maintenant year-presence-vertical-user-name */
 
 .year-presence-vertical-total-cell {
