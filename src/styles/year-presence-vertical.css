@@ -312,8 +312,8 @@
 
 /* Ligne de synthèse "Présents (ETP)" : plus visible et placée sous l'en-tête */
 .year-presence-vertical-total-row.presence-summary-row {
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 2px;
+    padding-top: 2px;
     border-top: none;
     margin-bottom: 0;
     padding-bottom: 0;
