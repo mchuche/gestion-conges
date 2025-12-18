@@ -101,8 +101,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
       }
 
       logger.debug('[NotificationsStore] Notification marquée comme lue:', notificationId)
+      return true
     } catch (error) {
       logger.error('[NotificationsStore] Erreur lors du marquage comme lu:', error)
+      throw error
     }
   }
 
@@ -132,8 +134,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
       })
 
       logger.log('[NotificationsStore] Toutes les notifications marquées comme lues')
+      return true
     } catch (error) {
       logger.error('[NotificationsStore] Erreur lors du marquage global:', error)
+      throw error
     }
   }
 
@@ -151,8 +155,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
       notifications.value = notifications.value.filter(n => n.id !== notificationId)
 
       logger.debug('[NotificationsStore] Notification supprimée:', notificationId)
+      return true
     } catch (error) {
       logger.error('[NotificationsStore] Erreur lors de la suppression:', error)
+      throw error
     }
   }
 
@@ -174,8 +180,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
       notifications.value = notifications.value.filter(n => !n.read)
 
       logger.log('[NotificationsStore] Notifications lues supprimées')
+      return true
     } catch (error) {
       logger.error('[NotificationsStore] Erreur lors de la suppression des notifications lues:', error)
+      throw error
     }
   }
 

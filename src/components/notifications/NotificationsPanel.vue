@@ -10,7 +10,7 @@
           class="btn-mark-all"
           title="Tout marquer comme lu"
         >
-          <Icon name="check-double" />
+          <Icon name="check-check" />
         </button>
         <button 
           @click="deleteAllRead"
@@ -24,7 +24,7 @@
           class="btn-close"
           title="Fermer"
         >
-          <Icon name="close" />
+          <Icon name="x" />
         </button>
       </div>
     </div>
@@ -72,7 +72,7 @@
             class="btn-delete"
             title="Supprimer"
           >
-            <Icon name="close" />
+            <Icon name="trash-2" />
           </button>
         </div>
       </div>
@@ -85,11 +85,13 @@ import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNotificationsStore } from '../../stores/notifications'
 import Icon from '../common/Icon.vue'
+import { useToast } from '../../composables/useToast'
 import { format, formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 const notificationsStore = useNotificationsStore()
 const { notifications, loading, unreadCount } = storeToRefs(notificationsStore)
+const { success, error: showErrorToast } = useToast()
 
 const emit = defineEmits(['close'])
 
@@ -131,20 +133,39 @@ function handleNotificationClick(notification) {
   }
 }
 
-function markAsRead(id) {
-  notificationsStore.markAsRead(id)
+async function markAsRead(id) {
+  try {
+    await notificationsStore.markAsRead(id)
+  } catch (e) {
+    showErrorToast(e?.message || 'Impossible de marquer comme lu')
+  }
 }
 
-function markAllAsRead() {
-  notificationsStore.markAllAsRead()
+async function markAllAsRead() {
+  try {
+    await notificationsStore.markAllAsRead()
+    success('Toutes les notifications ont été marquées comme lues')
+  } catch (e) {
+    showErrorToast(e?.message || 'Impossible de tout marquer comme lu')
+  }
 }
 
-function deleteNotification(id) {
-  notificationsStore.deleteNotification(id)
+async function deleteNotification(id) {
+  try {
+    await notificationsStore.deleteNotification(id)
+    success('Notification supprimée')
+  } catch (e) {
+    showErrorToast(e?.message || 'Impossible de supprimer la notification')
+  }
 }
 
-function deleteAllRead() {
-  notificationsStore.deleteAllRead()
+async function deleteAllRead() {
+  try {
+    await notificationsStore.deleteAllRead()
+    success('Notifications lues supprimées')
+  } catch (e) {
+    showErrorToast(e?.message || 'Impossible de supprimer les notifications lues')
+  }
 }
 </script>
 
@@ -321,6 +342,13 @@ function deleteAllRead() {
 
 .notification-item:hover .notification-actions {
   opacity: 1;
+}
+
+/* Mobile / touch : pas de hover, donc on affiche les actions en permanence */
+@media (hover: none) {
+  .notification-actions {
+    opacity: 1;
+  }
 }
 
 .notification-actions button {
