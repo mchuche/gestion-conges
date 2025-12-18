@@ -11,6 +11,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
   // Certains environnements n'ont pas (encore) la colonne `data` (migration non exécutée / cache PostgREST).
   // On garde un flag pour éviter de spammer des erreurs 400.
   const supportsDataColumn = ref(true)
+  // Certains environnements n'ont pas (encore) la colonne `read_at`.
+  const supportsReadAtColumn = ref(true)
 
   // Compteur de notifications non lues
   const unreadCount = computed(() => {
@@ -83,13 +85,21 @@ export const useNotificationsStore = defineStore('notifications', () => {
   // Marquer une notification comme lue
   async function markAsRead(notificationId) {
     try {
-      const { error } = await supabase
+      const basePatch = { read: true }
+      const patch = supportsReadAtColumn.value
+        ? { ...basePatch, read_at: new Date().toISOString() }
+        : basePatch
+
+      let { error } = await supabase
         .from('notifications')
-        .update({ 
-          read: true,
-          read_at: new Date().toISOString()
-        })
+        .update(patch)
         .eq('id', notificationId)
+
+      // Fallback: si la colonne `read_at` n'existe pas (PGRST204), retenter sans `read_at` et mémoriser.
+      if (error && error.code === 'PGRST204' && String(error.message || '').includes("'read_at'")) {
+        supportsReadAtColumn.value = false
+        ;({ error } = await supabase.from('notifications').update(basePatch).eq('id', notificationId))
+      }
 
       if (error) throw error
 
@@ -97,7 +107,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
       const notification = notifications.value.find(n => n.id === notificationId)
       if (notification) {
         notification.read = true
-        notification.read_at = new Date().toISOString()
+        if (supportsReadAtColumn.value) {
+          notification.read_at = new Date().toISOString()
+        }
       }
 
       logger.debug('[NotificationsStore] Notification marquée comme lue:', notificationId)
@@ -114,14 +126,25 @@ export const useNotificationsStore = defineStore('notifications', () => {
     if (!authStore.user) return
 
     try {
-      const { error } = await supabase
+      const basePatch = { read: true }
+      const patch = supportsReadAtColumn.value
+        ? { ...basePatch, read_at: new Date().toISOString() }
+        : basePatch
+
+      let { error } = await supabase
         .from('notifications')
-        .update({ 
-          read: true,
-          read_at: new Date().toISOString()
-        })
+        .update(patch)
         .eq('user_id', authStore.user.id)
         .eq('read', false)
+
+      if (error && error.code === 'PGRST204' && String(error.message || '').includes("'read_at'")) {
+        supportsReadAtColumn.value = false
+        ;({ error } = await supabase
+          .from('notifications')
+          .update(basePatch)
+          .eq('user_id', authStore.user.id)
+          .eq('read', false))
+      }
 
       if (error) throw error
 
@@ -129,7 +152,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
       notifications.value.forEach(n => {
         if (!n.read) {
           n.read = true
-          n.read_at = new Date().toISOString()
+          if (supportsReadAtColumn.value) {
+            n.read_at = new Date().toISOString()
+          }
         }
       })
 
