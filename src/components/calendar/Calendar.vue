@@ -92,7 +92,7 @@ const calendarTitle = computed(() => {
   if (yearViewFormat.value === 'presence-vertical') {
     return `Matrice de Présence ${currentYear.value}`
   } else if (yearViewFormat.value === 'columns') {
-    return `Vue Annuelle (Colonnes) ${currentYear.value}`
+    return `Vue Annuelle ${currentYear.value}`
   }
   return currentYearTitle.value
 })

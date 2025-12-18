@@ -7,7 +7,7 @@
       @change="handleFormatChange"
       class="format-select"
     >
-      <option value="columns">Vue Annuelle (Colonnes)</option>
+      <option value="columns">Vue Annuelle</option>
       <option value="presence-vertical">Matrice de Présence</option>
     </select>
   </div>
