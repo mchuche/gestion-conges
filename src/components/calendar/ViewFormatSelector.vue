@@ -104,7 +104,7 @@ function setFormat(format) {
 .format-segmented {
   display: inline-flex;
   border: 1px solid var(--border-color, #e0e0e0);
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
   background: var(--card-bg, white);
 }
