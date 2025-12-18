@@ -243,8 +243,8 @@ const selectedDate = computed(() => {
   if (startDatePicker.value) {
     return startDatePicker.value
   }
-  // Sinon utiliser la date sélectionnée dans le store ou la date du jour
-  return uiStore.selectedDate || new Date()
+  // Sinon utiliser la date sélectionnée dans le store (sinon null => on affiche le Datepicker)
+  return uiStore.selectedDate || null
 })
 
 // Synchroniser selectedEventTypeId avec le store

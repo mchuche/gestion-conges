@@ -436,12 +436,19 @@ function openSelectionModal() {
 }
 
 function openRecurringEventModal() {
+  // IMPORTANT: closeModal() remet uiStore.selectedDate à null.
+  // On préserve donc la date sélectionnée pour l'utiliser comme date proposée dans la modale de récurrence.
+  const preservedDate = selectedDate.value ? new Date(selectedDate.value) : null
+  const preservedPeriod = uiStore.selectedPeriod
+
   // Fermer d'abord la modale de sélection de congé
   closeModal()
+
   // Puis ouvrir la modale d'événements récurrents sans type d'événement pré-sélectionné
-  // L'utilisateur choisira le type dans la modale
   // Utiliser un petit délai pour éviter les conflits de rendu
   setTimeout(() => {
+    if (preservedDate) uiStore.setSelectedDate(preservedDate)
+    if (preservedPeriod) uiStore.setSelectedPeriod(preservedPeriod)
     uiStore.openRecurringEventModal(null)
   }, 100)
 }
