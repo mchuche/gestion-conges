@@ -2,6 +2,7 @@
 import { addDays, addWeeks, addMonths, addYears, getDay, startOfMonth, endOfMonth, isSameDay } from 'date-fns'
 import { getDateKey } from './utils'
 import { getPublicHolidays } from './holidays'
+import logger from './logger'
 
 /**
  * Génère les occurrences d'un événement récurrent
@@ -49,7 +50,7 @@ export function generateRecurringOccurrences(recurringEvent, targetStartDate, ta
   // car on peut avoir plusieurs jours sélectionnés (ex: lundi et mercredi)
   const useDayByDay = recurringEvent.recurrence_type === 'weekly'
   
-  console.log('[Recurrence] Début de génération:', {
+  logger.debug('[Recurrence] Début de génération:', {
     startDate: currentDate.toISOString().split('T')[0],
     endDate: finalEndDate.toISOString().split('T')[0],
     pattern: recurringEvent.recurrence_pattern,
@@ -75,10 +76,10 @@ export function generateRecurringOccurrences(recurringEvent, targetStartDate, ta
           })
           occurrenceCount++
           if (occurrenceCount <= 3) {
-            console.log(`[Recurrence] Occurrence ${occurrenceCount} ajoutée:`, currentDate.toISOString().split('T')[0])
+            logger.debug(`[Recurrence] Occurrence ${occurrenceCount} ajoutée:`, currentDate.toISOString().split('T')[0])
           }
         } else {
-          console.debug(`[Recurrence] Date ${currentDate.toISOString().split('T')[0]} exclue (jour férié)`)
+          logger.debug(`[Recurrence] Date ${currentDate.toISOString().split('T')[0]} exclue (jour férié)`)
         }
       }
     }
@@ -99,7 +100,7 @@ export function generateRecurringOccurrences(recurringEvent, targetStartDate, ta
     }
   }
   
-  console.log(`[Recurrence] Généré ${occurrences.length} occurrences sur ${iterations} itérations`)
+  logger.debug(`[Recurrence] Généré ${occurrences.length} occurrences sur ${iterations} itérations`)
   
   return occurrences
 }
@@ -112,7 +113,7 @@ function matchesRecurrencePattern(date, recurringEvent) {
   
   // Vérifier que le pattern existe
   if (!pattern) {
-    console.warn('[Recurrence] Pas de pattern défini pour l\'événement:', recurringEvent)
+    logger.warn('[Recurrence] Pas de pattern défini pour l\'événement:', recurringEvent)
     return false
   }
   
@@ -129,14 +130,14 @@ function matchesRecurrencePattern(date, recurringEvent) {
     case 'weekly':
       // Vérifier que daysOfWeek existe et contient des valeurs
       if (!pattern.daysOfWeek || !Array.isArray(pattern.daysOfWeek) || pattern.daysOfWeek.length === 0) {
-        console.warn('[Recurrence] Pattern hebdomadaire invalide:', pattern)
+        logger.warn('[Recurrence] Pattern hebdomadaire invalide:', pattern)
         return false
       }
       // Convertir en nombres si nécessaire (au cas où ce sont des strings)
       const daysOfWeekNums = pattern.daysOfWeek.map(d => typeof d === 'string' ? parseInt(d, 10) : d)
       const matches = daysOfWeekNums.includes(dayOfWeek)
       if (!matches) {
-        console.debug(`[Recurrence] Date ${date.toISOString().split('T')[0]} (jour ${dayOfWeek}) ne correspond pas aux jours ${daysOfWeekNums.join(',')}`)
+        logger.debug(`[Recurrence] Date ${date.toISOString().split('T')[0]} (jour ${dayOfWeek}) ne correspond pas aux jours ${daysOfWeekNums.join(',')}`)
       }
       return matches
       
@@ -147,18 +148,18 @@ function matchesRecurrencePattern(date, recurringEvent) {
         // Premier/dernier jour de la semaine du mois
         return matchesWeekOfMonth(date, pattern)
       }
-      console.warn('[Recurrence] Pattern mensuel invalide:', pattern)
+      logger.warn('[Recurrence] Pattern mensuel invalide:', pattern)
       return false
       
     case 'yearly':
       if (pattern.month !== undefined && pattern.day !== undefined) {
         return date.getMonth() === pattern.month && date.getDate() === pattern.day
       }
-      console.warn('[Recurrence] Pattern annuel invalide:', pattern)
+      logger.warn('[Recurrence] Pattern annuel invalide:', pattern)
       return false
       
     default:
-      console.warn('[Recurrence] Type de récurrence inconnu:', recurringEvent.recurrence_type)
+      logger.warn('[Recurrence] Type de récurrence inconnu:', recurringEvent.recurrence_type)
       return false
   }
 }

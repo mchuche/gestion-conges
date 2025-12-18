@@ -146,7 +146,7 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
       }
 
       // Générer les occurrences entre la date de début et la date de fin de l'événement
-      console.log('[RecurringEvents] Génération des occurrences avec:', {
+      logger.debug('[RecurringEvents] Génération des occurrences avec:', {
         event: newEvent,
         eventStartDate: eventStartDate.toISOString().split('T')[0],
         eventEndDate: eventEndDate.toISOString().split('T')[0],
@@ -160,13 +160,13 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
         uiStore.selectedCountry || 'FR'
       )
 
-      console.log(`[RecurringEvents] Génération terminée: ${occurrences.length} occurrences générées`)
+      logger.debug(`[RecurringEvents] Génération terminée: ${occurrences.length} occurrences générées`)
       logger.log(`Génération des occurrences: ${occurrences.length} occurrences générées`)
       if (occurrences.length > 0) {
         logger.log('Première occurrence:', occurrences[0])
         logger.log('Dernière occurrence:', occurrences[occurrences.length - 1])
       } else {
-        console.error('[RecurringEvents] Aucune occurrence générée! Pattern:', newEvent.recurrence_pattern)
+        logger.error('[RecurringEvents] Aucune occurrence générée! Pattern:', newEvent.recurrence_pattern)
       }
 
       // Insérer les occurrences dans la table leaves
@@ -186,10 +186,10 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
           return leave
         })
 
-        console.log(`[RecurringEvents] Tentative d'insertion de ${leavesToInsert.length} occurrences`)
-        console.log('[RecurringEvents] Premières occurrences:', leavesToInsert.slice(0, 5))
-        console.log('[RecurringEvents] Pattern:', newEvent.recurrence_pattern)
-        console.log('[RecurringEvents] Type:', newEvent.recurrence_type)
+        logger.debug(`[RecurringEvents] Tentative d'insertion de ${leavesToInsert.length} occurrences`)
+        logger.debug('[RecurringEvents] Premières occurrences:', leavesToInsert.slice(0, 5))
+        logger.debug('[RecurringEvents] Pattern:', newEvent.recurrence_pattern)
+        logger.debug('[RecurringEvents] Type:', newEvent.recurrence_type)
 
         // Utiliser upsert pour éviter les doublons
         const { data: insertedData, error: leavesError } = await supabase
@@ -200,20 +200,20 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
           .select()
 
         if (leavesError) {
-          console.error('[RecurringEvents] Erreur lors de l\'insertion des occurrences:', leavesError)
+          logger.error('[RecurringEvents] Erreur lors de l\'insertion des occurrences:', leavesError)
           logger.error('Erreur lors de l\'insertion des occurrences:', leavesError)
           throw leavesError
         }
 
-        console.log(`[RecurringEvents] ${insertedData?.length || leavesToInsert.length} occurrences insérées avec succès`)
+        logger.debug(`[RecurringEvents] ${insertedData?.length || leavesToInsert.length} occurrences insérées avec succès`)
         logger.log(`Insertion de ${leavesToInsert.length} occurrences dans la table leaves réussie`)
 
         // Recharger les congés
         await leavesStore.loadLeaves()
-        console.log('[RecurringEvents] Congés rechargés')
+        logger.debug('[RecurringEvents] Congés rechargés')
         logger.log('Congés rechargés')
       } else {
-        console.warn('[RecurringEvents] Aucune occurrence générée pour l\'événement:', newEvent)
+        logger.warn('[RecurringEvents] Aucune occurrence générée pour l\'événement:', newEvent)
         logger.warn('Aucune occurrence générée')
       }
 

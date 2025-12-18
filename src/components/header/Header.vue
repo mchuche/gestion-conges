@@ -105,7 +105,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
@@ -155,36 +155,35 @@ function toggleNotifications() {
 }
 
 function openConfig() {
-  console.log('[Header] openConfig appelé')
   try {
+    logger.debug('[Header] openConfig')
     uiStore.openConfigModal()
-    console.log('[Header] showConfigModal après appel:', uiStore.showConfigModal)
   } catch (error) {
-    console.error('[Header] Erreur dans openConfig:', error)
+    logger.error('[Header] Erreur dans openConfig:', error)
   }
 }
 
 function openHelp() {
-  console.log('[Header] openHelp appelé')
+  logger.debug('[Header] openHelp')
   uiStore.openHelpModal()
 }
 
 function openTeams() {
-  console.log('[Header] openTeams appelé')
+  logger.debug('[Header] openTeams')
   uiStore.openTeamsModal()
 }
 
 function openLeaveRecap() {
-  console.log('[Header] openLeaveRecap appelé')
+  logger.debug('[Header] openLeaveRecap')
   uiStore.openLeaveRecapModal()
 }
 
 function openAdmin() {
-  console.log('[Header] openAdmin appelé')
   try {
+    logger.debug('[Header] openAdmin')
     router.push('/admin')
   } catch (error) {
-    console.error('[Header] Erreur dans openAdmin:', error)
+    logger.error('[Header] Erreur dans openAdmin:', error)
   }
 }
 
@@ -213,6 +212,11 @@ onMounted(() => {
     notificationsStore.loadNotifications()
     notificationsStore.subscribeToNotifications()
   }
+})
+
+onUnmounted(() => {
+  // Nettoyage: éviter de garder un channel si le Header est démonté (ex: /admin)
+  notificationsStore.unsubscribeFromNotifications?.()
 })
 </script>
 

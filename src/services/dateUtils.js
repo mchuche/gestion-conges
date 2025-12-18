@@ -22,16 +22,18 @@ import {
   format as dateFnsFormat
 } from 'date-fns'
 
+import logger from './logger'
+
 // Obtenir l'année d'une date
 export function getYear(date) {
   if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-    console.error('[DateUtils] Date invalide dans getYear:', date)
+    logger.error('[DateUtils] Date invalide dans getYear:', date)
     return new Date().getFullYear()
   }
   try {
     return dateFnsGetYear(date)
   } catch (e) {
-    console.warn('[DateUtils] Erreur avec date-fns, utilisation native:', e)
+    logger.warn('[DateUtils] Erreur avec date-fns, utilisation native:', e)
     return date.getFullYear()
   }
 }
@@ -92,7 +94,7 @@ export function getDayNames(weekStartDay = 0) {
 export function createDate(year, month, day) {
   const date = new Date(year, month, day)
   if (isNaN(date.getTime())) {
-    console.error('[DateUtils] Date invalide créée:', year, month, day)
+    logger.error('[DateUtils] Date invalide créée:', year, month, day)
     return new Date()
   }
   return date

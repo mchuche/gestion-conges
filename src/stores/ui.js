@@ -599,9 +599,9 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function openConfigModal() {
-    console.log('[UIStore] openConfigModal appelé, showConfigModal avant:', showConfigModal.value)
+    logger.debug('[UIStore] openConfigModal appelé, showConfigModal avant:', showConfigModal.value)
     showConfigModal.value = true
-    console.log('[UIStore] openConfigModal appelé, showConfigModal après:', showConfigModal.value)
+    logger.debug('[UIStore] openConfigModal appelé, showConfigModal après:', showConfigModal.value)
   }
 
   function closeConfigModal() {

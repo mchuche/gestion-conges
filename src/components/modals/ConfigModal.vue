@@ -199,7 +199,7 @@ watch([configYear, leaveTypes], async () => {
 
 // Charger les données quand la modale s'ouvre
 watch(showModal, async (isOpen) => {
-  console.log('[ConfigModal] showModal changé:', isOpen)
+  devLogger.log('[ConfigModal] showModal changé:', isOpen)
   if (isOpen) {
     try {
       devLogger.log('[ConfigModal] Modal ouverte, chargement des données...')
