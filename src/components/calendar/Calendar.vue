@@ -22,8 +22,8 @@
           </button>
         </div>
         <div class="calendar-header-options">
-          <ViewFormatSelector id="yearViewFormatSelect" />
           <TeamSelector v-if="yearViewFormat === 'presence-vertical'" />
+          <ViewFormatSelector id="yearViewFormatSelect" />
         </div>
       </div>
     </div>
