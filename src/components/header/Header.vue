@@ -105,7 +105,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
@@ -206,17 +206,6 @@ onMounted(() => {
   if (typeof uiStore.loadMinimizeHeader === 'function') {
     uiStore.loadMinimizeHeader()
   }
-  
-  // Charger les notifications et s'abonner aux mises à jour
-  if (authStore.isAuthenticated) {
-    notificationsStore.loadNotifications()
-    notificationsStore.subscribeToNotifications()
-  }
-})
-
-onUnmounted(() => {
-  // Nettoyage: éviter de garder un channel si le Header est démonté (ex: /admin)
-  notificationsStore.unsubscribeFromNotifications?.()
 })
 </script>
 

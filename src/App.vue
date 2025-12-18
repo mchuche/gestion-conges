@@ -67,6 +67,16 @@ const isAdminPage = computed(() => route.name === 'admin')
 watch(
   () => authStore.isAuthenticated,
   (authed, wasAuthed) => {
+    // Transition déconnecté -> connecté : activer Realtime notifications globalement
+    if (!wasAuthed && authed) {
+      try {
+        notificationsStore.loadNotifications?.()
+        notificationsStore.subscribeToNotifications?.()
+      } catch (err) {
+        logger.error('[App] Erreur lors de l’activation Realtime notifications:', err)
+      }
+    }
+
     // Ne déclencher que sur transition connecté -> déconnecté
     if (wasAuthed && !authed) {
       try {

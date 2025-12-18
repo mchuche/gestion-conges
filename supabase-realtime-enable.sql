@@ -3,7 +3,7 @@
 -- 
 -- IMPORTANT: Realtime doit être activé dans le dashboard Supabase :
 -- 1. Allez dans Database > Replication
--- 2. Activez la réplication pour les tables suivantes : leaves, leave_types, leave_quotas
+-- 2. Activez la réplication pour les tables suivantes : leaves, leave_types, leave_quotas, notifications
 
 -- Activer la publication pour les tables (nécessaire pour Realtime)
 -- Note: Cette publication est généralement déjà créée par Supabase, mais on s'assure qu'elle existe
@@ -54,6 +54,17 @@ BEGIN
     END IF;
 END $$;
 
+-- Activer Realtime sur la table notifications
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND tablename = 'notifications'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+    END IF;
+END $$;
+
 -- Vérifier que les tables sont dans la publication
 SELECT 
     schemaname,
@@ -68,4 +79,5 @@ ORDER BY tablename;
 ALTER TABLE leaves REPLICA IDENTITY FULL;
 ALTER TABLE leave_types REPLICA IDENTITY FULL;
 ALTER TABLE leave_quotas REPLICA IDENTITY FULL;
+ALTER TABLE notifications REPLICA IDENTITY FULL;
 
