@@ -111,6 +111,13 @@ const monthNames = [
 const teamMembers = ref([])
 const loadingMembers = ref(false)
 
+// Fonction helper pour retirer la partie après l'arobase
+function removeEmailDomain(emailOrName) {
+  if (!emailOrName) return emailOrName
+  const atIndex = emailOrName.indexOf('@')
+  return atIndex !== -1 ? emailOrName.substring(0, atIndex) : emailOrName
+}
+
 function isLeaveCategoryLeave(leaveTypeId) {
   // "Présent = pas en congé" : on retire uniquement les types de catégorie 'leave'.
   // Les événements (category='event') ne retirent rien.
@@ -177,7 +184,7 @@ async function loadTeamMembers() {
     const members = await teamsService.loadTeamMembers(teamsStore.currentTeamId)
     teamMembers.value = members.map(member => ({
       id: member.userId,
-      name: member.email || member.name || 'Utilisateur inconnu',
+      name: removeEmailDomain(member.email || member.name || 'Utilisateur inconnu'),
       leaves: {}
     }))
     logger.debug('[YearViewPresenceVertical] Membres chargés:', teamMembers.value.length)
@@ -238,7 +245,7 @@ const users = computed(() => {
   if (authStore.user) {
     return [{
       id: authStore.user.id,
-      name: authStore.user.name || authStore.user.email || 'Moi',
+      name: removeEmailDomain(authStore.user.name || authStore.user.email || 'Moi'),
       leaves: {}
     }]
   }
