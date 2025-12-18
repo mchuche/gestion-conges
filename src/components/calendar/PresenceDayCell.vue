@@ -7,7 +7,7 @@
     :title="cellTitle"
     :style="cellStyle"
   >
-    <!-- Demi-journées : barres horizontales haut/bas -->
+    <!-- Demi-journées : division diagonale (barre oblique) -->
     <div
       v-if="hasSplit"
       class="presence-cell-half presence-cell-morning"
@@ -506,27 +506,49 @@ function handleMouseDown(event) {
 
 .year-presence-day-cell.has-split {
   background: transparent !important;
-  display: flex;
-  flex-direction: column;
+  display: block;
   padding: 0 !important;
+  overflow: hidden;
 }
 
 .presence-cell-half {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 50%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1;
+  /* Empêcher les sous-div de capturer le click (le parent gère l'interaction) */
+  pointer-events: none;
 }
 
 .presence-cell-morning {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  /* Triangle haut-gauche */
+  -webkit-clip-path: polygon(0 0, 100% 0, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
 .presence-cell-afternoon {
-  /* Pas de bordure pour le bas */
+  /* Triangle bas-droite */
+  -webkit-clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* Barre oblique de séparation entre matin/après-midi */
+.year-presence-day-cell.has-split::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    transparent 49.25%,
+    rgba(0, 0, 0, 0.16) 50%,
+    transparent 50.75%
+  );
 }
 
 .year-presence-day-cell.multi-selected {
@@ -569,9 +591,15 @@ function handleMouseDown(event) {
 
 .presence-cell-letter-morning {
   font-size: 8px;
+  position: absolute;
+  top: 2px;
+  left: 2px;
 }
 
 .presence-cell-letter-afternoon {
   font-size: 8px;
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
 }
 </style>
