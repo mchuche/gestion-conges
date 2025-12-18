@@ -8,6 +8,42 @@
 
 BEGIN;
 
+-- 0) Helper: email du user courant
+-- Certaines instances n'ont pas cette fonction (si supabase-schema.sql n'a pas été exécuté).
+-- On la (re)crée ici pour rendre la migration autonome.
+CREATE OR REPLACE FUNCTION public.get_current_user_email()
+RETURNS TEXT AS $$
+DECLARE
+  user_email TEXT;
+BEGIN
+  -- 1) Essayer via le JWT (le plus fiable et ne dépend pas de tables)
+  BEGIN
+    user_email := NULLIF(auth.jwt() ->> 'email', '');
+    IF user_email IS NULL THEN
+      user_email := NULLIF((auth.jwt() -> 'user_metadata' ->> 'email'), '');
+    END IF;
+  EXCEPTION WHEN undefined_function THEN
+    -- auth.jwt() non disponible (rare) → fallback table
+    user_email := NULL;
+  END;
+
+  -- 2) Fallback via user_emails (si disponible)
+  IF user_email IS NULL THEN
+    BEGIN
+      SELECT email INTO user_email
+      FROM public.user_emails
+      WHERE user_id = auth.uid();
+    EXCEPTION WHEN undefined_table THEN
+      user_email := NULL;
+    END;
+  END IF;
+
+  RETURN LOWER(user_email);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.get_current_user_email() TO authenticated;
+
 -- 1) Lister mes invitations avec infos d'équipe (team name/description) + email de l'invitant
 CREATE OR REPLACE FUNCTION public.list_my_team_invitations()
 RETURNS TABLE (
