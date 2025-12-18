@@ -648,6 +648,32 @@ export const useUIStore = defineStore('ui', () => {
     recurringEventDateRange.value = null
   }
 
+  /**
+   * Nettoyage "logout" : vider les sélections et fermer les modales,
+   * sans toucher aux préférences UI (thème, fullWidth, etc.).
+   */
+  function resetForLogout() {
+    // Sélections / mode multi
+    selectedDate.value = null
+    selectedDates.value = []
+    selectedPeriod.value = 'full'
+    selectedTargetUserId.value = null
+    multiSelectMode.value = false
+    ctrlKeyPressed.value = false
+
+    // Modales
+    showModal.value = false
+    showConfigModal.value = false
+    showHelpModal.value = false
+    showTeamsModal.value = false
+    showLeaveRecapModal.value = false
+    showRecurringEventModal.value = false
+
+    // Événements récurrents
+    selectedEventTypeId.value = null
+    recurringEventDateRange.value = null
+  }
+
   function reset() {
     currentDate.value = new Date()
     selectedDate.value = null
@@ -754,6 +780,7 @@ export const useUIStore = defineStore('ui', () => {
     recurringEventDateRange,
     openRecurringEventModal,
     closeRecurringEventModal,
+    resetForLogout,
     reset
   }
 })

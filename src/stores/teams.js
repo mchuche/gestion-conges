@@ -93,6 +93,13 @@ export const useTeamsStore = defineStore('teams', () => {
     }
   }
 
+  function reset() {
+    userTeams.value = []
+    currentTeamId.value = null
+    loading.value = false
+    error.value = null
+  }
+
   return {
     // State
     userTeams,
@@ -106,6 +113,7 @@ export const useTeamsStore = defineStore('teams', () => {
     // Actions
     loadUserTeams,
     createTeam,
-    setCurrentTeam
+    setCurrentTeam,
+    reset
   }
 })

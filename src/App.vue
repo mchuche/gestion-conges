@@ -32,6 +32,11 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { useUIStore } from './stores/ui'
 import { useRecurringEventsStore } from './stores/recurringEvents'
+import { useLeavesStore } from './stores/leaves'
+import { useLeaveTypesStore } from './stores/leaveTypes'
+import { useQuotasStore } from './stores/quotas'
+import { useTeamsStore } from './stores/teams'
+import { useNotificationsStore } from './stores/notifications'
 import AuthModal from './components/auth/AuthModal.vue'
 import Header from './components/header/Header.vue'
 import LeaveModal from './components/modals/LeaveModal.vue'
@@ -47,11 +52,58 @@ const route = useRoute()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const recurringEventsStore = useRecurringEventsStore()
+const leavesStore = useLeavesStore()
+const leaveTypesStore = useLeaveTypesStore()
+const quotasStore = useQuotasStore()
+const teamsStore = useTeamsStore()
+const notificationsStore = useNotificationsStore()
 
 // Utiliser les computed du store pour la réactivité
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const fullWidth = computed(() => uiStore.fullWidth)
 const isAdminPage = computed(() => route.name === 'admin')
+
+// Nettoyage global au logout (Realtime + données utilisateur)
+watch(
+  () => authStore.isAuthenticated,
+  (authed, wasAuthed) => {
+    // Ne déclencher que sur transition connecté -> déconnecté
+    if (wasAuthed && !authed) {
+      try {
+        // 1) Couper les subscriptions Realtime
+        notificationsStore.resetNotifications?.()
+        leavesStore.disableRealtime?.()
+        leaveTypesStore.disableRealtime?.()
+        quotasStore.disableRealtime?.()
+      } catch (err) {
+        logger.error('[App] Erreur lors du cleanup Realtime au logout:', err)
+      }
+
+      try {
+        // 2) Vider les stores utilisateurs
+        leavesStore.reset?.()
+        leaveTypesStore.reset?.()
+        quotasStore.reset?.()
+        recurringEventsStore.reset?.()
+        teamsStore.reset?.()
+      } catch (err) {
+        logger.error('[App] Erreur lors du reset des stores au logout:', err)
+      }
+
+      try {
+        // 3) Fermer les modales/effacer les sélections (sans toucher aux préférences UI)
+        if (typeof uiStore.resetForLogout === 'function') {
+          uiStore.resetForLogout()
+        } else {
+          // Fallback (ancien code)
+          uiStore.reset?.()
+        }
+      } catch (err) {
+        logger.error('[App] Erreur lors du reset UI au logout:', err)
+      }
+    }
+  }
+)
 
 // Appliquer la classe full-width au body
 watch(fullWidth, (value) => {
