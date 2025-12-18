@@ -1,6 +1,32 @@
 <template>
   <div class="view-format-selector">
     <label for="yearViewFormatSelect" class="format-label">Format de vue :</label>
+
+    <!-- Desktop: switch segmenté -->
+    <div class="format-segmented" role="tablist" aria-label="Format de vue">
+      <button
+        type="button"
+        class="format-segment"
+        :class="{ active: selectedFormat === 'columns' }"
+        role="tab"
+        :aria-selected="selectedFormat === 'columns'"
+        @click="setFormat('columns')"
+      >
+        Vue Annuelle
+      </button>
+      <button
+        type="button"
+        class="format-segment"
+        :class="{ active: selectedFormat === 'presence-vertical' }"
+        role="tab"
+        :aria-selected="selectedFormat === 'presence-vertical'"
+        @click="setFormat('presence-vertical')"
+      >
+        Matrice de Présence
+      </button>
+    </div>
+
+    <!-- Mobile: dropdown -->
     <select
       id="yearViewFormatSelect"
       v-model="selectedFormat"
@@ -26,6 +52,10 @@ const selectedFormat = computed({
 
 function handleFormatChange(event) {
   uiStore.setYearViewFormat(event.target.value)
+}
+
+function setFormat(format) {
+  uiStore.setYearViewFormat(format)
 }
 </script>
 
@@ -70,6 +100,47 @@ function handleFormatChange(event) {
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
 }
 
+/* Switch segmenté (desktop) */
+.format-segmented {
+  display: inline-flex;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--card-bg, white);
+}
+
+.format-segment {
+  border: none;
+  background: transparent;
+  color: var(--text-color, #2c3e50);
+  padding: 8px 12px;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.format-segment + .format-segment {
+  border-left: 1px solid var(--border-color, #e0e0e0);
+}
+
+.format-segment:hover {
+  background: rgba(74, 144, 226, 0.08);
+}
+
+.format-segment.active {
+  background: var(--primary-color, #4a90e2);
+  color: white;
+}
+
+.format-segment:focus {
+  outline: none;
+}
+
+.format-segment:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 2px rgba(74, 144, 226, 0.35);
+}
+
 @media (max-width: 768px) {
   .view-format-selector {
     flex-direction: column;
@@ -78,6 +149,18 @@ function handleFormatChange(event) {
 
   .format-select {
     max-width: 100%;
+  }
+
+  /* Mobile: dropdown uniquement */
+  .format-segmented {
+    display: none;
+  }
+}
+
+/* Desktop: segmenté uniquement */
+@media (min-width: 769px) {
+  .format-select {
+    display: none;
   }
 }
 </style>
