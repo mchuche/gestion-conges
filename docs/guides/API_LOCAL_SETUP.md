@@ -51,6 +51,13 @@ npm run prisma:migrate
 npx prisma migrate deploy
 ```
 
+L’historique Prisma est réduit à **une migration** (`20260511190000_init`) qui recrée tout le schéma. Si tu avais encore une base construite avec les **anciennes** migrations et que `migrate deploy` échoue (tables déjà présentes), vide le schéma puis réapplique — par exemple avec Postgres sous Docker :
+
+```bash
+docker exec gestion-conges-db psql -U gestion -d gestion_conges -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public; GRANT ALL ON SCHEMA public TO gestion;"
+cd api && npx prisma migrate deploy && npm run prisma:seed
+```
+
 ```bash
 npm run start:dev
 ```
