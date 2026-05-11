@@ -6,26 +6,27 @@ Ce projet est né d'une idée que j'avais en tête depuis longtemps, mais sur la
 
 ---
 
-Une application web moderne et responsive pour gérer vos jours de congé avec un calendrier interactif. **Multi-utilisateurs** avec authentification via l’**API NestJS** (JWT) et persistance **PostgreSQL** (Prisma).
+Une application web moderne et responsive pour gérer vos jours de congé avec un calendrier interactif. **Multi-utilisateurs** avec authentification via l’**API NestJS** (JWT access + refresh) et persistance **PostgreSQL** (Prisma).
 
 ## ✨ Fonctionnalités
 
-- 🔐 **Authentification multi-utilisateurs** : Chaque utilisateur a son propre compte et ses propres données
-- 📆 **Calendrier interactif** : Naviguez entre les semestres et cliquez sur n'importe quel jour pour ajouter un congé
-- 🎨 **Types de congés personnalisables** : 
-  - Congé Payé, RTT, Jours Hiver, Maladie, Télétravail, Formation, Grève
-  - Créez vos propres types avec couleurs et labels personnalisés
-- ⏰ **Demi-journées** : Posez des congés pour le matin ou l'après-midi uniquement
-- 📅 **Jours fériés** : Support de 11 pays (FR, BE, CH, CA, US, GB, DE, ES, IT, NL, LU)
-- 📊 **Statistiques et quotas** : Suivez vos congés posés et restants par type et par année
-- 💾 **Sauvegarde** : Données via l’API NestJS sur PostgreSQL (déploiement ou Docker local)
-- 📱 **Responsive** : Fonctionne parfaitement sur ordinateur, tablette et mobile
-- 🎯 **Interface moderne** : Design élégant et intuitif
-- 📲 **PWA (Progressive Web App)** : Installable comme une app native, fonctionne hors ligne
+- 🔐 **Authentification multi-utilisateurs** : compte par utilisateur, données isolées côté API
+- 📆 **Vues calendrier** : navigation par **année** ; **vue annuelle** (colonnes par mois) ou **matrice de présence** (par équipe, vue synthétique)
+- 👥 **Équipes** : équipes, membres et invitations (partage de contexte pour la matrice de présence)
+- 🎨 **Types de congés** : types globaux (congé payé, RTT, télétravail, etc.) et **personnalisation** des couleurs par utilisateur
+- ⏰ **Demi-journées** : matin ou après-midi
+- 🔁 **Événements récurrents** : règles de récurrence et application sur une plage de dates
+- 🔔 **Notifications** : panneau de notifications côté utilisateur
+- 📅 **Jours fériés** : plusieurs pays (ex. FR, BE, CH, CA, US, GB, DE, ES, IT, NL, LU)
+- 📊 **Statistiques et quotas** : suivi par type et par année
+- 🛡️ **Administration (comptes admin)** : **`/gestion-conges/admin`** — onglets Utilisateurs, Équipes, Types de congés, Paramètres, Statistiques, Logs d’audit
+- 💾 **Données** : API NestJS + PostgreSQL (local Docker ou hébergement distant)
+- 📱 **Responsive** : ordinateur, tablette et mobile
+- 📲 **PWA** : installable (**standalone**), mise à jour du **service worker** en production ; les **données métier** passent par l’API et nécessitent en général une connexion réseau
 
 ## 🚀 Installation et configuration
 
-**Guide unique :** **`docs/INSTALL.md`** — Postgres (Docker), fichiers **`.env`** racine vs **`api/.env`**, migrations (`npm run migrate`), `npm run api:dev`, front (`npm run dev`), et **table des scripts npm** à la racine.
+**Guide unique :** **`docs/INSTALL.md`** — Postgres (Docker), fichiers **`.env`** racine vs **`api/.env`**, migrations (`npm run migrate`, `migrate:dev`), réinitialisation dev (`npm run db:reset` si besoin), `npm run api:dev`, front (`npm run dev`), **table des scripts npm**.
 
 | Besoin | Où lire |
 |--------|---------|
@@ -41,193 +42,145 @@ Après installation : front sur **`http://localhost:5173/gestion-conges/`** (bas
 
 ## 📖 Utilisation
 
-1. **S'inscrire/Se connecter** :
-   - Créez un compte avec votre email et mot de passe
-   - Ou connectez-vous si vous avez déjà un compte
+1. **S'inscrire / se connecter** : email et mot de passe (compte dédié).
 
-2. **Ajouter un congé** :
-   - Cliquez sur un jour dans le calendrier
-   - Choisissez la période (journée complète, matin, après-midi)
-   - Sélectionnez le type de congé
-   - Le congé est enregistré via l’API
+2. **Choisir le format d’affichage** : vue **annuelle** ou **matrice de présence** (sélecteur dans l’en-tête) ; pour la matrice, sélection d’**équipe** si besoin.
 
-3. **Sélection multiple** :
-   - Maintenez **Ctrl** (ou **Cmd** sur Mac) et cliquez sur plusieurs jours
-   - Appliquez un congé à tous les jours sélectionnés en une fois
+3. **Ajouter un congé** : cliquer sur un jour → période (journée, matin, après-midi) → type de congé → enregistrement via l’API.
 
-4. **Supprimer un congé** :
-   - Cliquez sur un jour qui a déjà un congé
-   - Cliquez sur le bouton "Supprimer"
+4. **Événements récurrents** : création via le flux prévu dans l’interface (modale dédiée).
 
-5. **Naviguer entre les semestres** :
-   - Utilisez les flèches ◀ et ▶ pour changer de semestre
+5. **Sélection multiple** : **Ctrl** (ou **Cmd** sur Mac) + plusieurs jours, puis application d’un type en lot.
 
-6. **Configurer** :
-   - Cliquez sur ⚙️ pour accéder à la configuration
-   - Modifiez les types de congés, quotas, et pays
+6. **Supprimer** : jour déjà renseigné → action supprimer dans la modale.
+
+7. **Navigation** : flèches ◀ / ▶ pour changer d’**année**.
+
+8. **Configurer** : ⚙️ — types, quotas, pays des jours fériés, équipes, etc.
+
+9. **Administration** : réservé aux comptes **admin** — route **`/gestion-conges/admin`** (voir **`docs/guides/CREATE_FIRST_ADMIN.md`**).
 
 ## 💻 Compatibilité
 
-- ✅ Tous les navigateurs modernes (Chrome, Firefox, Safari, Edge)
-- ✅ Windows, macOS, Linux
-- ✅ iOS et Android (via navigateur)
-- ✅ Peut être installé comme PWA (Progressive Web App) sur mobile
+- Navigateurs modernes (Chrome, Firefox, Safari, Edge)
+- Windows, macOS, Linux
+- iOS et Android (navigateur ou **PWA installée**)
 
 ## 📁 Structure des fichiers
 
 ```
 gestion-conges/
 ├── index.html              # Point d'entrée HTML (Vite)
-├── vite.config.js
+├── vite.config.js          # dont vite-plugin-pwa (manifest + service worker)
 ├── package.json
-├── docker-compose.yml      # Postgres (dev) ; profil `docker` = API + Nginx
-├── docker/                 # Nginx, doc d’usage Docker
+├── docker-compose.yml      # Postgres (dev) ; profil `docker` = API + Nginx + web
+├── docker/                 # Nginx, doc Docker
 ├── Dockerfile.web          # Image Nginx (build Vite) — profil docker
 ├── api/                    # Backend NestJS + Prisma (+ Dockerfile)
-├── scripts/                # start-dev.*, generate-icons.html
-├── docs/                   # INSTALL, guides, notes internes (docs/notes/)
-├── public/                 # Fichiers statiques (servis tels quels)
-│   ├── 404.html
-│   ├── manifest.json       # Manifest PWA
-│   └── icons/
-├── src/                    # Application Vue.js
-│   ├── main.js            # Point d'entrée Vue
-│   ├── App.vue            # Composant racine
-│   ├── router/            # Configuration Vue Router
-│   │   └── index.js
-│   ├── stores/            # Stores Pinia
-│   │   ├── auth.js        # Authentification
-│   │   ├── leaves.js      # Gestion des congés
-│   │   ├── leaveTypes.js  # Types de congés
-│   │   ├── quotas.js      # Quotas
-│   │   ├── teams.js       # Équipes
-│   │   └── ui.js          # État UI
-│   ├── components/        # Composants Vue
-│   │   ├── admin/         # Administration
-│   │   ├── auth/          # Authentification
-│   │   ├── calendar/      # Calendrier
-│   │   ├── common/        # Composants réutilisables
-│   │   ├── header/        # En-tête
-│   │   ├── modals/        # Modales
-│   │   └── stats/         # Statistiques
-│   ├── composables/       # Composables Vue (hooks)
-│   ├── services/          # Client API, utilitaires
-│   ├── styles/            # Styles CSS
-│   ├── utils/             # Utilitaires
-│   ├── plugins/           # Plugins Vue
-│   └── i18n/              # Internationalisation
-├── .github/workflows/      # Workflows GitHub Actions
-│   └── deploy.yml         # Déploiement automatique
-├── .env.example            # Exemple de variables d'environnement
-├── docs/archive/            # Documentation et SQL historiques (non requis pour Nest + Prisma)
-└── README.md               # Ce fichier
+├── scripts/                # start-dev.*, generate-icons.html, README
+├── docs/                   # INSTALL, guides, notes (docs/notes/)
+├── public/                 # Statiques (404.html, manifest.json de réf., icons/)
+├── src/
+│   ├── main.js
+│   ├── App.vue
+│   ├── router/index.js     # / , /admin (garde admin)
+│   ├── stores/             # Pinia : auth, leaves, leaveTypes, quotas, teams,
+│   │                       # ui, recurringEvents, notifications
+│   ├── components/
+│   │   ├── admin/          # Administration (super-admin)
+│   │   ├── auth/
+│   │   ├── calendar/       # Calendrier, vues annuelle / présence
+│   │   ├── common/
+│   │   ├── header/
+│   │   ├── menu/
+│   │   ├── modals/
+│   │   ├── notifications/
+│   │   └── stats/
+│   ├── composables/
+│   ├── services/           # API client, dates, jours fériés, récurrence…
+│   ├── styles/             # main.css, year-view.css, year-presence-vertical.css
+│   ├── utils/
+│   ├── plugins/
+│   └── i18n/
+├── .github/workflows/
+│   └── deploy.yml          # Déploiement GitHub Pages
+├── .env.example
+├── docs/archive/
+└── README.md
 ```
 
 ## 🔧 Installation comme PWA (Progressive Web App)
 
-L'application est maintenant une **PWA complète** et peut être installée sur votre appareil !
+L’application peut être **installée** sur téléphone, tablette ou poste (expérience **standalone**, icône d’accueil). Le build utilise **`vite-plugin-pwa`** : précache des **assets statiques** (JS, CSS, HTML, images) et stratégie **`autoUpdate`** pour le service worker après déploiement.
 
-### Fonctionnalités PWA
+### À nuancer
 
-- ✅ **Installation native** : Installez l'app sur votre téléphone, tablette ou ordinateur
-- ✅ **Mode hors ligne** : Fonctionne même sans connexion internet (lecture seule)
-- ✅ **Icône sur l'écran d'accueil** : Accès rapide à l'application
-- ✅ **Mises à jour automatiques** : Notification quand une nouvelle version est disponible
-- ✅ **Expérience native** : S'ouvre en plein écran, sans barre d'adresse
+- **Données** : congés, auth, équipes passent par l’**API** ; sans réseau, l’interface peut être servie depuis le cache du navigateur, mais **pas** d’usage métier complet hors ligne comme une app native hors connexion.
+- **Mises à jour** : nouvelle version du site = nouveau SW ; le comportement exact dépend du navigateur (pas forcément une notification dédiée au sens « alerte utilisateur »).
 
 ### Comment installer
 
-**Sur mobile (Android/iPhone) :**
-1. Ouvrez l'application dans votre navigateur
-2. Un bouton "📱 Installer l'app" apparaîtra automatiquement (ou utilisez le menu du navigateur)
-3. Suivez les instructions pour installer
-4. L'app apparaîtra sur votre écran d'accueil
+**Mobile :** ouvrir le site dans le navigateur → menu du navigateur ou invite « Ajouter à l’écran d’accueil » selon l’OS.
 
-**Sur ordinateur (Chrome/Edge) :**
-1. Ouvrez l'application dans Chrome ou Edge
-2. Cliquez sur l'icône d'installation dans la barre d'adresse (ou menu > Installer l'application)
-3. L'app s'ouvrira dans une fenêtre dédiée
+**Chrome / Edge (desktop) :** icône d’installation dans la barre d’adresses ou menu « Installer l’application ».
 
-**Note :** Pour générer les icônes PWA, ouvrez **`scripts/generate-icons.html`** dans le navigateur, puis placez les fichiers dans **`public/icons/`** (voir `scripts/README.md`).
+**Icônes** : générateur **`scripts/generate-icons.html`** → fichiers dans **`public/icons/`** (voir **`scripts/README.md`**).
 
 ## 🛠️ Outils et Technologies
 
 ### Frontend
-- **Vue.js 3** : Framework JavaScript (Composition API)
-- **Vite** : Build tool et serveur de développement
-- **Vue Router** : Routage côté client
-- **Pinia** : Gestion d'état
-- **Headless UI Vue** : Composants UI accessibles
-- **VeeValidate** : Validation de formulaires
-- **Vue I18n** : Internationalisation
-- **AutoAnimate** : Animations automatiques
-- **VueUse** : Collection de composables utilitaires
-- **VueDatePicker** : Sélecteur de dates
 
-### Backend & base de données
-- **NestJS** : API REST (`api/`)
-- **PostgreSQL** : base relationnelle (Docker local ou hébergeur)
-- **Prisma** : ORM, migrations et client typé (`api/prisma/`)
+- **Vue.js 3** (Composition API)
+- **Vite** + **vite-plugin-pwa**
+- **Vue Router**, **Pinia**
+- **Headless UI Vue**, **VeeValidate**, **Yup**
+- **Vue I18n**, **AutoAnimate**, **VueUse**, **VueDatePicker**, **Lucide Vue Next**, **SweetAlert2**, **date-fns**
 
-### Déploiement & CI/CD
-- **GitHub Pages** : Hébergement de l'application
-- **GitHub Actions** : Déploiement automatique sur GitHub Pages
-- **Git** : Contrôle de version
+### Backend et base de données
 
-### Outils de développement
-- **Cursor** : Éditeur de code avec IA intégrée
-  - Éditeur basé sur VS Code avec des fonctionnalités d'IA avancées
-  - Aide au développement avec suggestions de code intelligentes
-  - Utilisé pour le développement et la maintenance de ce projet
-- **GitHub** : Hébergement du code source et gestion des secrets
-- **Prisma Studio** (`cd api && npx prisma studio`) : exploration des tables PostgreSQL
+- **NestJS** (`api/`)
+- **PostgreSQL**
+- **Prisma** (`api/prisma/` — dont par exemple `User`, `Leave`, `Team`, `RecurringEvent`, `Notification`, `AppSetting`, `AuditLog`, quotas…)
 
-### Bibliothèques externes
-- **@nestjs/core** + écosystème Nest : API REST
-- **@prisma/client** : accès base de données
-- **SweetAlert2** : Modales et notifications
-- **date-fns** : Manipulation de dates
+### Déploiement et CI/CD
+
+- **GitHub Pages** + **GitHub Actions** (`deploy.yml`, secret **`VITE_API_URL`**)
+
+### Développement
+
+- **Prisma Studio** : `npm run prisma:studio` à la racine (voir **`docs/INSTALL.md`**)
 
 ## 💡 Notes techniques
 
-- **Backend** : NestJS + Prisma sur PostgreSQL
-- **Authentification** : JWT (access + refresh), voir module `api/src/auth/`
-- **Sécurité** : contrôle d’accès côté API (guards, relations utilisateur)
-- **Schéma** : défini dans `api/prisma/schema.prisma`, migrations dans `api/prisma/migrations/`
+- **Auth** : JWT (access + refresh), module **`api/src/auth/`**
+- **Autorisations** : guards Nest, ownership des ressources ; rôles **admin** pour `/admin`
+- **Schéma** : **`api/prisma/schema.prisma`**, migrations **`api/prisma/migrations/`**
 
 ## 🗄️ Base de données
 
-Le modèle relationnel est celui de **Prisma** (`User`, `Leave`, `GlobalLeaveType`, quotas, équipes, etc.). Pour appliquer le schéma : **`npm run migrate`** à la racine (équivalent `prisma migrate deploy` dans `api/`). D’anciens fichiers SQL éventuels sont rangés sous **`docs/archive/`** (voir `docs/archive/README.md`).
+Modèle **Prisma** sur PostgreSQL. Application du schéma : **`npm run migrate`** (deploy). En développement, après changement de schéma : **`npm run migrate:dev`** ; en cas d’incohérence locale : **`npm run db:reset`** (destructif — voir **`docs/INSTALL.md`**). Anciens artefacts SQL éventuels : **`docs/archive/`**.
 
 ## 🎨 Personnalisation
 
-Vous pouvez facilement personnaliser :
-- Les couleurs dans `styles.css` (variables CSS `:root`)
-- Les types de congés via l'interface de configuration (⚙️)
-- Les quotas par type et par année
-- Le pays pour les jours fériés
+- Variables et styles globaux : **`src/styles/main.css`** (et fichiers **`year-view.css`**, **`year-presence-vertical.css`** selon les vues)
+- Types de congés et quotas : interface ⚙️
+- Pays des jours fériés : configuration utilisateur
 
 ## 🔒 Sécurité
 
-- **Clés API** : Stockées dans GitHub Secrets (production) ou `.env` (développement local, non versionné)
-- **Autorisations** : appliquées dans les services Nest (JWT + ownership des ressources)
-- **Authentification** : JWT émis par l’API Nest (access + refresh)
-- **Mots de passe** : Hashés (jamais stockés en clair)
-- **Variables d'environnement** : Gérées via Vite pour un accès sécurisé aux clés API
+- Secrets : GitHub Actions / **`.env`** non versionné
+- API : JWT, validation, contrôle d’accès dans les services
+- Mots de passe : hashés côté serveur
 
 ## 🚀 Déploiement
 
-### GitHub Pages avec GitHub Actions
+### GitHub Pages
 
-Le workflow **`.github/workflows/deploy.yml`** construit le front et publie le dossier `dist/`. Il attend un secret dépôt :
+Workflow **`.github/workflows/deploy.yml`** : build du front, publication de **`dist/`**. Secret **`VITE_API_URL`** (URL HTTPS de l’API). **CORS** côté Nest pour l’origine Pages — détail : **`docs/guides/DEPLOY_GITHUB_PAGES.md`**.
 
-- **`VITE_API_URL`** : URL HTTPS de ton **API Nest** (ex. `https://api.mondomaine.com`).
+### Autres hébergeurs
 
-L’API doit être hébergée séparément et accepter les requêtes depuis ton domaine Pages (**CORS**). Détail pas à pas : **`docs/guides/DEPLOY_GITHUB_PAGES.md`**.
-
-### Autres hébergeurs (Vercel, Netlify, etc.)
-
-Même principe : variable d’environnement **`VITE_API_URL`** au build, plus hébergement de l’API et CORS.
+Même principe : **`VITE_API_URL`** au build, API et CORS configurés séparément.
 
 ## 📝 Licence
 
@@ -235,5 +188,4 @@ Libre d'utilisation pour usage personnel.
 
 ---
 
-**Profitez de votre gestionnaire de congés multi-utilisateurs ! 🎉**
-
+**Bon courage avec votre gestionnaire de congés multi-utilisateurs ! 🎉**
