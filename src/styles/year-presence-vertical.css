@@ -254,7 +254,6 @@
     .container.full-width .year-presence-vertical-container {
         grid-template-columns: repeat(3, 1fr);
     }
-}
     .year-presence-vertical-view .year-presence-vertical-day-header,
     .year-presence-vertical-view .year-presence-day-cell,
     .year-presence-vertical-view .year-presence-stats-cell,
