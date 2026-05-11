@@ -1,122 +1,43 @@
-# 🚀 Guide de Déploiement - GitHub Pages avec Secrets
+# Déploiement sur GitHub Pages
 
-Ce guide vous explique comment déployer l'application sur GitHub Pages en utilisant GitHub Secrets pour stocker vos clés Supabase de manière sécurisée.
+Le dépôt publie **uniquement le front** (build Vite). L’**API Nest** doit être hébergée ailleurs (VPS, Railway, Fly.io, etc.) et exposée en **HTTPS** pour que le navigateur accepte les appels depuis `*.github.io`.
 
-## 📋 Prérequis
+## Prérequis
 
-1. Un compte GitHub
-2. Un compte Supabase avec un projet créé
-3. Vos clés Supabase (URL et Anon Key)
+1. Dépôt GitHub avec Pages activé.
+2. Une URL publique pour l’API, par exemple `https://api.mondomaine.com` (sans slash final de préférence, les deux fonctionnent en général).
 
-## 🔐 Étape 1 : Configurer les Secrets GitHub
+## 1. Secret GitHub
 
-1. **Allez dans votre dépôt GitHub**
-   - Ouvrez votre dépôt sur GitHub.com
+1. **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+2. Nom : **`VITE_API_URL`**
+3. Valeur : l’URL de base de ton API (ex. `https://api.mondomaine.com`)
 
-2. **Accédez aux paramètres de secrets**
-   - Cliquez sur **Settings** (en haut du dépôt)
-   - Dans le menu de gauche, cliquez sur **Secrets and variables**
-   - Puis cliquez sur **Actions**
+Le workflow `.github/workflows/deploy.yml` crée un `.env` au build avec cette variable ; Vite l’injecte dans le bundle (`import.meta.env.VITE_API_URL`).
 
-3. **Ajouter le premier secret : SUPABASE_URL**
-   - Cliquez sur **New repository secret**
-   - **Name** : `SUPABASE_URL`
-   - **Secret** : Votre URL Supabase (ex: `https://abcdefghijklmnop.supabase.co`)
-   - Cliquez sur **Add secret**
+## 2. Activer GitHub Pages
 
-4. **Ajouter le second secret : SUPABASE_ANON_KEY**
-   - Cliquez à nouveau sur **New repository secret**
-   - **Name** : `SUPABASE_ANON_KEY`
-   - **Secret** : Votre clé anonyme Supabase (la longue chaîne commençant par `eyJ...`)
-   - Cliquez sur **Add secret**
+1. **Settings** → **Pages**
+2. **Source** : **GitHub Actions**
 
-## 🌐 Étape 2 : Activer GitHub Pages
+## 3. Déployer
 
-1. **Accédez aux paramètres Pages**
-   - Toujours dans **Settings**
-   - Dans le menu de gauche, cliquez sur **Pages**
+Push sur `main` (ou déclenchement manuel **Actions** → **Deploy to GitHub Pages** → **Run workflow**).
 
-2. **Configurer la source**
-   - Sous **Source**, sélectionnez **GitHub Actions**
-   - Le workflow `.github/workflows/deploy.yml` sera utilisé automatiquement
+Après succès, l’URL du site s’affiche dans l’environnement **github-pages** (souvent `https://<user>.github.io/<repo>/`).
 
-## 📤 Étape 3 : Déployer
+## CORS
 
-1. **Pousser votre code**
-   ```bash
-   git add .
-   git commit -m "Configuration GitHub Actions"
-   git push origin main
-   ```
+L’API Nest doit autoriser l’origine de ton site Pages dans sa configuration CORS (origine exacte avec ou sans slash final selon ce que le navigateur envoie).
 
-2. **Vérifier le déploiement**
-   - Allez dans l'onglet **Actions** de votre dépôt
-   - Vous verrez le workflow "Deploy to GitHub Pages" en cours d'exécution
-   - Attendez qu'il se termine (icône verte = succès)
+## Développement local
 
-3. **Accéder à votre site**
-   - Une fois le déploiement terminé, votre site sera accessible à :
-     `https://votre-username.github.io/nom-du-depot`
-   - Le lien exact s'affiche dans l'onglet **Actions** après le déploiement
+À la racine : `copy .env.example .env` puis définir **`VITE_API_URL=http://localhost:3000`** (ou l’URL de ton API locale). Voir aussi **`docs/INSTALL.md`**.
 
-## 🔄 Mettre à jour les secrets
+## Dépannage
 
-Si vous devez changer vos clés Supabase :
-
-1. Allez dans **Settings** → **Secrets and variables** → **Actions**
-2. Cliquez sur le secret à modifier
-3. Cliquez sur **Update**
-4. Modifiez la valeur et sauvegardez
-5. Poussez un nouveau commit pour redéployer avec les nouvelles valeurs
-
-## 🐛 Dépannage
-
-### Le déploiement échoue
-
-1. Vérifiez que les secrets sont bien configurés :
-   - `SUPABASE_URL` existe et contient une URL valide
-   - `SUPABASE_ANON_KEY` existe et contient une clé valide
-
-2. Vérifiez les logs dans l'onglet **Actions**
-   - Cliquez sur le workflow qui a échoué
-   - Regardez les logs pour identifier l'erreur
-
-### Le site ne fonctionne pas après le déploiement
-
-1. Ouvrez la console du navigateur (F12)
-2. Vérifiez s'il y a des erreurs liées à Supabase
-3. Vérifiez que les secrets GitHub sont corrects
-
-## 💻 Développement local
-
-Pour développer localement, vous devez créer un fichier `.env` :
-
-**Windows :**
-```bash
-copy .env.example .env
-```
-
-**Linux/Mac :**
-```bash
-cp .env.example .env
-```
-
-Puis modifiez `.env` avec vos clés Supabase.
-
-## ✅ Vérification
-
-Une fois déployé, vérifiez que :
-
-- ✅ Le site est accessible sur GitHub Pages
-- ✅ La connexion Supabase fonctionne (pas d'erreur dans la console)
-- ✅ Vous pouvez vous inscrire/se connecter
-- ✅ Les données sont sauvegardées correctement
-
----
-
-**Note** : Le workflow GitHub Actions crée automatiquement `.env` pendant le build à partir des GitHub Secrets. Vos secrets restent sécurisés dans GitHub Secrets.
-
-
-
-
-
+| Problème | Piste |
+|----------|--------|
+| Build Actions en erreur « VITE_API_URL manquant » | Créer le secret `VITE_API_URL` dans le dépôt. |
+| Page blanche / erreurs réseau après déploiement | Vérifier que l’API est joignable en HTTPS, CORS, et que `VITE_API_URL` pointe vers la bonne base URL. |
+| 404 sur les routes Vue | Pages sert du statique : le SPA doit utiliser le bon `base` Vite (ici `/gestion-conges/`). |

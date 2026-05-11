@@ -1,12 +1,19 @@
+/**
+ * Store des congés — API NestJS (`/leaves`)
+ *
+ * Les congés sont stockés en PostgreSQL via Prisma ; le format local reste
+ * `{ date_key: leave_type_id }` pour compatibilité avec le calendrier.
+ * Le temps réel PocketBase est remplacé par un no-op (futur WebSocket ou polling).
+ */
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../services/supabase'
+import { apiJson } from '../services/api'
 import logger from '../services/logger'
 import { handleError } from '../services/errorHandler'
 import { useAuthStore } from './auth'
 import { useLeaveTypesStore } from './leaveTypes'
 import { useNotificationsStore } from './notifications'
-import { useLeavesRealtime } from '../composables/useRealtime'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -35,10 +42,16 @@ export const useLeavesStore = defineStore('leaves', () => {
     return leaves.value.hasOwnProperty(dateKey)
   }
 
-  // Actions
+  // ============================================
+  // ACTIONS
+  // ============================================
+  
+  /**
+   * Charge tous les congés de l'utilisateur connecté depuis PocketBase
+   */
   async function loadLeaves() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       leaves.value = {}
       return
     }
@@ -47,29 +60,20 @@ export const useLeavesStore = defineStore('leaves', () => {
       loading.value = true
       error.value = null
 
-      const { data, error: fetchError } = await supabase
-        .from('leaves')
-        .select('*')
-        .eq('user_id', authStore.user.id)
-
-      if (fetchError) throw fetchError
-
-      // Convertir les données en format interne
+      const data = await apiJson('/leaves', { method: 'GET' })
       leaves.value = {}
       leaveIdMap.value = {}
-      if (data) {
-        data.forEach(leave => {
-          leaves.value[leave.date_key] = leave.leave_type_id
-          // Stocker le mapping ID -> date_key pour les DELETE Realtime
-          if (leave.id) {
-            leaveIdMap.value[leave.id] = leave.date_key
-          }
-        })
-      }
+
+      const rows = data.items || []
+      rows.forEach((leave) => {
+        leaves.value[leave.dateKey] = leave.leaveTypeId
+        if (leave.id) {
+          leaveIdMap.value[leave.id] = leave.dateKey
+        }
+      })
 
       logger.log('Jours de congé chargés:', Object.keys(leaves.value).length, 'entrées')
-      
-      // Activer Realtime après le premier chargement
+
       if (!realtimeEnabled.value) {
         setupRealtime()
       }
@@ -86,40 +90,24 @@ export const useLeavesStore = defineStore('leaves', () => {
   }
 
   /**
-   * Charger les congés de tous les membres d'une équipe
+   * Charge les congés de tous les membres d'une équipe
+   * 
    * @param {string[]} userIds - Liste des IDs des membres de l'équipe
    * @returns {Promise<Object>} - Objet avec userId comme clé et { date_key: leave_type_id } comme valeur
    */
   async function loadTeamLeaves(userIds) {
-    if (!userIds || userIds.length === 0 || !supabase) {
+    if (!userIds || userIds.length === 0) {
       return {}
     }
 
     try {
       logger.debug('[LeavesStore] Chargement des congés pour l\'équipe:', userIds.length, 'membres')
-      
-      const { data, error: fetchError } = await supabase
-        .from('leaves')
-        .select('*')
-        .in('user_id', userIds)
 
-      if (fetchError) throw fetchError
+      const qs = userIds.map(encodeURIComponent).join(',')
+      const data = await apiJson(`/leaves/team?userIds=${qs}`, { method: 'GET' })
+      const teamLeaves = data.byUser || {}
 
-      // Organiser les congés par utilisateur
-      const teamLeaves = {}
-      if (data) {
-        logger.debug('[LeavesStore] Données brutes reçues:', data.length, 'entrées')
-        data.forEach(leave => {
-          if (!teamLeaves[leave.user_id]) {
-            teamLeaves[leave.user_id] = {}
-          }
-          teamLeaves[leave.user_id][leave.date_key] = leave.leave_type_id
-        })
-      } else {
-        logger.warn('[LeavesStore] Aucune donnée reçue pour les congés d\'équipe')
-      }
-
-      const totalLeaves = Object.values(teamLeaves).reduce((sum, leaves) => sum + Object.keys(leaves).length, 0)
+      const totalLeaves = Object.values(teamLeaves).reduce((sum, u) => sum + Object.keys(u).length, 0)
       logger.log('[LeavesStore] Congés d\'équipe chargés:', Object.keys(teamLeaves).length, 'utilisateurs,', totalLeaves, 'congés/événements')
       return teamLeaves
     } catch (err) {
@@ -128,158 +116,43 @@ export const useLeavesStore = defineStore('leaves', () => {
     }
   }
 
-  // Configuration Realtime
+  /**
+   * Anciennement : abonnement PocketBase Realtime.
+   * Avec Nest : pas de flux temps réel pour l’instant — recharger manuellement ou prévoir WebSockets plus tard.
+   */
   function setupRealtime() {
     const authStore = useAuthStore()
     if (!authStore.user || realtimeEnabled.value) return
 
-    // Nettoyer l'ancienne subscription si elle existe
     disableRealtime()
-
     realtimeEnabled.value = true
-    
-    // Stocker la référence de la subscription pour pouvoir la nettoyer
-    realtimeSubscription.value = useLeavesRealtime(authStore.user.id, {
-      onInsert: (newLeave) => {
-        logger.log('[Realtime] Nouveau congé inséré:', newLeave)
-        // Ajouter le congé au store
-        if (newLeave && newLeave.date_key) {
-          leaves.value[newLeave.date_key] = newLeave.leave_type_id
-          // Mettre à jour le mapping ID -> date_key
-          if (newLeave.id) {
-            leaveIdMap.value[newLeave.id] = newLeave.date_key
-          }
-        }
-      },
-      onUpdate: (updatedLeave, oldLeave) => {
-        logger.log('[Realtime] Congé mis à jour:', updatedLeave)
-        // Mettre à jour le congé dans le store
-        if (oldLeave && oldLeave.date_key && updatedLeave && updatedLeave.date_key) {
-          if (leaves.value.hasOwnProperty(oldLeave.date_key)) {
-            leaves.value[updatedLeave.date_key] = updatedLeave.leave_type_id
-            // Si la date_key a changé, supprimer l'ancienne et mettre à jour le mapping
-            if (oldLeave.date_key !== updatedLeave.date_key) {
-              removeLeave(oldLeave.date_key)
-              // Mettre à jour le mapping ID -> date_key
-              if (updatedLeave.id && oldLeave.id === updatedLeave.id) {
-                leaveIdMap.value[updatedLeave.id] = updatedLeave.date_key
-              }
-            }
-          }
-        }
-        // Mettre à jour le mapping ID -> date_key
-        if (updatedLeave && updatedLeave.id && updatedLeave.date_key) {
-          leaveIdMap.value[updatedLeave.id] = updatedLeave.date_key
-        }
-      },
-      onDelete: (deletedLeave) => {
-        logger.log('[Realtime] Congé supprimé - payload complet:', deletedLeave)
-        
-        // Essayer plusieurs façons d'obtenir date_key
-        let dateKey = null
-        
-        if (deletedLeave) {
-          // Méthode 1: date_key directement dans le payload (si REPLICA IDENTITY FULL fonctionne)
-          if (deletedLeave.date_key) {
-            dateKey = deletedLeave.date_key
-          }
-          // Méthode 2: résoudre depuis le mapping ID -> date_key
-          else if (deletedLeave.id && leaveIdMap.value[deletedLeave.id]) {
-            dateKey = leaveIdMap.value[deletedLeave.id]
-            logger.log('[Realtime] date_key résolu depuis le mapping ID:', deletedLeave.id, '->', dateKey)
-          }
-        }
-        
-        if (dateKey) {
-          // Utiliser directement la suppression pour garantir la réactivité Vue
-          if (dateKey in leaves.value) {
-            removeLeave(dateKey)
-            logger.log('[Realtime] Congé supprimé du store:', dateKey)
-          } else {
-            // Le congé a peut-être déjà été supprimé localement (suppression manuelle)
-            // C'est normal, on ne log qu'en debug
-            logger.debug('[Realtime] Congé déjà supprimé du store (suppression locale probable):', dateKey)
-          }
-          // Toujours nettoyer le mapping ID -> date_key même si le congé n'existe plus
-          if (deletedLeave.id && leaveIdMap.value[deletedLeave.id]) {
-            delete leaveIdMap.value[deletedLeave.id]
-          }
-        } else {
-          // Fallback: si on n'a toujours pas date_key, recharger les congés
-          // Cela ne devrait normalement plus arriver avec le mapping
-          logger.warn('[Realtime] date_key manquant dans DELETE et non trouvé dans le mapping. ID:', deletedLeave?.id, '- Rechargement des congés')
-          loadLeaves()
-        }
-      }
-    })
-    
-    logger.log('[Realtime] Subscription activée pour les congés')
+    realtimeSubscription.value = null
+    logger.debug('[LeavesStore] Realtime désactivé (API Nest). Utilisez loadLeaves() après les changements distants.')
   }
 
   function disableRealtime() {
-    // Nettoyer la subscription si elle existe
-    if (realtimeSubscription.value && typeof realtimeSubscription.value.unsubscribe === 'function') {
-      realtimeSubscription.value.unsubscribe()
-      logger.log('[Realtime] Subscription nettoyée pour les congés')
-    }
     realtimeSubscription.value = null
     realtimeEnabled.value = false
   }
 
+  /**
+   * Sauvegarde tous les congés de l'utilisateur dans PocketBase
+   * Compare les congés existants avec les congés actuels et fait les mises à jour nécessaires
+   */
   async function saveLeaves() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) return
+    if (!authStore.user) return
 
     try {
       loading.value = true
       error.value = null
 
-      // Récupérer tous les congés existants pour cet utilisateur
-      const { data: existingLeaves } = await supabase
-        .from('leaves')
-        .select('id, date_key')
-        .eq('user_id', authStore.user.id)
-
-      const existingKeys = new Set(existingLeaves?.map(l => l.date_key) || [])
-      const currentKeys = new Set(Object.keys(leaves.value))
-
-      // Supprimer les congés qui n'existent plus
-      const toDelete = existingLeaves?.filter(l => !currentKeys.has(l.date_key)) || []
-      if (toDelete.length > 0) {
-        const idsToDelete = toDelete.map(l => l.id)
-        await supabase
-          .from('leaves')
-          .delete()
-          .in('id', idsToDelete)
-      }
-
-      // Insérer ou mettre à jour les congés
-      const leavesToInsert = []
-      Object.keys(leaves.value).forEach(dateKey => {
-        if (!existingKeys.has(dateKey)) {
-          leavesToInsert.push({
-            user_id: authStore.user.id,
-            date_key: dateKey,
-            leave_type_id: leaves.value[dateKey]
-          })
-        }
+      await apiJson('/leaves/sync', {
+        method: 'POST',
+        body: JSON.stringify({ entries: { ...leaves.value } }),
       })
 
-      if (leavesToInsert.length > 0) {
-        const { data: insertedLeaves } = await supabase
-          .from('leaves')
-          .insert(leavesToInsert)
-          .select('id, date_key')
-        
-        // Mettre à jour le mapping ID -> date_key pour les nouveaux inserts
-        if (insertedLeaves) {
-          insertedLeaves.forEach(leave => {
-            if (leave.id && leave.date_key) {
-              leaveIdMap.value[leave.id] = leave.date_key
-            }
-          })
-        }
-      }
+      await loadLeaves()
 
       logger.log('Jours de congé sauvegardés:', Object.keys(leaves.value).length, 'entrées')
     } catch (err) {
@@ -365,9 +238,17 @@ export const useLeavesStore = defineStore('leaves', () => {
     }
   }
 
+  /**
+   * Sauvegarde un congé pour un utilisateur spécifique
+   * Utilisé notamment par les propriétaires d'équipe pour modifier les événements des membres
+   * 
+   * @param {string} targetUserId - ID de l'utilisateur cible
+   * @param {string} dateKey - Clé de date (format: YYYY-MM-DD ou YYYY-MM-DD-period)
+   * @param {string|null} leaveTypeId - ID du type de congé (null pour supprimer)
+   */
   async function saveLeaveForUser(targetUserId, dateKey, leaveTypeId) {
-    if (!targetUserId || !supabase) {
-      logger.error('[LeavesStore] saveLeaveForUser: paramètres invalides', { targetUserId, hasSupabase: !!supabase })
+    if (!targetUserId) {
+      logger.error('[LeavesStore] saveLeaveForUser: paramètres invalides', { targetUserId })
       throw new Error('Utilisateur cible non spécifié')
     }
 
@@ -377,7 +258,6 @@ export const useLeavesStore = defineStore('leaves', () => {
       loading.value = true
       error.value = null
 
-      // Vérifier que le propriétaire d'équipe ne modifie que les événements
       const authStore = useAuthStore()
       if (leaveTypeId && targetUserId !== authStore.user?.id) {
         const leaveTypesStore = useLeaveTypesStore()
@@ -388,86 +268,38 @@ export const useLeavesStore = defineStore('leaves', () => {
         }
       }
 
-      // Vérifier si un congé existe déjà pour cette date et cet utilisateur
-      logger.debug('[LeavesStore] Recherche congé existant...')
-      const { data: existingLeave, error: fetchError } = await supabase
-        .from('leaves')
-        .select('id, leave_type_id')
-        .eq('user_id', targetUserId)
-        .eq('date_key', dateKey)
-        .maybeSingle()
-
-      if (fetchError) {
-        logger.error('[LeavesStore] Erreur lors de la recherche:', fetchError)
-        throw fetchError
+      if (targetUserId === authStore.user?.id && leaveTypeId && leaves.value[dateKey] === leaveTypeId) {
+        logger.debug('[LeavesStore] Aucun changement (même type) - skip:', { targetUserId, dateKey, leaveTypeId })
+        return
       }
 
-      logger.debug('[LeavesStore] Congé existant:', existingLeave)
+      const previousLeaveTypeId =
+        targetUserId === authStore.user?.id ? (leaves.value[dateKey] || null) : null
 
-      const previousLeaveTypeId = existingLeave?.leave_type_id || null
+      const data = await apiJson('/leaves/for-user', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          targetUserId,
+          dateKey,
+          leaveTypeId: leaveTypeId ?? null,
+        }),
+      })
 
-      if (leaveTypeId) {
-        // Ajouter ou mettre à jour
-        if (existingLeave) {
-          // No-op: si le type est identique, ne rien faire (et éviter une notification "fantôme")
-          if (previousLeaveTypeId && previousLeaveTypeId === leaveTypeId) {
-            logger.debug('[LeavesStore] Aucun changement (même type) - skip update:', { targetUserId, dateKey, leaveTypeId })
-            return
-          }
-          // Mettre à jour
-          logger.log('[LeavesStore] Mise à jour du congé existant:', existingLeave.id)
-          const { error: updateError } = await supabase
-            .from('leaves')
-            .update({ leave_type_id: leaveTypeId })
-            .eq('id', existingLeave.id)
-          
-          if (updateError) {
-            logger.error('[LeavesStore] Erreur UPDATE:', updateError)
-            throw updateError
-          }
-          logger.log('[LeavesStore] ✅ Congé mis à jour avec succès')
+      const item = data.item
+      if (targetUserId === authStore.user?.id) {
+        if (item) {
+          leaves.value = { ...leaves.value, [dateKey]: item.leaveTypeId }
+          leaveIdMap.value = { ...leaveIdMap.value, [item.id]: item.dateKey }
         } else {
-          // Insérer
-          logger.log('[LeavesStore] Insertion nouveau congé...')
-          const { error: insertError } = await supabase
-            .from('leaves')
-            .insert({
-              user_id: targetUserId,
-              date_key: dateKey,
-              leave_type_id: leaveTypeId
-            })
-          
-          if (insertError) {
-            logger.error('[LeavesStore] Erreur INSERT:', insertError)
-            throw insertError
+          removeLeave(dateKey)
+          const next = { ...leaveIdMap.value }
+          for (const id of Object.keys(next)) {
+            if (next[id] === dateKey) delete next[id]
           }
-          logger.log('[LeavesStore] ✅ Congé inséré avec succès')
-        }
-      } else {
-        // Supprimer
-        // Si rien n'existe, ne rien faire (et ne pas notifier)
-        if (!existingLeave) {
-          logger.debug('[LeavesStore] Suppression demandée mais aucun congé trouvé - skip:', { targetUserId, dateKey })
-          return
-        }
-        if (existingLeave) {
-          logger.log('[LeavesStore] Suppression du congé:', existingLeave.id)
-          const { error: deleteError } = await supabase
-            .from('leaves')
-            .delete()
-            .eq('id', existingLeave.id)
-          
-          if (deleteError) {
-            logger.error('[LeavesStore] Erreur DELETE:', deleteError)
-            throw deleteError
-          }
-          logger.log('[LeavesStore] ✅ Congé supprimé avec succès')
+          leaveIdMap.value = next
         }
       }
 
-      logger.log('[LeavesStore] ✅ saveLeaveForUser TERMINÉ avec succès')
-      
-      // Créer une notification si un propriétaire modifie l'événement d'un membre
       if (targetUserId !== authStore.user?.id) {
         await createNotificationForLeaveChange(
           authStore.user,
@@ -477,8 +309,9 @@ export const useLeavesStore = defineStore('leaves', () => {
           previousLeaveTypeId
         )
       }
-      
-      // Incrémenter le compteur pour déclencher le rechargement dans les composants
+
+      logger.log('[LeavesStore] ✅ saveLeaveForUser TERMINÉ avec succès')
+
       teamLeavesUpdateTrigger.value++
     } catch (err) {
       logger.error('[LeavesStore] ❌ saveLeaveForUser ÉCHEC:', err)

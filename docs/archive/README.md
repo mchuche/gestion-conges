@@ -1,18 +1,16 @@
-# Archive - Documentation de Migration
+# Archives documentation
 
-Ce dossier contient les fichiers de documentation liés à la migration de l'application vanilla JavaScript vers Vue.js 3.
+Fichiers **hors parcours d’installation** de l’app actuelle (**Vue 3 + Vite**, **NestJS + Prisma + PostgreSQL**). Conservés pour l’historique ou des migrations de données ponctuelles.
 
-Ces fichiers sont conservés à des fins historiques et de référence, mais ne sont plus nécessaires pour le développement actuel car la migration est terminée.
+## Contenu
 
-## Fichiers archivés
+| Élément | Description |
+|---------|-------------|
+| `MIGRATION_VUEJS_PLAN.md` | Plan de passage du JS vanilla vers Vue 3 |
+| `README_VUE_MIGRATION.md` | Notes de démarrage migration Vue |
+| `PHASES_RESTANTES.md` | Phases migration (terminées) |
+| `MIGRATION_POCKETBASE.md` | Ancien guide d’intermédiation entre backends ; **non utilisé** par la stack actuelle |
+| `REALTIME_SETUP_LEGACY.md` | Ancienne doc temps réel (projet tiers) ; le front s’appuie sur l’**API Nest** |
+| `supabase-legacy/` | Scripts SQL / ops d’une stack PostgreSQL hébergée autrement (référence seulement) |
 
-- `MIGRATION_VUEJS_PLAN.md` : Plan détaillé de migration vers Vue.js 3
-- `README_VUE_MIGRATION.md` : Guide de démarrage pour la migration
-- `PHASES_RESTANTES.md` : Liste des phases restantes de la migration (terminée)
-
-## État actuel
-
-✅ La migration vers Vue.js 3 est **terminée** et l'application fonctionne entièrement avec Vue.js.
-
-Pour la documentation actuelle de l'application, consultez le `README.md` à la racine du projet.
-
+Pour installer ou faire évoluer le projet aujourd’hui : **`docs/INSTALL.md`**, **`docs/guides/API_LOCAL_SETUP.md`**, **`docs/guides/README.md`**.

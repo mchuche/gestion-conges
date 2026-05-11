@@ -30,7 +30,7 @@
           id="signupPassword"
           name="password"
           type="password"
-          rules="required|min:6"
+          rules="required|min:8"
           v-slot="{ field, errors }"
         >
           <input
@@ -41,7 +41,7 @@
             placeholder="••••••••"
           />
           <ErrorMessage name="password" class="field-error" />
-          <small class="auth-hint">Minimum 6 caractères</small>
+          <small class="auth-hint">Minimum 8 caractères</small>
         </Field>
       </div>
       

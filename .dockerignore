@@ -1,0 +1,10 @@
+node_modules
+dist
+api
+.git
+.gitignore
+.env
+.env.*
+*.md
+.cursor
+coverage

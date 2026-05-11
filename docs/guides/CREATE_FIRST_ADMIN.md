@@ -1,70 +1,115 @@
-# Guide : Créer le premier administrateur
+# Créer le premier administrateur
 
-## Pré-requis
-Assure-toi d’avoir exécuté le script Supabase “fresh install” :
-- `supabase/sql/00_fresh_install.sql`
+Stack actuelle : **NestJS + Prisma**, table **`AppAdmin`** liée à **`User`**.
 
-(Il crée déjà `app_admins`, `app_settings` + les fonctions/policies.)
+## Méthode recommandée : script de bootstrap (installation)
 
-## Étape 2 : Trouver votre User ID
+### Variables (`api/.env` ou environnement shell)
 
-Vous avez plusieurs options pour trouver votre `user_id` :
+| Variable | Obligatoire | Rôle |
+|----------|-------------|------|
+| `BOOTSTRAP_ADMIN_EMAIL` | oui* | Email du compte super-admin |
+| `BOOTSTRAP_ADMIN_PASSWORD` | oui* | Mot de passe initial |
+| `BOOTSTRAP_ADMIN_NAME` | non | Nom affiché (défaut : « Administrateur ») |
 
-### Option A : Via la console du navigateur
-1. Connectez-vous à votre application
-2. Ouvrez la console du navigateur (F12)
-3. Tapez cette commande :
-```javascript
-supabase.auth.getUser().then(u => console.log('User ID:', u.data.user.id))
+\*Les deux premières sont **requises ensemble**. Sinon le bootstrap est **ignoré**.
+
+### Comportement
+
+1. S’il existe **déjà** un enregistrement **`AppAdmin`** avec le rôle **`super_admin`**, **rien n’est fait** (idempotent — tu peux relancer en prod sans risque).
+2. Sinon : création du **`User`** (hash bcrypt comme à l’inscription) s’il n’existe pas, puis **`AppAdmin`** en **`super_admin`**.
+3. Si l’utilisateur existe déjà (ex. tu t’es inscrit avant), **seul le lien admin** est créé ; le **mot de passe** reste celui déjà en base.
+
+### Commandes
+
+À la **racine du dépôt** (recommandé) :
+
+```bash
+npm run bootstrap-admin
 ```
-4. Copiez l'ID affiché
 
-### Option B : Via Supabase Dashboard
-1. Allez dans **Authentication** > **Users**
-2. Trouvez votre utilisateur dans la liste
-3. Cliquez dessus pour voir les détails
-4. Copiez l'**UUID** (c'est votre `user_id`)
+Ou dans **`api/`** :
 
-## Étape 3 : Créer votre compte administrateur
+```bash
+cd api
+npm run bootstrap-admin
+```
 
-1. Retournez dans **SQL Editor** dans Supabase
-2. Exécutez cette requête (remplacez `VOTRE_USER_ID` par l'ID que vous avez copié) :
+Ou via le seed complet (types globaux + bootstrap si les variables sont définies) :
+
+```bash
+npm run prisma:seed
+```
+
+Le script réel est **`api/prisma/bootstrap-admin.js`** (également appelé depuis **`api/prisma/seed.js`**).
+
+### Docker
+
+Après `docker compose --profile docker up -d`, avec les variables uniquement pour cette commande :
+
+```bash
+docker compose exec -e BOOTSTRAP_ADMIN_EMAIL=toi@example.com -e BOOTSTRAP_ADMIN_PASSWORD="TonMotDePasse" api npm run bootstrap-admin
+```
+
+Ou ajoute les trois variables dans **`api/.env`** et monte-le dans le service `api` (compose) puis `docker compose exec api npm run bootstrap-admin`.
+
+---
+
+## Promouvoir quelqu’un qui est déjà dans la base (email)
+
+Utile quand le compte existe déjà (inscription passée) et tu veux le passer en **super_admin**, **même si un autre super_admin existe déjà**.
+
+### Variable
+
+| Variable | Rôle |
+|----------|------|
+| `PROMOTE_SUPER_ADMIN_EMAIL` | Email exact du **`User`** (insensible à la casse côté script) |
+
+### Commandes
+
+À la racine du dépôt :
+
+```bash
+npm run promote-super-admin
+```
+
+(`api/.env` doit contenir `PROMOTE_SUPER_ADMIN_EMAIL=...`, ou export dans le shell.)
+
+Exemple PowerShell sans modifier `.env` :
+
+```powershell
+$env:PROMOTE_SUPER_ADMIN_EMAIL="collegue@example.com"; npm run promote-super-admin
+```
+
+Le seed (`npm run prisma:seed`) exécute aussi cette étape **avant** le bootstrap si la variable est définie.
+
+### Docker
+
+```bash
+docker compose exec -e PROMOTE_SUPER_ADMIN_EMAIL=collegue@example.com api npm run promote-super-admin
+```
+
+Si l’email n’existe pas en base, la commande **échoue** avec un message explicite.
+
+---
+
+## Méthode manuelle (sans script)
+
+1. Crée un compte via l’app (**inscription**).
+2. Récupère **`User.id`** (Prisma Studio : `cd api && npx prisma studio`).
+3. SQL sur PostgreSQL :
 
 ```sql
--- Créer votre compte super_admin
-INSERT INTO app_admins (user_id, role, created_by)
-VALUES ('VOTRE_USER_ID', 'super_admin', 'VOTRE_USER_ID');
+INSERT INTO "AppAdmin" ("id", "userId", role)
+VALUES (gen_random_uuid()::text, 'REMPLACER_PAR_USER_ID', 'super_admin');
 ```
 
-**Exemple :**
-```sql
-INSERT INTO app_admins (user_id, role, created_by)
-VALUES ('123e4567-e89b-12d3-a456-426614174000', 'super_admin', '123e4567-e89b-12d3-a456-426614174000');
-```
+4. Déconnexion puis reconnexion pour rafraîchir le JWT.
 
-## Étape 4 : Vérifier que ça fonctionne
+---
 
-1. Rafraîchissez votre application
-2. Le bouton **"⚙️ Admin"** devrait apparaître dans le header
-3. Cliquez dessus pour ouvrir la page d'administration
+## Après coup
 
-## Notes importantes
-
-- **Super Admin** : Peut tout faire (gérer les admins, supprimer des utilisateurs, etc.)
-- **Admin** : Peut gérer les utilisateurs et groupes, mais pas créer d'autres admins
-- Pour créer d'autres admins, vous devrez utiliser SQL pour l'instant (une interface UI sera ajoutée plus tard)
-
-## Dépannage
-
-Si le bouton admin n'apparaît pas :
-1. Vérifiez que vous avez bien exécuté `supabase/sql/00_fresh_install.sql`
-2. Vérifiez que votre `user_id` est correct dans la table `app_admins`
-3. Déconnectez-vous et reconnectez-vous à l'application
-4. Videz le cache du navigateur (Ctrl+Shift+R)
-
-Pour vérifier si vous êtes bien admin :
-```sql
--- Dans SQL Editor, remplacez VOTRE_USER_ID
-SELECT * FROM app_admins WHERE user_id = 'VOTRE_USER_ID';
-```
-
+- **`npm run promote-super-admin`** : pour passer un utilisateur existant en super_admin (voir ci-dessus).
+- **`npm run bootstrap-admin`** : uniquement tant qu’**aucun** super_admin n’existe (première installation).
+- Sinon : SQL / Prisma Studio comme dans la section « Méthode manuelle ».

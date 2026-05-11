@@ -463,14 +463,8 @@ async function handleDeleteAccount() {
   const result = await Swal.fire({
     title: '🗑️ Supprimer mon compte ?',
     html: 'Cette action est <strong style="color: #e74c3c;">irréversible</strong> !<br><br>' +
-          'Toutes vos données seront définitivement supprimées :<br>' +
-          '• Tous vos congés<br>' +
-          '• Vos types de congés personnalisés<br>' +
-          '• Vos quotas<br>' +
-          '• Vos préférences<br>' +
-          '• Votre participation aux équipes<br><br>' +
-          'Si vous possédez des équipes, elles seront transférées au premier membre disponible ou supprimées.<br><br>' +
-          'Le compte Supabase devra être supprimé depuis le dashboard Supabase.',
+          'Côté serveur Nest, seront supprimés : congés, personnalisations de couleurs, sessions, droits admin éventuels.<br><br>' +
+          'Données encore gérées par d’autres services (équipes PocketBase, quotas, préférences locales, etc.) peuvent nécessiter un nettoyage séparé tant que la migration n’est pas complète.',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: 'Oui, supprimer mon compte',

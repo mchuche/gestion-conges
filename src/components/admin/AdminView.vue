@@ -151,6 +151,9 @@
           <TabPanel class="admin-tab-panel">
           <div v-if="loadingSettings" class="loading">Chargement...</div>
           <div v-else class="admin-settings">
+            <p class="admin-hint" style="margin-bottom: 1rem;">
+              Ces JSON sont enregistrés en base via l’API (<code>PUT /admin/app-settings</code>) et servent de référence pour les nouveaux comptes (selon l’implémentation métier).
+            </p>
             <Form @submit="onSaveSettingsSubmit" v-slot="{ meta, values, setFieldValue }" :initial-values="{ defaultLeaveTypes: defaultLeaveTypes, defaultQuotas: defaultQuotas }">
               <div class="admin-settings-section">
                 <h3>Types de congés par défaut</h3>
@@ -240,6 +243,9 @@
 
           <!-- Onglet Logs d'audit -->
           <TabPanel class="admin-tab-panel">
+            <p class="admin-hint" style="margin-bottom: 1rem;">
+              Actions admin enregistrées côté serveur (<code>GET /admin/audit-logs</code>).
+            </p>
             <div v-if="loadingAudit" class="loading">Chargement...</div>
             <div v-else-if="auditLogs.length === 0" class="no-data">Aucun log disponible</div>
             <div v-else class="admin-audit-container">
@@ -292,7 +298,20 @@ import { useRouter } from 'vue-router'
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useAuthStore } from '../../stores/auth'
-import { supabase } from '../../services/supabase'
+import {
+  fetchAdminStats,
+  fetchAdminUsers,
+  fetchAdminTeams,
+  deleteAdminUser,
+  deleteAdminTeam,
+  fetchGlobalLeaveTypes,
+  createGlobalLeaveType,
+  updateGlobalLeaveType,
+  deleteGlobalLeaveType,
+  fetchAdminAppSettings,
+  putAdminAppSettings,
+  fetchAdminAuditLogs,
+} from '../../services/adminApi'
 import Swal from 'sweetalert2'
 import logger, { getConsoleDebugLogsEnabled, setConsoleDebugLogsEnabled } from '../../services/logger'
 import { useToast } from '../../composables/useToast'
@@ -406,36 +425,17 @@ async function loadUsers() {
   try {
     devLogger.log('[AdminView] Chargement des utilisateurs...')
     loadingUsers.value = true
-    const searchTerm = userSearch.value.trim()
-    
-    let query = supabase
-      .from('user_emails')
-      .select('user_id, email, created_at')
-      .order('created_at', { ascending: false })
+    const searchTerm = userSearch.value.trim() || undefined
 
-    if (searchTerm) {
-      query = query.ilike('email', `%${searchTerm}%`)
-    }
+    const data = await fetchAdminUsers(searchTerm)
+    const records = data.users || []
 
-    const { data, error } = await query
-
-    if (error) throw error
-
-    // Enrichir avec des statistiques
-    devLogger.log('[AdminView] Utilisateurs bruts reçus:', data?.length || 0)
-    users.value = await Promise.all((data || []).map(async (user) => {
-      const [leavesResult, teamsResult] = await Promise.all([
-        supabase.from('leaves').select('id', { count: 'exact', head: true }).eq('user_id', user.user_id),
-        supabase.from('team_members').select('id', { count: 'exact', head: true }).eq('user_id', user.user_id)
-      ])
-
-      return {
-        id: user.user_id,
-        email: user.email,
-        createdAt: user.created_at,
-        leavesCount: leavesResult.count || 0,
-        teamsCount: teamsResult.count || 0
-      }
+    users.value = records.map((user) => ({
+      id: user.id,
+      email: user.email,
+      createdAt: user.createdAt,
+      leavesCount: user.leavesCount ?? 0,
+      teamsCount: user.teamsCount ?? 0,
     }))
     devLogger.log('[AdminView] Utilisateurs chargés:', users.value.length)
   } catch (err) {
@@ -455,25 +455,15 @@ async function loadTeams() {
   try {
     devLogger.log('[AdminView] Chargement des équipes...')
     loadingTeams.value = true
-    const { data, error } = await supabase
-      .from('teams')
-      .select('id, name, created_at')
-      .order('created_at', { ascending: false })
 
-    if (error) throw error
+    const data = await fetchAdminTeams()
+    const records = data.teams || []
 
-    teams.value = await Promise.all((data || []).map(async (team) => {
-      const { count } = await supabase
-        .from('team_members')
-        .select('id', { count: 'exact', head: true })
-        .eq('team_id', team.id)
-
-      return {
-        id: team.id,
-        name: team.name,
-        createdAt: team.created_at,
-        membersCount: count || 0
-      }
+    teams.value = records.map((team) => ({
+      id: team.id,
+      name: team.name,
+      createdAt: team.createdAt,
+      membersCount: team.membersCount ?? 0,
     }))
     devLogger.log('[AdminView] Équipes chargées:', teams.value.length)
   } catch (err) {
@@ -492,30 +482,15 @@ async function loadStats() {
 
   try {
     devLogger.log('[AdminView] Chargement des statistiques...')
-    const [usersResult, teamsResult, leavesResult, invitationsResult] = await Promise.all([
-      supabase.from('user_emails').select('user_id', { count: 'exact', head: true }),
-      supabase.from('teams').select('id', { count: 'exact', head: true }),
-      supabase.from('leaves').select('id', { count: 'exact', head: true }),
-      supabase.from('team_invitations').select('id', { count: 'exact', head: true }).eq('status', 'pending')
-    ])
-
-    devLogger.log('[AdminView] Statistiques reçues:', {
-      users: usersResult.count,
-      teams: teamsResult.count,
-      leaves: leavesResult.count,
-      invitations: invitationsResult.count
-    })
-
+    const s = await fetchAdminStats()
     stats.value = {
-      totalUsers: usersResult.count || 0,
-      totalTeams: teamsResult.count || 0,
-      totalLeaves: leavesResult.count || 0,
-      pendingInvitations: invitationsResult.count || 0
+      totalUsers: s.totalUsers ?? 0,
+      totalTeams: s.totalTeams ?? 0,
+      totalLeaves: s.totalLeaves ?? 0,
+      pendingInvitations: s.pendingInvitations ?? 0,
     }
-    
     devLogger.log('[AdminView] stats.value mis à jour:', stats.value)
   } catch (err) {
-    logger.error('[AdminView] Erreur lors du chargement des statistiques:', err)
     logger.error('[AdminView] Erreur lors du chargement des statistiques:', err)
   }
 }
@@ -528,52 +503,35 @@ async function loadSettings() {
 
   try {
     loadingSettings.value = true
-    const { data, error } = await supabase
-      .from('app_settings')
-      .select('key, value, description')
-
-    if (error) throw error
-
-    const settings = {}
-    ;(data || []).forEach(setting => {
-      settings[setting.key] = {
-        value: setting.value,
-        description: setting.description
-      }
-    })
-
-    // Charger les types de congés par défaut
-    if (settings.default_leave_types) {
-      let leaveTypes = Array.isArray(settings.default_leave_types.value)
-        ? settings.default_leave_types.value
-        : []
-      
-      // S'assurer que tous les types ont une catégorie
-      leaveTypes = leaveTypes.map(type => {
-        if (!type.category) {
-          const eventTypes = ['télétravail', 'formation', 'grève', 'maladie']
-          type.category = eventTypes.includes(type.id) ? 'event' : 'leave'
-        }
-        return type
-      })
-      
-      defaultLeaveTypes.value = JSON.stringify(leaveTypes, null, 2)
-    } else {
-      // Utiliser les types par défaut
-      const { getDefaultLeaveTypes } = await import('../../services/utils')
-      defaultLeaveTypes.value = JSON.stringify(getDefaultLeaveTypes(), null, 2)
+    const { getDefaultLeaveTypes } = await import('../../services/utils')
+    const fallbackTypes = getDefaultLeaveTypes()
+    const fallbackQuotas = {
+      'congé-payé': 25,
+      rtt: 22,
+      'jours-hiver': 2,
     }
 
-    // Charger les quotas par défaut
-    if (settings.default_quotas) {
-      defaultQuotas.value = JSON.stringify(settings.default_quotas.value, null, 2)
+    const data = await fetchAdminAppSettings()
+    let leaveTypes = data.defaultLeaveTypes
+    if (leaveTypes == null || !Array.isArray(leaveTypes)) {
+      leaveTypes = fallbackTypes
     } else {
-      defaultQuotas.value = JSON.stringify({
-        'congé-payé': 25,
-        'rtt': 22,
-        'jours-hiver': 2
-      }, null, 2)
+      const eventTypes = ['télétravail', 'formation', 'grève', 'maladie']
+      leaveTypes = leaveTypes.map((type) => ({
+        ...type,
+        category:
+          type.category ||
+          (eventTypes.includes(type.id) ? 'event' : 'leave'),
+      }))
     }
+
+    let quotas = data.defaultQuotas
+    if (quotas == null || typeof quotas !== 'object' || Array.isArray(quotas)) {
+      quotas = fallbackQuotas
+    }
+
+    defaultLeaveTypes.value = JSON.stringify(leaveTypes, null, 2)
+    defaultQuotas.value = JSON.stringify(quotas, null, 2)
   } catch (err) {
     logger.error('[AdminView] Erreur lors du chargement des paramètres:', err)
     showErrorToast('Impossible de charger les paramètres: ' + (err.message || err))
@@ -588,52 +546,50 @@ async function onSaveSettingsSubmit(values) {
     return
   }
 
+  let leaveTypes
+  let quotas
   try {
-    // Les valeurs JSON sont déjà validées par VeeValidate
-    const leaveTypes = JSON.parse(values.defaultLeaveTypes || defaultLeaveTypes.value)
-    const quotas = JSON.parse(values.defaultQuotas || defaultQuotas.value)
-
-    // Valider que chaque type a une catégorie valide
-    const validCategories = ['leave', 'event']
-    for (const type of leaveTypes) {
-      if (!type.category) {
-        type.category = 'leave'
-      } else if (!validCategories.includes(type.category)) {
-        throw new Error(`Catégorie invalide pour "${type.name}": "${type.category}". Doit être "leave" ou "event".`)
-      }
+    leaveTypes = JSON.parse(values.defaultLeaveTypes || defaultLeaveTypes.value)
+    quotas = JSON.parse(values.defaultQuotas || defaultQuotas.value)
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      showErrorToast(
+        'Le JSON est invalide. Vérifiez la syntaxe (virgules, guillemets, accolades, etc.).',
+      )
     }
+    return
+  }
 
-    const settings = {
-      default_leave_types: leaveTypes,
-      default_quotas: quotas
+  const validCategories = ['leave', 'event']
+  if (!Array.isArray(leaveTypes)) {
+    showErrorToast('Types par défaut : un tableau JSON est attendu.')
+    return
+  }
+  for (const type of leaveTypes) {
+    if (!type.category) {
+      type.category = 'leave'
+    } else if (!validCategories.includes(type.category)) {
+      showErrorToast(
+        `Catégorie invalide pour « ${type.name || type.id} » : utilisez leave ou event.`,
+      )
+      return
     }
+  }
+  if (typeof quotas !== 'object' || quotas === null || Array.isArray(quotas)) {
+    showErrorToast('Quotas par défaut : un objet JSON est attendu.')
+    return
+  }
 
-    // Sauvegarder dans app_settings
-    const updates = Object.keys(settings).map(key => ({
-      key,
-      value: settings[key],
-      updated_by: authStore.user?.id,
-      updated_at: new Date().toISOString()
-    }))
-
-    for (const update of updates) {
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert(update, {
-          onConflict: 'key'
-        })
-
-      if (error) throw error
-    }
-
-    success('Paramètres sauvegardés avec succès')
+  try {
+    await putAdminAppSettings({
+      defaultLeaveTypes: leaveTypes,
+      defaultQuotas: quotas,
+    })
+    success('Paramètres globaux enregistrés.')
+    await loadSettings()
   } catch (err) {
-    logger.error('[AdminView] Erreur lors de la sauvegarde des paramètres:', err)
-    if (err instanceof SyntaxError) {
-      showErrorToast('Le JSON est invalide. Vérifiez la syntaxe (virgules, guillemets, accolades, etc.).')
-    } else {
-      showErrorToast('Erreur lors de la sauvegarde: ' + (err.message || err))
-    }
+    logger.error('[AdminView] Sauvegarde paramètres:', err)
+    showErrorToast(err.message || 'Erreur lors de la sauvegarde.')
   }
 }
 
@@ -645,20 +601,17 @@ async function loadGlobalLeaveTypes() {
 
   try {
     loadingLeaveTypes.value = true
-    const { data, error } = await supabase
-      .from('global_leave_types')
-      .select('*')
-      .order('created_at', { ascending: true })
 
-    if (error) throw error
+    const data = await fetchGlobalLeaveTypes()
+    const records = data.types || []
 
-    globalLeaveTypes.value = (data || []).map(t => ({
+    globalLeaveTypes.value = records.map((t) => ({
       id: t.id,
       name: t.name,
       label: t.label,
-      category: t.category || 'leave'
+      category: t.category || 'leave',
     }))
-    
+
     devLogger.log('[AdminView] Types de congés globaux chargés:', globalLeaveTypes.value.length)
   } catch (err) {
     logger.error('[AdminView] Erreur lors du chargement des types de congés globaux:', err)
@@ -706,16 +659,12 @@ async function handleAddGlobalLeaveType() {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
 
-      const { error } = await supabase
-        .from('global_leave_types')
-        .insert({
-          id: id,
-          name: formValues.name,
-          label: formValues.label,
-          category: formValues.category || 'leave'
-        })
-
-      if (error) throw error
+      await createGlobalLeaveType({
+        id,
+        name: formValues.name,
+        label: formValues.label,
+        category: formValues.category || 'leave',
+      })
 
       success('Type de congé ajouté avec succès')
       await loadGlobalLeaveTypes()
@@ -757,17 +706,11 @@ async function handleEditGlobalLeaveType(type) {
 
   if (formValues) {
     try {
-      const { error } = await supabase
-        .from('global_leave_types')
-        .update({
-          name: formValues.name,
-          label: formValues.label,
-          category: formValues.category || 'leave',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', type.id)
-
-      if (error) throw error
+      await updateGlobalLeaveType(type.id, {
+        name: formValues.name,
+        label: formValues.label,
+        category: formValues.category || 'leave',
+      })
 
       success('Type de congé modifié avec succès')
       await loadGlobalLeaveTypes()
@@ -779,17 +722,9 @@ async function handleEditGlobalLeaveType(type) {
 }
 
 async function handleDeleteGlobalLeaveType(type) {
-  // Vérifier si le type est utilisé
-  const { count } = await supabase
-    .from('leaves')
-    .select('id', { count: 'exact', head: true })
-    .eq('leave_type_id', type.id)
-    .limit(1)
-
   let confirmMessage = `Êtes-vous sûr de vouloir supprimer le type "<strong>${type.name}</strong>" ?`
-  if (count > 0) {
-    confirmMessage += `<br><br>⚠️ <strong>Attention</strong> : Ce type est utilisé dans ${count} jour(s) de congé. Ces congés seront également supprimés.`
-  }
+  confirmMessage +=
+    '<br><br>⚠️ Si des congés ou quotas référencent encore ce type, le serveur supprimera d’abord ces données liées (comportement API Nest).'
 
   const result = await Swal.fire({
     title: 'Supprimer le type de congé ?',
@@ -803,12 +738,7 @@ async function handleDeleteGlobalLeaveType(type) {
 
   if (result.isConfirmed) {
     try {
-      const { error } = await supabase
-        .from('global_leave_types')
-        .delete()
-        .eq('id', type.id)
-
-      if (error) throw error
+      await deleteGlobalLeaveType(type.id)
 
       success('Type de congé supprimé avec succès')
       await loadGlobalLeaveTypes()
@@ -827,51 +757,12 @@ async function loadAuditLogs() {
 
   try {
     loadingAudit.value = true
-    const { data, error } = await supabase
-      .from('audit_logs')
-      .select(`
-        id,
-        user_id,
-        action,
-        entity_type,
-        entity_id,
-        details,
-        created_at
-      `)
-      .order('created_at', { ascending: false })
-      .limit(200)
-
-    if (error) throw error
-
-    // Récupérer les emails des utilisateurs
-    const userIds = [...new Set((data || []).map(log => log.user_id).filter(Boolean))]
-    const userEmailsMap = {}
-    
-    if (userIds.length > 0) {
-      const { data: emailsData } = await supabase
-        .from('user_emails')
-        .select('user_id, email')
-        .in('user_id', userIds)
-      
-      ;(emailsData || []).forEach(user => {
-        userEmailsMap[user.user_id] = user.email
-      })
-    }
-
-    // Formater les logs avec les emails
-    auditLogs.value = (data || []).map(log => ({
-      id: log.id,
-      userId: log.user_id,
-      userEmail: log.user_id ? (userEmailsMap[log.user_id] || 'Utilisateur inconnu') : 'Système',
-      action: log.action,
-      entityType: log.entity_type,
-      entityId: log.entity_id,
-      details: log.details,
-      createdAt: log.created_at
-    }))
+    const data = await fetchAdminAuditLogs(200)
+    auditLogs.value = data.logs || []
   } catch (err) {
     logger.error('[AdminView] Erreur lors du chargement des logs d\'audit:', err)
     showErrorToast('Impossible de charger les logs d\'audit: ' + (err.message || err))
+    auditLogs.value = []
   } finally {
     loadingAudit.value = false
   }
@@ -891,15 +782,18 @@ function formatDateTime(dateString) {
 
 function getActionInfo(action) {
   const actionMap = {
-    'user_deleted': { icon: '⌧', color: '#e74c3c', label: 'Utilisateur supprimé' },
-    'team_deleted': { icon: '⌧', color: '#e74c3c', label: 'Groupe supprimé' },
-    'team_ownership_transferred': { icon: '👑', color: '#f39c12', label: 'Propriété transférée' },
-    'settings_updated': { icon: '⚙', color: '#3498db', label: 'Paramètres modifiés' },
-    'team_created': { icon: '➕', color: '#2ecc71', label: 'Groupe créé' },
-    'user_created': { icon: '➕', color: '#2ecc71', label: 'Utilisateur créé' },
-    'admin_action': { icon: '🔒', color: '#9b59b6', label: 'Action admin' }
+    user_deleted: { icon: '⌧', color: '#e74c3c', label: 'Utilisateur supprimé' },
+    team_deleted: { icon: '⌧', color: '#e74c3c', label: 'Groupe supprimé' },
+    team_ownership_transferred: { icon: '👑', color: '#f39c12', label: 'Propriété transférée' },
+    settings_updated: { icon: '⚙', color: '#3498db', label: 'Paramètres modifiés' },
+    team_created: { icon: '➕', color: '#2ecc71', label: 'Groupe créé' },
+    user_created: { icon: '➕', color: '#2ecc71', label: 'Utilisateur créé' },
+    global_leave_type_created: { icon: '➕', color: '#2ecc71', label: 'Type global créé' },
+    global_leave_type_updated: { icon: '✏', color: '#3498db', label: 'Type global modifié' },
+    global_leave_type_deleted: { icon: '⌧', color: '#e74c3c', label: 'Type global supprimé' },
+    admin_action: { icon: '🔒', color: '#9b59b6', label: 'Action admin' },
   }
-  
+
   return actionMap[action] || { icon: '📝', color: '#666', label: action }
 }
 
@@ -917,7 +811,8 @@ async function handleDeleteUser(user) {
 
   if (result.isConfirmed) {
     try {
-      info('La suppression du compte doit être faite depuis le dashboard Supabase.')
+      await deleteAdminUser(user.id)
+      success('Utilisateur supprimé.')
       await loadUsers()
     } catch (err) {
       showErrorToast(err.message || 'Erreur lors de la suppression')
@@ -938,12 +833,7 @@ async function handleDeleteTeam(team) {
 
   if (result.isConfirmed) {
     try {
-      const { error } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', team.id)
-
-      if (error) throw error
+      await deleteAdminTeam(team.id)
 
       success('Équipe supprimée avec succès')
       await loadTeams()

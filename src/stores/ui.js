@@ -1,6 +1,11 @@
+/**
+ * Store UI — préférences persistées via API Nest (`GET/PATCH /preferences`).
+ * Le reste (modales, navigation calendrier) reste local.
+ */
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../services/supabase'
+import { apiJson } from '../services/api'
 import logger from '../services/logger'
 import { useAuthStore } from './auth'
 import { getDateKey } from '../services/utils'
@@ -101,25 +106,81 @@ export const useUIStore = defineStore('ui', () => {
     configYear.value = year
   }
 
+  // --- Préférences serveur (GET/PATCH /preferences, corps PATCH en camelCase) ---
+
+  /** Cache mémoire : évite plusieurs GET identiques au montage (App + Calendar…). */
+  let prefsCache = null
+  let prefsLoading = null
+
+  /** À appeler après déconnexion pour ne pas réutiliser les prefs d’un autre utilisateur. */
+  function resetPreferencesCache() {
+    prefsCache = null
+    prefsLoading = null
+  }
+
+  /**
+   * Récupère une fois la ligne `UserPreferences` (réponse snake_case).
+   * Retourne `null` si pas d’utilisateur connecté.
+   */
+  async function fetchPreferencesPayload() {
+    const authStore = useAuthStore()
+    if (!authStore.user) return null
+    if (prefsCache) return prefsCache
+    if (prefsLoading) return prefsLoading
+    prefsLoading = apiJson('/preferences', { method: 'GET' })
+      .then((p) => {
+        prefsCache = p
+        prefsLoading = null
+        return p
+      })
+      .catch((e) => {
+        prefsLoading = null
+        throw e
+      })
+    return prefsLoading
+  }
+
+  /** Applique tous les champs utiles de la réponse GET vers les refs du store. */
+  function applyPreferencesPayload(p) {
+    if (!p) return
+    if (p.selected_country) selectedCountry.value = p.selected_country
+    if (p.week_start_day !== undefined && p.week_start_day !== null) {
+      weekStartDay.value = p.week_start_day
+    }
+    if (p.event_opacity !== undefined && p.event_opacity !== null) {
+      const op = parseFloat(p.event_opacity)
+      if (!Number.isNaN(op) && op >= 0 && op <= 1) eventOpacity.value = op
+    }
+    if (p.holiday_weekend_intensity && ['light', 'normal', 'strong'].includes(p.holiday_weekend_intensity)) {
+      holidayWeekendIntensity.value = p.holiday_weekend_intensity
+    }
+    if (p.theme_mode && ['auto', 'light', 'dark'].includes(p.theme_mode)) {
+      themeMode.value = p.theme_mode
+    }
+  }
+
+  /** PATCH partiel ; invalide le cache pour le prochain GET. */
+  async function patchPreferences(partial) {
+    const authStore = useAuthStore()
+    if (!authStore.user) return
+    await apiJson('/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(partial),
+    })
+    prefsCache = null
+  }
+
   async function loadSelectedCountry() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       selectedCountry.value = 'FR'
       return
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('selected_country')
-        .eq('user_id', authStore.user.id)
-        .maybeSingle()
-
-      if (error) throw error
-
-      if (data && data.selected_country) {
-        selectedCountry.value = data.selected_country
-      } else {
+      const p = await fetchPreferencesPayload()
+      applyPreferencesPayload(p)
+      if (!p?.selected_country) {
         selectedCountry.value = 'FR'
         await saveSelectedCountry()
       }
@@ -131,20 +192,10 @@ export const useUIStore = defineStore('ui', () => {
 
   async function saveSelectedCountry() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) return
+    if (!authStore.user) return
 
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: authStore.user.id,
-          selected_country: selectedCountry.value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        })
-
-      if (error) throw error
+      await patchPreferences({ selectedCountry: selectedCountry.value })
     } catch (err) {
       logger.error('Erreur lors de la sauvegarde du pays:', err)
       throw err
@@ -158,55 +209,29 @@ export const useUIStore = defineStore('ui', () => {
 
   async function loadWeekStartDay() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       weekStartDay.value = 0
-    eventOpacity.value = 0.15
+      eventOpacity.value = 0.15
       return
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('week_start_day')
-        .eq('user_id', authStore.user.id)
-        .maybeSingle()
-
-      if (error) throw error
-
-      if (data && data.week_start_day !== null && data.week_start_day !== undefined) {
-        weekStartDay.value = data.week_start_day
-      } else {
-        weekStartDay.value = 0
-        // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
-        // await saveWeekStartDay()
-      }
+      const p = await fetchPreferencesPayload()
+      applyPreferencesPayload(p)
     } catch (err) {
       logger.error('Erreur lors du chargement du jour de début de semaine:', err)
       weekStartDay.value = 0
-      // Ne pas essayer de sauvegarder si le chargement a échoué
     }
   }
 
   async function saveWeekStartDay() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) return
+    if (!authStore.user) return
 
     try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: authStore.user.id,
-          week_start_day: weekStartDay.value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        })
-
-      if (error) throw error
+      await patchPreferences({ weekStartDay: weekStartDay.value })
     } catch (err) {
-      // Ne pas bloquer l'application si la sauvegarde échoue (problème RLS ou autre)
       logger.error('Erreur lors de la sauvegarde du jour de début de semaine:', err)
-      // Ne pas throw pour permettre à l'application de continuer
     }
   }
 
@@ -217,61 +242,28 @@ export const useUIStore = defineStore('ui', () => {
 
   async function loadEventOpacity() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       eventOpacity.value = 0.15
       return
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('event_opacity')
-        .eq('user_id', authStore.user.id)
-        .maybeSingle()
-
-      if (error) throw error
-
-      if (data && data.event_opacity !== null && data.event_opacity !== undefined) {
-        const opacity = parseFloat(data.event_opacity)
-        if (!isNaN(opacity) && opacity >= 0 && opacity <= 1) {
-          eventOpacity.value = opacity
-        } else {
-          eventOpacity.value = 0.15
-          // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
-          // await saveEventOpacity()
-        }
-      } else {
-        eventOpacity.value = 0.15
-        // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
-        // await saveEventOpacity()
-      }
+      const p = await fetchPreferencesPayload()
+      applyPreferencesPayload(p)
     } catch (err) {
       logger.error('Erreur lors du chargement de event_opacity:', err)
       eventOpacity.value = 0.15
-      // Ne pas essayer de sauvegarder si le chargement a échoué
     }
   }
 
   async function saveEventOpacity() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) return
+    if (!authStore.user) return
 
     try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: authStore.user.id,
-          event_opacity: eventOpacity.value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        })
-
-      if (error) throw error
+      await patchPreferences({ eventOpacity: eventOpacity.value })
     } catch (err) {
-      // Ne pas bloquer l'application si la sauvegarde échoue (problème RLS ou autre)
       logger.error('Erreur lors de la sauvegarde de event_opacity:', err)
-      // Ne pas throw pour permettre à l'application de continuer
     }
   }
 
@@ -285,54 +277,28 @@ export const useUIStore = defineStore('ui', () => {
 
   async function loadHolidayWeekendIntensity() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       holidayWeekendIntensity.value = 'normal'
       return
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('holiday_weekend_intensity')
-        .eq('user_id', authStore.user.id)
-        .maybeSingle()
-
-      if (error) throw error
-
-      if (data && data.holiday_weekend_intensity && ['light', 'normal', 'strong'].includes(data.holiday_weekend_intensity)) {
-        holidayWeekendIntensity.value = data.holiday_weekend_intensity
-      } else {
-        holidayWeekendIntensity.value = 'normal'
-        // Ne pas essayer de sauvegarder si le chargement a échoué (problème RLS)
-        // await saveHolidayWeekendIntensity()
-      }
+      const p = await fetchPreferencesPayload()
+      applyPreferencesPayload(p)
     } catch (err) {
       logger.error('Erreur lors du chargement de holiday_weekend_intensity:', err)
       holidayWeekendIntensity.value = 'normal'
-      // Ne pas essayer de sauvegarder si le chargement a échoué
     }
   }
 
   async function saveHolidayWeekendIntensity() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) return
+    if (!authStore.user) return
 
     try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: authStore.user.id,
-          holiday_weekend_intensity: holidayWeekendIntensity.value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        })
-
-      if (error) throw error
+      await patchPreferences({ holidayWeekendIntensity: holidayWeekendIntensity.value })
     } catch (err) {
-      // Ne pas bloquer l'application si la sauvegarde échoue (problème RLS ou autre)
       logger.error('Erreur lors de la sauvegarde de holiday_weekend_intensity:', err)
-      // Ne pas throw pour permettre à l'application de continuer
     }
   }
 
@@ -459,20 +425,10 @@ export const useUIStore = defineStore('ui', () => {
 
   async function saveThemePreference() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) return
+    if (!authStore.user) return
 
     try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: authStore.user.id,
-          theme_mode: themeMode.value,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        })
-
-      if (error) throw error
+      await patchPreferences({ themeMode: themeMode.value })
     } catch (err) {
       logger.error('Erreur lors de la sauvegarde du thème:', err)
     }
@@ -480,32 +436,20 @@ export const useUIStore = defineStore('ui', () => {
 
   async function loadThemePreference() {
     const authStore = useAuthStore()
-    
-    // Charger depuis localStorage d'abord (pour une application immédiate)
+
+    // localStorage d’abord (affichage immédiat avant session)
     const savedMode = localStorage.getItem('themeMode') || 'auto'
     themeMode.value = savedMode
-    
-    // Si l'utilisateur est connecté, charger depuis Supabase
-    if (authStore.user && supabase) {
+
+    if (authStore.user) {
       try {
-        const { data, error } = await supabase
-          .from('user_preferences')
-          .select('theme_mode')
-          .eq('user_id', authStore.user.id)
-          .maybeSingle()
-
-        if (error) throw error
-
-        if (data && data.theme_mode) {
-          themeMode.value = data.theme_mode
-        }
+        const p = await fetchPreferencesPayload()
+        applyPreferencesPayload(p)
       } catch (err) {
-        logger.error('Erreur lors du chargement du thème depuis Supabase:', err)
-        // Continuer avec la valeur localStorage
+        logger.error('Erreur lors du chargement du thème depuis l’API:', err)
       }
     }
-    
-    // Appliquer le thème et configurer l'écouteur système
+
     applyTheme()
     setupSystemThemeListener()
   }
@@ -651,8 +595,11 @@ export const useUIStore = defineStore('ui', () => {
   /**
    * Nettoyage "logout" : vider les sélections et fermer les modales,
    * sans toucher aux préférences UI (thème, fullWidth, etc.).
+   * On invalide quand même le cache serveur pour le prochain utilisateur.
    */
   function resetForLogout() {
+    resetPreferencesCache()
+
     // Sélections / mode multi
     selectedDate.value = null
     selectedDates.value = []
@@ -781,6 +728,7 @@ export const useUIStore = defineStore('ui', () => {
     openRecurringEventModal,
     closeRecurringEventModal,
     resetForLogout,
+    resetPreferencesCache,
     reset
   }
 })

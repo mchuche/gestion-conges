@@ -1,39 +1,49 @@
-# Installation (développement local) — 10 minutes
+# Installation (développement local)
 
 ## Prérequis
-- **Node.js 18+** (recommandé) + npm
-- Un **projet Supabase** (gratuit suffit)
 
-## 1) Supabase (base de données)
-1. Crée un projet sur Supabase.
-2. Va dans **SQL Editor**.
-3. Exécute le script **Fresh install** :
-   - `supabase/sql/00_fresh_install.sql`
+- **Node.js 20+** (recommandé) et npm
+- **Docker** (optionnel) — **`docker/README.md`** : Postgres seul *ou* stack complète API + Nginx (`--profile docker`)
+- Fichier **`.env`** à la racine du front : copier `.env.example` → `.env` et définir **`VITE_API_URL`** (ex. `http://localhost:3000`)
 
-### (Optionnel) Realtime
-Pour avoir les mises à jour en temps réel (congés + notifications) :
-- Dans Supabase : **Database → Replication** et active `leaves`, `leave_types`, `leave_quotas`, `notifications`
-- Ou exécute : `supabase/ops/supabase-realtime-enable.sql`
+## 1) API NestJS + PostgreSQL
 
-## 2) Variables d’environnement (local)
-1. Copie `.env.example` vers `.env`
-2. Remplis :
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
+Guide détaillé : **`docs/guides/API_LOCAL_SETUP.md`**
 
-## 3) Lancer l’app
-Dans le dossier du projet :
+Résumé :
+
+```bash
+docker compose up -d
+cd api
+copy .env.example .env   # Windows ; Linux/macOS : cp
+npm install
+npx prisma migrate deploy
+npm run start:dev
+```
+
+## 2) Application Vue (front)
+
+À la racine du dépôt :
 
 ```bash
 npm install
 npm run dev
 ```
 
-Ou sur Windows :
-- `start-dev.ps1` (PowerShell)
-- `start-dev.bat` (cmd)
+Navigateur : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-conges/`).
+
+## 3) Scripts Windows
+
+**`scripts/start-dev.ps1`** ou **`scripts/start-dev.bat`** — voir **`scripts/README.md`**.
 
 ## 4) Déploiement GitHub Pages
-Voir : `docs/guides/DEPLOY_GITHUB_PAGES.md`
 
+**`docs/guides/DEPLOY_GITHUB_PAGES.md`** (secret **`VITE_API_URL`** vers ton API en production).
 
+---
+
+### Index de la documentation
+
+- **Guides actifs** : **`docs/guides/README.md`**
+- **Notes internes** (revue, idées, exemples) : **`docs/notes/`**
+- **Archives** (anciennes migrations / docs historiques) : **`docs/archive/README.md`**

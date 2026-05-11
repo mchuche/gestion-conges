@@ -6,7 +6,7 @@ Ce projet est né d'une idée que j'avais en tête depuis longtemps, mais sur la
 
 ---
 
-Une application web moderne et responsive pour gérer vos jours de congé avec un calendrier interactif. **Multi-utilisateurs avec authentification Supabase**.
+Une application web moderne et responsive pour gérer vos jours de congé avec un calendrier interactif. **Multi-utilisateurs** avec authentification via l’**API NestJS** (JWT) et persistance **PostgreSQL** (Prisma).
 
 ## ✨ Fonctionnalités
 
@@ -18,7 +18,7 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 - ⏰ **Demi-journées** : Posez des congés pour le matin ou l'après-midi uniquement
 - 📅 **Jours fériés** : Support de 11 pays (FR, BE, CH, CA, US, GB, DE, ES, IT, NL, LU)
 - 📊 **Statistiques et quotas** : Suivez vos congés posés et restants par type et par année
-- 💾 **Sauvegarde cloud** : Toutes vos données sont sauvegardées dans Supabase (base de données PostgreSQL)
+- 💾 **Sauvegarde** : Données via l’API NestJS sur PostgreSQL (déploiement ou Docker local)
 - 📱 **Responsive** : Fonctionne parfaitement sur ordinateur, tablette et mobile
 - 🎯 **Interface moderne** : Design élégant et intuitif
 - 📲 **PWA (Progressive Web App)** : Installable comme une app native, fonctionne hors ligne
@@ -27,41 +27,34 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 
 ### Prérequis
 
-1. **Créer un compte Supabase** (gratuit) : https://supabase.com
-2. **Créer un projet Supabase** et récupérer vos clés API
+1. **Node.js 20+** et **npm**
+2. **Docker** (recommandé) pour PostgreSQL local — voir **`docker/README.md`** (option « stack complète » avec `--profile docker`)
 
 ### Configuration
 
-1. **Créer les tables dans Supabase** :
-   - Allez dans **SQL Editor** dans votre projet Supabase
-   - Exécutez le script : `supabase/sql/00_fresh_install.sql`
-   - (Optionnel) Activez Realtime : `supabase/ops/supabase-realtime-enable.sql`
-
-2. **Configurer les clés API** :
-
-   **Pour le développement local :**
-   - Copiez `.env.example` vers `.env`
-   - Modifiez `.env` avec vos clés Supabase :
-     ```
-     VITE_SUPABASE_URL=votre_url_supabase
-     VITE_SUPABASE_ANON_KEY=votre_cle_anon
-     ```
-   - ⚠️ **Ne commitez JAMAIS `.env` dans Git** (déjà dans `.gitignore`)
+1. **Base de données et API** : suis **`docs/INSTALL.md`** et le guide détaillé **`docs/guides/API_LOCAL_SETUP.md`** (Prisma : `npx prisma migrate deploy` dans `api/`).
+2. **Variables d’environnement (front)** :
+   - Copie `.env.example` → `.env` à la racine
+   - Définis **`VITE_API_URL`** (ex. `http://localhost:3000`) pour pointer vers l’API Nest
+   - ⚠️ **Ne commite jamais `.env`** (déjà dans `.gitignore`)
+3. **Archives** (anciennes procédures, hors besoin courant) : **`docs/archive/`** — voir `docs/archive/README.md`.
 
    **Pour GitHub Pages :**
-   - Configurez les secrets GitHub (voir section "Déploiement")
-   - Les variables d'environnement seront utilisées lors du déploiement
+   - Secret dépôt **`VITE_API_URL`** (URL HTTPS de l’API) — voir section « Déploiement » et **`docs/guides/DEPLOY_GITHUB_PAGES.md`**
 
-3. **Installer les dépendances et lancer l'application** :
+4. **Installer les dépendances et lancer l'application** :
    ```bash
    npm install
    npm run dev
    ```
    
-   L'application sera accessible sur `http://localhost:5173`
+   Front : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-conges/`)
 
-👉 Guide pas-à-pas (plus simple) : `docs/INSTALL.md`
-👉 Créer le premier admin : `docs/guides/CREATE_FIRST_ADMIN.md`
+👉 Installation : `docs/INSTALL.md`  
+👉 Index des guides : `docs/guides/README.md`  
+👉 API locale : `docs/guides/API_LOCAL_SETUP.md`  
+👉 Premier admin : `docs/guides/CREATE_FIRST_ADMIN.md`  
+👉 Notes internes : `docs/notes/`
 
 ## 📖 Utilisation
 
@@ -73,7 +66,7 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
    - Cliquez sur un jour dans le calendrier
    - Choisissez la période (journée complète, matin, après-midi)
    - Sélectionnez le type de congé
-   - Le congé sera automatiquement sauvegardé dans Supabase
+   - Le congé est enregistré via l’API
 
 3. **Sélection multiple** :
    - Maintenez **Ctrl** (ou **Cmd** sur Mac) et cliquez sur plusieurs jours
@@ -101,14 +94,20 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 
 ```
 gestion-conges/
-├── index.html              # Point d'entrée HTML (utilisé par Vite)
-├── vite.config.js          # Configuration Vite
-├── package.json            # Dépendances npm
-├── public/                 # Fichiers statiques
-│   ├── 404.html           # Page 404 pour GitHub Pages (routage SPA)
-│   ├── manifest.json      # Manifest PWA
-│   └── icons/             # Icônes PWA
-├── src/                    # Code source Vue.js
+├── index.html              # Point d'entrée HTML (Vite)
+├── vite.config.js
+├── package.json
+├── docker-compose.yml      # Postgres (dev) ; profil `docker` = API + Nginx
+├── docker/                 # Nginx, doc d’usage Docker
+├── Dockerfile.web          # Image Nginx (build Vite) — profil docker
+├── api/                    # Backend NestJS + Prisma (+ Dockerfile)
+├── scripts/                # start-dev.*, generate-icons.html
+├── docs/                   # INSTALL, guides, notes internes (docs/notes/)
+├── public/                 # Fichiers statiques (servis tels quels)
+│   ├── 404.html
+│   ├── manifest.json       # Manifest PWA
+│   └── icons/
+├── src/                    # Application Vue.js
 │   ├── main.js            # Point d'entrée Vue
 │   ├── App.vue            # Composant racine
 │   ├── router/            # Configuration Vue Router
@@ -129,7 +128,7 @@ gestion-conges/
 │   │   ├── modals/        # Modales
 │   │   └── stats/         # Statistiques
 │   ├── composables/       # Composables Vue (hooks)
-│   ├── services/          # Services (Supabase, API, etc.)
+│   ├── services/          # Client API, utilitaires
 │   ├── styles/            # Styles CSS
 │   ├── utils/             # Utilitaires
 │   ├── plugins/           # Plugins Vue
@@ -137,12 +136,7 @@ gestion-conges/
 ├── .github/workflows/      # Workflows GitHub Actions
 │   └── deploy.yml         # Déploiement automatique
 ├── .env.example            # Exemple de variables d'environnement
-├── supabase/                # Scripts Supabase (fresh install, migrations, ops)
-│   ├── sql/
-│   │   └── 00_fresh_install.sql
-│   ├── migrations/
-│   ├── ops/
-│   └── legacy/
+├── docs/archive/            # Documentation et SQL historiques (non requis pour Nest + Prisma)
 └── README.md               # Ce fichier
 ```
 
@@ -171,7 +165,7 @@ L'application est maintenant une **PWA complète** et peut être installée sur 
 2. Cliquez sur l'icône d'installation dans la barre d'adresse (ou menu > Installer l'application)
 3. L'app s'ouvrira dans une fenêtre dédiée
 
-**Note :** Pour générer les icônes nécessaires, ouvrez `generate-icons.html` dans votre navigateur et cliquez sur "Télécharger toutes les icônes", puis placez-les dans le dossier `icons/`.
+**Note :** Pour générer les icônes PWA, ouvrez **`scripts/generate-icons.html`** dans le navigateur, puis placez les fichiers dans **`public/icons/`** (voir `scripts/README.md`).
 
 ## 🛠️ Outils et Technologies
 
@@ -187,12 +181,10 @@ L'application est maintenant une **PWA complète** et peut être installée sur 
 - **VueUse** : Collection de composables utilitaires
 - **VueDatePicker** : Sélecteur de dates
 
-### Backend & Base de données
-- **Supabase** : Backend as a Service (BaaS)
-  - **PostgreSQL** : Base de données relationnelle
-  - **Supabase Auth** : Authentification et gestion des utilisateurs
-  - **Row Level Security (RLS)** : Sécurité au niveau des lignes
-  - **API REST automatique** : Générée automatiquement par Supabase
+### Backend & base de données
+- **NestJS** : API REST (`api/`)
+- **PostgreSQL** : base relationnelle (Docker local ou hébergeur)
+- **Prisma** : ORM, migrations et client typé (`api/prisma/`)
 
 ### Déploiement & CI/CD
 - **GitHub Pages** : Hébergement de l'application
@@ -205,31 +197,24 @@ L'application est maintenant une **PWA complète** et peut être installée sur 
   - Aide au développement avec suggestions de code intelligentes
   - Utilisé pour le développement et la maintenance de ce projet
 - **GitHub** : Hébergement du code source et gestion des secrets
-- **Supabase Dashboard** : Interface d'administration de la base de données
+- **Prisma Studio** (`cd api && npx prisma studio`) : exploration des tables PostgreSQL
 
 ### Bibliothèques externes
-- **@supabase/supabase-js** (v2) : Client JavaScript officiel pour Supabase
+- **@nestjs/core** + écosystème Nest : API REST
+- **@prisma/client** : accès base de données
 - **SweetAlert2** : Modales et notifications
 - **date-fns** : Manipulation de dates
 
 ## 💡 Notes techniques
 
-- **Backend** : Supabase (PostgreSQL + API REST automatique)
-- **Authentification** : Supabase Auth (sécurisé, avec gestion de sessions)
-- **Base de données** : PostgreSQL avec Row Level Security (RLS)
-- **Sécurité** : Chaque utilisateur ne peut voir/modifier que ses propres données
-- **Synchronisation** : Les données sont synchronisées en temps réel via Supabase
+- **Backend** : NestJS + Prisma sur PostgreSQL
+- **Authentification** : JWT (access + refresh), voir module `api/src/auth/`
+- **Sécurité** : contrôle d’accès côté API (guards, relations utilisateur)
+- **Schéma** : défini dans `api/prisma/schema.prisma`, migrations dans `api/prisma/migrations/`
 
 ## 🗄️ Base de données
 
-L'application utilise 4 tables dans Supabase :
-
-- `leaves` : Stocke les congés posés (date_key, leave_type_id)
-- `leave_types` : Types de congés personnalisables par utilisateur
-- `leave_quotas` : Quotas de congés par type et par année
-- `user_preferences` : Préférences utilisateur (pays sélectionné, etc.)
-
-**Script SQL** : Exécutez le script SQL fourni dans Supabase > SQL Editor pour créer les tables et les politiques de sécurité (RLS).
+Le modèle relationnel est celui de **Prisma** (`User`, `Leave`, `GlobalLeaveType`, quotas, équipes, etc.). Pour créer le schéma : **`npx prisma migrate deploy`** dans le dossier `api/`. D’anciens fichiers SQL éventuels sont rangés sous **`docs/archive/`** (voir `docs/archive/README.md`).
 
 ## 🎨 Personnalisation
 
@@ -242,52 +227,24 @@ Vous pouvez facilement personnaliser :
 ## 🔒 Sécurité
 
 - **Clés API** : Stockées dans GitHub Secrets (production) ou `.env` (développement local, non versionné)
-- **Row Level Security (RLS)** : Activé - chaque utilisateur ne voit que ses données
-- **Authentification** : Sécurisée via Supabase Auth
+- **Autorisations** : appliquées dans les services Nest (JWT + ownership des ressources)
+- **Authentification** : JWT émis par l’API Nest (access + refresh)
 - **Mots de passe** : Hashés (jamais stockés en clair)
 - **Variables d'environnement** : Gérées via Vite pour un accès sécurisé aux clés API
 
 ## 🚀 Déploiement
 
-### GitHub Pages avec GitHub Actions (Recommandé)
+### GitHub Pages avec GitHub Actions
 
-Cette méthode utilise GitHub Secrets pour stocker vos clés Supabase de manière sécurisée. Les variables d'environnement sont injectées lors du build.
+Le workflow **`.github/workflows/deploy.yml`** construit le front et publie le dossier `dist/`. Il attend un secret dépôt :
 
-#### 1. Configurer les secrets GitHub
+- **`VITE_API_URL`** : URL HTTPS de ton **API Nest** (ex. `https://api.mondomaine.com`).
 
-1. Allez dans votre dépôt GitHub
-2. **Settings** → **Secrets and variables** → **Actions**
-3. Cliquez sur **New repository secret** et ajoutez :
-   - **Nom** : `SUPABASE_URL`
-   - **Valeur** : Votre URL Supabase (ex: `https://xxxxx.supabase.co`)
-4. Ajoutez un second secret :
-   - **Nom** : `SUPABASE_ANON_KEY`
-   - **Valeur** : Votre clé anonyme Supabase
+L’API doit être hébergée séparément et accepter les requêtes depuis ton domaine Pages (**CORS**). Détail pas à pas : **`docs/guides/DEPLOY_GITHUB_PAGES.md`**.
 
-#### 2. Activer GitHub Pages
+### Autres hébergeurs (Vercel, Netlify, etc.)
 
-1. Allez dans **Settings** → **Pages**
-2. Sous **Source**, sélectionnez **GitHub Actions**
-3. Le workflow `.github/workflows/deploy.yml` sera utilisé automatiquement
-
-#### 3. Déployer
-
-1. Poussez votre code sur la branche `main`
-2. Le workflow GitHub Actions se déclenchera automatiquement
-3. Les variables d'environnement seront injectées lors du build
-4. Votre site sera déployé sur GitHub Pages
-
-#### 4. Vérifier le déploiement
-
-- Allez dans l'onglet **Actions** de votre dépôt pour voir le statut du déploiement
-- Une fois terminé, votre site sera accessible à `https://votre-username.github.io/gestion-conges`
-
-### Alternative : Déploiement sur Vercel/Netlify
-
-Pour un déploiement sur Vercel ou Netlify :
-- Configurez les variables d'environnement dans leur interface
-- Plus sécurisé pour la production
-- Configuration similaire avec leurs interfaces respectives
+Même principe : variable d’environnement **`VITE_API_URL`** au build, plus hébergement de l’API et CORS.
 
 ## 📝 Licence
 

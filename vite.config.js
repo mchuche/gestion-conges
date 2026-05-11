@@ -5,6 +5,12 @@ import { resolve } from 'path'
 
 export default defineConfig({
   base: '/gestion-conges/',
+  // Dev : ouvre directement la bonne URL (le router Vue est en createWebHistory('/gestion-conges/'))
+  server: {
+    port: 5173,
+    strictPort: false,
+    open: '/gestion-conges/',
+  },
   plugins: [
     vue(),
     VitePWA({

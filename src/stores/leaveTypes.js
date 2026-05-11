@@ -1,9 +1,15 @@
+/**
+ * Store des types de congés — API Nest (`/leave-types`)
+ *
+ * Les types globaux viennent du seed Prisma ; les couleurs sont des personnalisations
+ * par utilisateur (table LeaveTypeCustomization).
+ */
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../services/supabase'
+import { apiJson } from '../services/api'
 import logger from '../services/logger'
 import { useAuthStore } from './auth'
-import { useLeaveTypesRealtime } from '../composables/useRealtime'
 
 // Couleurs par défaut pour chaque type
 const DEFAULT_COLORS = {
@@ -65,10 +71,16 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
     })
   }
 
-  // Actions
+  // ============================================
+  // ACTIONS
+  // ============================================
+  
+  /**
+   * Charge les types de congés globaux et les personnalisations utilisateur
+   */
   async function loadLeaveTypes() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       leaveTypes.value = []
       return
     }
@@ -77,126 +89,26 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
       loading.value = true
       error.value = null
 
-      // Charger les types globaux (accessibles à tous)
-      let globalData = null
-      let globalError = null
-      
-      try {
-        const result = await supabase
-          .from('global_leave_types')
-          .select('*')
-          .order('created_at')
-        globalData = result.data
-        globalError = result.error
-      } catch (err) {
-        globalError = err
-      }
+      const data = await apiJson('/leave-types', { method: 'GET' })
+      const list = data.leaveTypes || []
 
-      if (globalError) {
-        // Si la table n'existe pas encore (migration non exécutée), utiliser les types par défaut
-        if (globalError.code === '42P01' || globalError.message?.includes('does not exist') || globalError.message?.includes('relation') || globalError.message?.includes('table')) {
-          logger.warn('Table global_leave_types non trouvée. Migration SQL non exécutée. Utilisation des types par défaut.')
-          // Utiliser les types par défaut temporairement
-          globalLeaveTypes.value = [
-            { id: 'congé-payé', name: 'Congé Payé', label: 'CP', category: 'leave' },
-            { id: 'rtt', name: 'RTT', label: 'RTT', category: 'leave' },
-            { id: 'jours-hiver', name: 'Jours Hiver', label: 'JH', category: 'leave' },
-            { id: 'maladie', name: 'Maladie', label: 'Mal', category: 'event' },
-            { id: 'télétravail', name: 'Télétravail', label: 'TT', category: 'event' },
-            { id: 'formation', name: 'Formation', label: 'Form', category: 'event' },
-            { id: 'grève', name: 'Grève', label: 'Grève', category: 'event' }
-          ]
-        } else {
-          throw globalError
-        }
-      } else if (globalData) {
-        globalLeaveTypes.value = globalData.map(t => ({
-          id: t.id,
-          name: t.name,
-          label: t.label,
-          category: t.category || 'leave'
-        }))
-      } else {
-        // Fallback si aucune donnée
-        globalLeaveTypes.value = []
-      }
+      globalLeaveTypes.value = list.map((t) => ({
+        id: t.id,
+        name: t.name,
+        label: t.label,
+        category: t.category || 'leave',
+      }))
 
-      // Charger les personnalisations de l'utilisateur (couleurs)
-      // Si la table leave_types a encore l'ancienne structure, essayer de la charger quand même
-      let customData = null
-      let customError = null
-      
-      try {
-        const result = await supabase
-          .from('leave_types')
-          .select('global_type_id, color')
-          .eq('user_id', authStore.user.id)
-        customData = result.data
-        customError = result.error
-      } catch (err) {
-        // Si la requête échoue (ancienne structure), ignorer les personnalisations
-        logger.warn('Impossible de charger les personnalisations (migration non exécutée?):', err)
-        customData = []
-        customError = null
-      }
-
-      if (customError && customError.code !== '42P01') {
-        // Ignorer seulement si la table n'existe pas, sinon lancer l'erreur
-        throw customError
-      }
-
-      // Construire le map des personnalisations
       userCustomizations.value = {}
-      if (customData) {
-        customData.forEach(custom => {
-          userCustomizations.value[custom.global_type_id] = {
-            color: custom.color
-          }
-        })
-      }
-
-      // Créer les personnalisations par défaut pour les types globaux qui n'en ont pas
-      const missingCustomizations = []
-      globalLeaveTypes.value.forEach(globalType => {
-        if (!userCustomizations.value[globalType.id]) {
-          missingCustomizations.push({
-            user_id: authStore.user.id,
-            global_type_id: globalType.id,
-            color: DEFAULT_COLORS[globalType.id] || '#4a90e2'
-          })
-        }
+      list.forEach((t) => {
+        const gid = t.global_type_id || t.id
+        userCustomizations.value[gid] = { color: t.color }
       })
 
-      if (missingCustomizations.length > 0) {
-        const { error: insertError } = await supabase
-          .from('leave_types')
-          .insert(missingCustomizations)
-        
-        if (insertError) {
-          logger.warn('Erreur lors de la création des personnalisations par défaut:', insertError)
-        } else {
-          // Recharger les personnalisations
-          const { data: newCustomData } = await supabase
-            .from('leave_types')
-            .select('global_type_id, color')
-            .eq('user_id', authStore.user.id)
-          
-          if (newCustomData) {
-            newCustomData.forEach(custom => {
-              userCustomizations.value[custom.global_type_id] = {
-                color: custom.color
-              }
-            })
-          }
-        }
-      }
-
-      // Fusionner les types globaux avec les personnalisations
       mergeTypesWithCustomizations()
 
       logger.log('Types de congés chargés:', leaveTypes.value.length, 'types')
-      
-      // Activer Realtime après le premier chargement
+
       if (!realtimeEnabled.value) {
         setupRealtime()
       }
@@ -209,9 +121,12 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
     }
   }
 
+  /**
+   * Sauvegarde les personnalisations utilisateur (couleurs) dans PocketBase
+   */
   async function saveLeaveTypes() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       return
     }
 
@@ -219,60 +134,21 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
       loading.value = true
       error.value = null
 
-      // Récupérer toutes les personnalisations existantes
-      const { data: existingCustomizations } = await supabase
-        .from('leave_types')
-        .select('id, global_type_id')
-        .eq('user_id', authStore.user.id)
+      const items = leaveTypes.value.map((type) => ({
+        id: type.id,
+        global_type_id: type.global_type_id || type.id,
+        color: type.color,
+      }))
 
-      const existingGlobalIds = new Set(existingCustomizations?.map(t => t.global_type_id) || [])
-      const currentGlobalIds = new Set(leaveTypes.value.map(t => t.global_type_id || t.id))
-
-      // Mettre à jour ou insérer les personnalisations (couleurs uniquement)
-      const updates = []
-      const inserts = []
-
-      leaveTypes.value.forEach(type => {
-        const globalTypeId = type.global_type_id || type.id
-        if (existingGlobalIds.has(globalTypeId)) {
-          // Mettre à jour la couleur
-          const existingId = existingCustomizations.find(c => c.global_type_id === globalTypeId)?.id
-          if (existingId) {
-            updates.push({
-              id: existingId,
-              color: type.color
-            })
-          }
-        } else {
-          // Insérer une nouvelle personnalisation
-          inserts.push({
-            user_id: authStore.user.id,
-            global_type_id: globalTypeId,
-            color: type.color
-          })
-        }
+      await apiJson('/leave-types/save', {
+        method: 'POST',
+        body: JSON.stringify({ items }),
       })
 
-      // Insérer les nouvelles personnalisations
-      if (inserts.length > 0) {
-        await supabase
-          .from('leave_types')
-          .insert(inserts)
-      }
-
-      // Mettre à jour les personnalisations existantes
-      for (const update of updates) {
-        await supabase
-          .from('leave_types')
-          .update({ color: update.color })
-          .eq('id', update.id)
-      }
-
-      // Mettre à jour le cache des personnalisations
-      leaveTypes.value.forEach(type => {
+      leaveTypes.value.forEach((type) => {
         const globalTypeId = type.global_type_id || type.id
         userCustomizations.value[globalTypeId] = {
-          color: type.color
+          color: type.color,
         }
       })
 
@@ -320,75 +196,19 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
     leaveTypes.value = newTypes
   }
 
-  // Configuration Realtime
+  /** Anciennement PocketBase Realtime — désactivé avec l’API Nest. */
   function setupRealtime() {
     const authStore = useAuthStore()
     if (!authStore.user || realtimeEnabled.value) return
 
-    // Nettoyer les anciennes subscriptions si elles existent
     disableRealtime()
-
     realtimeEnabled.value = true
-    
-    // Subscription pour les personnalisations utilisateur (leave_types)
-    realtimeSubscription.value = useLeaveTypesRealtime(authStore.user.id, {
-      onInsert: (newCustomization) => {
-        logger.log('[Realtime] Nouvelle personnalisation insérée:', newCustomization)
-        if (newCustomization.global_type_id) {
-          userCustomizations.value[newCustomization.global_type_id] = {
-            color: newCustomization.color
-          }
-          mergeTypesWithCustomizations()
-        }
-      },
-      onUpdate: (updatedCustomization, oldCustomization) => {
-        logger.log('[Realtime] Personnalisation mise à jour:', updatedCustomization)
-        if (updatedCustomization.global_type_id) {
-          userCustomizations.value[updatedCustomization.global_type_id] = {
-            color: updatedCustomization.color
-          }
-          mergeTypesWithCustomizations()
-        }
-      },
-      onDelete: (deletedCustomization) => {
-        logger.log('[Realtime] Personnalisation supprimée:', deletedCustomization)
-        if (deletedCustomization.global_type_id) {
-          delete userCustomizations.value[deletedCustomization.global_type_id]
-          mergeTypesWithCustomizations()
-        }
-      }
-    })
-
-    // Subscription pour les types globaux (global_leave_types)
-    // Utiliser une subscription Supabase directe car useLeaveTypesRealtime est pour leave_types
-    const globalChannel = supabase
-      .channel('global_leave_types_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'global_leave_types'
-      }, (payload) => {
-        logger.log('[Realtime] Changement dans global_leave_types:', payload)
-        // Recharger les types globaux
-        loadLeaveTypes()
-      })
-      .subscribe()
-
-    globalRealtimeSubscription.value = globalChannel
-    
-    logger.log('[Realtime] Subscriptions activées pour les types de congés')
+    realtimeSubscription.value = null
+    globalRealtimeSubscription.value = null
+    logger.debug('[LeaveTypesStore] Realtime désactivé (API Nest).')
   }
 
   function disableRealtime() {
-    // Nettoyer les subscriptions si elles existent
-    if (realtimeSubscription.value && typeof realtimeSubscription.value.unsubscribe === 'function') {
-      realtimeSubscription.value.unsubscribe()
-      logger.log('[Realtime] Subscription nettoyée pour les personnalisations')
-    }
-    if (globalRealtimeSubscription.value) {
-      supabase.removeChannel(globalRealtimeSubscription.value)
-      logger.log('[Realtime] Subscription nettoyée pour les types globaux')
-    }
     realtimeSubscription.value = null
     globalRealtimeSubscription.value = null
     realtimeEnabled.value = false

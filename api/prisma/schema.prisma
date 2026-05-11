@@ -1,0 +1,226 @@
+// Schéma Prisma — NestJS + PostgreSQL (remplace PocketBase pour la V2 API).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leaves              Leave[]
+  refreshTokens       RefreshToken[]
+  leaveTypeCustoms    LeaveTypeCustomization[]
+  appAdmin            AppAdmin?
+  ownedTeams          Team[]             @relation("TeamOwner")
+  teamMemberships     TeamMember[]
+  teamInvitationsSent TeamInvitation[]   @relation("InvitationInviter")
+  memberInviteLinks   TeamMember[]       @relation("MemberInvitedBy")
+  notifications       Notification[]
+  leaveQuotas         LeaveQuota[]
+  userPreferences     UserPreferences?
+  recurringEvents     RecurringEvent[]
+  appSettingsUpdated  AppSetting[]       @relation("AppSettingUpdatedBy")
+  auditLogs           AuditLog[]
+}
+
+/// Paramètres globaux de l’application (équivalent `app_settings` PocketBase).
+model AppSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  description String   @default("")
+  updatedById String?
+  updatedBy   User?    @relation("AppSettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Journal des actions admin (équivalent `audit_logs` PocketBase).
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String?
+  entityId   String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Rôle admin (équivalent collection app_admins PocketBase).
+model AppAdmin {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   String // "admin" | "super_admin"
+}
+
+/// Types de congés globaux (IDs stables, ex. congé-payé).
+model GlobalLeaveType {
+  id       String @id
+  name     String
+  label    String
+  category String @default("leave")
+  sortOrder Int   @default(0)
+}
+
+/// Personnalisation couleur par utilisateur.
+model LeaveTypeCustomization {
+  id           String @id @default(uuid())
+  userId       String
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  globalTypeId String
+  color        String @default("#4a90e2")
+
+  @@unique([userId, globalTypeId])
+}
+
+model Leave {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateKey     String
+  leaveTypeId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, dateKey])
+  @@index([userId])
+}
+
+/// Équipe (remplace collection `teams` PocketBase).
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  ownerId     String
+  owner       User     @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     TeamMember[]
+  invitations TeamInvitation[]
+
+  @@index([ownerId])
+}
+
+/// Membre d’équipe — rôle `owner` ou `member` (aligné PocketBase).
+model TeamMember {
+  id          String   @id @default(uuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String
+  invitedById String?
+  invitedBy   User?    @relation("MemberInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+/// Invitation par email (statut pending | accepted | declined).
+model TeamInvitation {
+  id          String    @id @default(uuid())
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  email       String
+  invitedById String
+  invitedBy   User      @relation("InvitationInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+  status      String    @default("pending")
+  createdAt   DateTime  @default(now())
+  acceptedAt  DateTime?
+
+  @@index([teamId])
+  @@index([email])
+}
+
+/// Notifications in-app (invitations, événements modifiés, etc.).
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  read      Boolean   @default(false)
+  readAt    DateTime?
+  data      Json?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Quotas par année et type de congé (ex. 25 jours CP en 2026).
+model LeaveQuota {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year        Int
+  leaveTypeId String
+  quota       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, year, leaveTypeId])
+  @@index([userId])
+}
+
+/// Préférences UI persistées (pays, thème, semaine, opacité…).
+model UserPreferences {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selectedCountry         String   @default("FR")
+  weekStartDay            Int      @default(0)
+  eventOpacity            Float    @default(0.15)
+  holidayWeekendIntensity String   @default("normal")
+  themeMode               String   @default("auto")
+  updatedAt               DateTime @updatedAt
+}
+
+/// Règle d’événement récurrent (génération de lignes dans `Leave` côté client).
+model RecurringEvent {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveTypeId       String
+  period            String    @default("full")
+  recurrenceType    String
+  recurrencePattern Json
+  startDate         DateTime  @db.Date
+  endDate           DateTime? @db.Date
+  maxOccurrences    Int?
+  excludedDates     Json      @default("[]")
+  name              String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId])
+}

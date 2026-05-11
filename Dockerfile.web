@@ -1,0 +1,23 @@
+# Build du front Vue + Nginx pour servir dist/ (sans HTTPS — à ajouter en prod derrière un proxy).
+
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+# URL de l’API telle que le navigateur y accède depuis ta machine (hôte expose le port 3000)
+ARG VITE_API_URL=http://localhost:3000
+ENV VITE_API_URL=$VITE_API_URL
+
+RUN npm run build
+
+FROM nginx:alpine
+
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html/gestion-conges
+
+EXPOSE 80

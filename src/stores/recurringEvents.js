@@ -1,30 +1,79 @@
+/**
+ * Store des événements récurrents — API Nest (`/recurring-events`).
+ *
+ * Les règles sont en base ; la génération des dates se fait côté client
+ * (`generateRecurringOccurrences`) puis les lignes sont appliquées via
+ * `setLeave` + `saveLeaves()` (sync `/leaves/sync`).
+ */
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../services/supabase'
+import { apiJson } from '../services/api'
 import logger from '../services/logger'
 import { handleError } from '../services/errorHandler'
 import { useAuthStore } from './auth'
 import { useLeavesStore } from './leaves'
 import { useUIStore } from './ui'
-import { generateRecurringOccurrences, formatRecurrencePattern } from '../services/recurrence'
+import { generateRecurringOccurrences } from '../services/recurrence'
 import { getYear } from '../services/dateUtils'
 import { getDateKeys } from '../services/utils'
 
+/**
+ * Corps PATCH Nest à partir d’objets pouvant être en snake_case (UI historique)
+ * ou camelCase.
+ */
+function toPatchDto(updates) {
+  const u = updates || {}
+  const dto = {}
+  if (u.leave_type_id !== undefined) dto.leaveTypeId = u.leave_type_id
+  if (u.leaveTypeId !== undefined) dto.leaveTypeId = u.leaveTypeId
+  if (u.period !== undefined) dto.period = u.period
+  if (u.recurrence_type !== undefined) dto.recurrenceType = u.recurrence_type
+  if (u.recurrenceType !== undefined) dto.recurrenceType = u.recurrenceType
+  if (u.recurrence_pattern !== undefined) dto.recurrencePattern = u.recurrence_pattern
+  if (u.recurrencePattern !== undefined) dto.recurrencePattern = u.recurrencePattern
+  if (u.start_date !== undefined) dto.startDate = u.start_date
+  if (u.startDate !== undefined) dto.startDate = u.startDate
+  if (u.end_date !== undefined) dto.endDate = u.end_date
+  if (u.endDate !== undefined) dto.endDate = u.endDate
+  if (u.max_occurrences !== undefined) dto.maxOccurrences = u.max_occurrences
+  if (u.maxOccurrences !== undefined) dto.maxOccurrences = u.maxOccurrences
+  if (u.excluded_dates !== undefined) dto.excludedDates = u.excluded_dates
+  if (u.excludedDates !== undefined) dto.excludedDates = u.excludedDates
+  if (u.name !== undefined) dto.name = u.name
+  if (u.is_active !== undefined) dto.isActive = u.is_active
+  if (u.isActive !== undefined) dto.isActive = u.isActive
+  return dto
+}
+
 export const useRecurringEventsStore = defineStore('recurringEvents', () => {
-  // State
   const recurringEvents = ref([])
   const loading = ref(false)
   const error = ref(null)
 
-  // Getters
-  const activeRecurringEvents = computed(() => {
-    return recurringEvents.value.filter(event => event.is_active)
-  })
+  const activeRecurringEvents = computed(() =>
+    recurringEvents.value.filter((event) => event.is_active),
+  )
 
-  // Actions
+  /**
+   * Pour chaque occurrence générée : si le créneau (date_key) est libre,
+   * on pose le type ; puis un seul sync serveur.
+   */
+  async function applyOccurrencesToLeaves(leavesStore, occurrences) {
+    if (!occurrences.length) return
+    for (const occ of occurrences) {
+      const date = occ.date instanceof Date ? occ.date : new Date(occ.date)
+      const keys = getDateKeys(date)
+      const dateKey = occ.period === 'full' ? keys.full : keys[occ.period]
+      if (leavesStore.leaves[dateKey]) continue
+      leavesStore.setLeave(dateKey, occ.leaveTypeId)
+    }
+    await leavesStore.saveLeaves()
+  }
+
   async function loadRecurringEvents() {
     const authStore = useAuthStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       recurringEvents.value = []
       return
     }
@@ -33,20 +82,13 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
       loading.value = true
       error.value = null
 
-      const { data, error: fetchError } = await supabase
-        .from('recurring_events')
-        .select('*')
-        .eq('user_id', authStore.user.id)
-        .order('created_at', { ascending: false })
-
-      if (fetchError) throw fetchError
-
-      recurringEvents.value = data || []
+      const data = await apiJson('/recurring-events', { method: 'GET' })
+      recurringEvents.value = data.events || []
       logger.log('Événements récurrents chargés:', recurringEvents.value.length)
     } catch (err) {
       const errorMessage = handleError(err, {
         context: 'RecurringEventsStore.loadRecurringEvents',
-        showToast: false
+        showToast: false,
       })
       error.value = errorMessage
       recurringEvents.value = []
@@ -56,54 +98,43 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
   }
 
   /**
-   * Charger les événements récurrents de tous les membres d'une équipe
-   * @param {string[]} userIds - Liste des IDs des membres de l'équipe
-   * @returns {Promise<Object>} - Objet avec userId comme clé et array d'événements récurrents comme valeur
+   * Événements récurrents actifs pour une liste d’utilisateurs (vue équipe).
+   * Réponse API : `{ byUser: { [userId]: events[] } }`.
    */
   async function loadTeamRecurringEvents(userIds) {
-    if (!userIds || userIds.length === 0 || !supabase) {
+    if (!userIds || userIds.length === 0) {
       return {}
     }
 
     try {
-      logger.debug('[RecurringEventsStore] Chargement des événements récurrents pour l\'équipe:', userIds.length, 'membres')
-      
-      const { data, error: fetchError } = await supabase
-        .from('recurring_events')
-        .select('*')
-        .in('user_id', userIds)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-
-      if (fetchError) throw fetchError
-
-      // Organiser les événements récurrents par utilisateur
-      const teamRecurringEvents = {}
-      if (data) {
-        data.forEach(event => {
-          if (!teamRecurringEvents[event.user_id]) {
-            teamRecurringEvents[event.user_id] = []
-          }
-          teamRecurringEvents[event.user_id].push(event)
-        })
-      }
-
-      logger.log('[RecurringEventsStore] Événements récurrents d\'équipe chargés pour', Object.keys(teamRecurringEvents).length, 'membres')
-      return teamRecurringEvents
+      const q = userIds.map(encodeURIComponent).join(',')
+      const data = await apiJson(`/recurring-events/team?userIds=${q}`, {
+        method: 'GET',
+      })
+      const byUser = data.byUser || {}
+      logger.debug(
+        '[RecurringEventsStore] Équipe :',
+        Object.keys(byUser).length,
+        'utilisateurs avec règles',
+      )
+      return byUser
     } catch (err) {
-      logger.error('[RecurringEventsStore] Erreur lors du chargement des événements récurrents d\'équipe:', err)
+      logger.error(
+        '[RecurringEventsStore] Erreur loadTeamRecurringEvents:',
+        err,
+      )
       return {}
     }
   }
 
   /**
-   * Crée un événement récurrent et génère les occurrences
+   * Crée la règle côté API puis matérialise les occurrences en congés locaux.
    */
   async function createRecurringEvent(eventData) {
     const authStore = useAuthStore()
     const leavesStore = useLeavesStore()
     const uiStore = useUIStore()
-    if (!authStore.user || !supabase) {
+    if (!authStore.user) {
       throw new Error('Utilisateur non authentifié')
     }
 
@@ -111,121 +142,56 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
       loading.value = true
       error.value = null
 
-      // Créer la règle de récurrence
-      const { data: newEvent, error: insertError } = await supabase
-        .from('recurring_events')
-        .insert({
-          user_id: authStore.user.id,
-          leave_type_id: eventData.leave_type_id,
+      const newEvent = await apiJson('/recurring-events', {
+        method: 'POST',
+        body: JSON.stringify({
+          leaveTypeId: eventData.leave_type_id,
           period: eventData.period || 'full',
-          recurrence_type: eventData.recurrence_type,
-          recurrence_pattern: eventData.recurrence_pattern,
-          start_date: eventData.start_date,
-          end_date: eventData.end_date || null,
-          max_occurrences: eventData.max_occurrences || null,
-          excluded_dates: eventData.excluded_dates || [],
-          name: eventData.name || null,
-          is_active: eventData.is_active !== false
-        })
-        .select()
-        .single()
+          recurrenceType: eventData.recurrence_type,
+          recurrencePattern: eventData.recurrence_pattern,
+          startDate: eventData.start_date,
+          endDate: eventData.end_date ?? undefined,
+          maxOccurrences: eventData.max_occurrences ?? null,
+          excludedDates: eventData.excluded_dates ?? [],
+          name: eventData.name ?? null,
+          isActive: eventData.is_active !== false,
+        }),
+      })
 
-      if (insertError) throw insertError
-
-      // Utiliser la date de début de l'événement récurrent
       const eventStartDate = new Date(eventData.start_date)
-      // Utiliser la date de fin de l'événement récurrent, ou la fin de l'année si non définie
       let eventEndDate
       if (eventData.end_date) {
         eventEndDate = new Date(eventData.end_date)
       } else {
-        // Si pas de date de fin, utiliser la fin de l'année de la date de début
         eventEndDate = new Date(eventStartDate)
         eventEndDate.setMonth(11, 31)
         eventEndDate.setHours(23, 59, 59, 999)
       }
 
-      // Générer les occurrences entre la date de début et la date de fin de l'événement
-      logger.debug('[RecurringEvents] Génération des occurrences avec:', {
-        event: newEvent,
-        eventStartDate: eventStartDate.toISOString().split('T')[0],
-        eventEndDate: eventEndDate.toISOString().split('T')[0],
-        country: uiStore.selectedCountry || 'FR'
-      })
-      
       const occurrences = generateRecurringOccurrences(
         newEvent,
         eventStartDate,
         eventEndDate,
-        uiStore.selectedCountry || 'FR'
+        uiStore.selectedCountry || 'FR',
       )
 
-      logger.debug(`[RecurringEvents] Génération terminée: ${occurrences.length} occurrences générées`)
-      logger.log(`Génération des occurrences: ${occurrences.length} occurrences générées`)
+      logger.debug(
+        `[RecurringEvents] ${occurrences.length} occurrence(s) générée(s)`,
+      )
+
       if (occurrences.length > 0) {
-        logger.log('Première occurrence:', occurrences[0])
-        logger.log('Dernière occurrence:', occurrences[occurrences.length - 1])
-      } else {
-        logger.error('[RecurringEvents] Aucune occurrence générée! Pattern:', newEvent.recurrence_pattern)
-      }
-
-      // Insérer les occurrences dans la table leaves
-      if (occurrences.length > 0) {
-        const leavesToInsert = occurrences.map(occ => {
-          // S'assurer que occ.date est bien un objet Date
-          const date = occ.date instanceof Date ? occ.date : new Date(occ.date)
-          const keys = getDateKeys(date)
-          const dateKey = occ.period === 'full' ? keys.full : keys[occ.period]
-          
-          const leave = {
-            user_id: authStore.user.id,
-            date_key: dateKey,
-            leave_type_id: occ.leaveTypeId
-          }
-          
-          return leave
-        })
-
-        logger.debug(`[RecurringEvents] Tentative d'insertion de ${leavesToInsert.length} occurrences`)
-        logger.debug('[RecurringEvents] Premières occurrences:', leavesToInsert.slice(0, 5))
-        logger.debug('[RecurringEvents] Pattern:', newEvent.recurrence_pattern)
-        logger.debug('[RecurringEvents] Type:', newEvent.recurrence_type)
-
-        // Utiliser upsert pour éviter les doublons
-        const { data: insertedData, error: leavesError } = await supabase
-          .from('leaves')
-          .upsert(leavesToInsert, {
-            onConflict: 'user_id,date_key'
-          })
-          .select()
-
-        if (leavesError) {
-          logger.error('[RecurringEvents] Erreur lors de l\'insertion des occurrences:', leavesError)
-          logger.error('Erreur lors de l\'insertion des occurrences:', leavesError)
-          throw leavesError
-        }
-
-        logger.debug(`[RecurringEvents] ${insertedData?.length || leavesToInsert.length} occurrences insérées avec succès`)
-        logger.log(`Insertion de ${leavesToInsert.length} occurrences dans la table leaves réussie`)
-
-        // Recharger les congés
+        await applyOccurrencesToLeaves(leavesStore, occurrences)
         await leavesStore.loadLeaves()
-        logger.debug('[RecurringEvents] Congés rechargés')
-        logger.log('Congés rechargés')
-      } else {
-        logger.warn('[RecurringEvents] Aucune occurrence générée pour l\'événement:', newEvent)
-        logger.warn('Aucune occurrence générée')
       }
 
-      // Recharger les événements récurrents
       await loadRecurringEvents()
 
-      logger.log(`Événement récurrent créé avec ${occurrences.length} occurrences`)
+      logger.log(`Événement récurrent créé (${occurrences.length} occurrence(s))`)
       return newEvent
     } catch (err) {
       const errorMessage = handleError(err, {
         context: 'RecurringEventsStore.createRecurringEvent',
-        showToast: false
+        showToast: false,
       })
       error.value = errorMessage
       throw err
@@ -234,13 +200,11 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
     }
   }
 
-  /**
-   * Met à jour un événement récurrent
-   */
   async function updateRecurringEvent(eventId, updates) {
     const authStore = useAuthStore()
     const leavesStore = useLeavesStore()
-    if (!authStore.user || !supabase) {
+    const uiStore = useUIStore()
+    if (!authStore.user) {
       throw new Error('Utilisateur non authentifié')
     }
 
@@ -248,25 +212,33 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
       loading.value = true
       error.value = null
 
-      const { data: updatedEvent, error: updateError } = await supabase
-        .from('recurring_events')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', eventId)
-        .eq('user_id', authStore.user.id)
-        .select()
-        .single()
+      let existingEvent = recurringEvents.value.find((e) => e.id === eventId)
+      if (!existingEvent) {
+        await loadRecurringEvents()
+        existingEvent = recurringEvents.value.find((e) => e.id === eventId)
+      }
+      if (!existingEvent || existingEvent.user_id !== authStore.user.id) {
+        throw new Error("Vous n'avez pas le droit de modifier cet événement")
+      }
 
-      if (updateError) throw updateError
+      const dto = toPatchDto(updates)
+      const updatedEvent = await apiJson(`/recurring-events/${eventId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(dto),
+      })
 
-      // Si les dates ou le pattern ont changé, régénérer les occurrences
-      if (updates.start_date || updates.end_date || updates.recurrence_pattern || updates.recurrence_type) {
-        // Supprimer les anciennes occurrences (optionnel, selon la logique métier)
-        // Pour l'instant, on ne supprime pas automatiquement
-        
-        // Générer les nouvelles occurrences
+      const u = updates || {}
+      const regen =
+        u.start_date ||
+        u.startDate ||
+        u.end_date !== undefined ||
+        u.endDate !== undefined ||
+        u.recurrence_pattern ||
+        u.recurrencePattern ||
+        u.recurrence_type ||
+        u.recurrenceType
+
+      if (regen) {
         const currentYear = getYear(new Date())
         const startDate = new Date(currentYear, 0, 1)
         const endDate = new Date(currentYear + 1, 11, 31)
@@ -275,28 +247,11 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
           updatedEvent,
           startDate,
           endDate,
-          'FR'
+          uiStore.selectedCountry || 'FR',
         )
 
         if (occurrences.length > 0) {
-          const leavesToInsert = occurrences.map(occ => {
-            const keys = getDateKeys(occ.date)
-            const dateKey = occ.period === 'full' ? keys.full : keys[occ.period]
-            return {
-              user_id: authStore.user.id,
-              date_key: dateKey,
-              leave_type_id: occ.leaveTypeId
-            }
-          })
-
-          const { error: leavesError } = await supabase
-            .from('leaves')
-            .upsert(leavesToInsert, {
-              onConflict: 'user_id,date_key'
-            })
-
-          if (leavesError) throw leavesError
-
+          await applyOccurrencesToLeaves(leavesStore, occurrences)
           await leavesStore.loadLeaves()
         }
       }
@@ -306,7 +261,7 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
     } catch (err) {
       const errorMessage = handleError(err, {
         context: 'RecurringEventsStore.updateRecurringEvent',
-        showToast: false
+        showToast: false,
       })
       error.value = errorMessage
       throw err
@@ -316,12 +271,13 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
   }
 
   /**
-   * Supprime un événement récurrent
+   * Supprime la règle ; optionnellement enlève les congés générés sur une fenêtre large.
    */
   async function deleteRecurringEvent(eventId, deleteAllOccurrences = false) {
     const authStore = useAuthStore()
     const leavesStore = useLeavesStore()
-    if (!authStore.user || !supabase) {
+    const uiStore = useUIStore()
+    if (!authStore.user) {
       throw new Error('Utilisateur non authentifié')
     }
 
@@ -329,59 +285,49 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
       loading.value = true
       error.value = null
 
-      // Si on doit supprimer toutes les occurrences
       if (deleteAllOccurrences) {
-        // Récupérer l'événement pour connaître le type
-        const event = recurringEvents.value.find(e => e.id === eventId)
+        const event = recurringEvents.value.find((e) => e.id === eventId)
         if (event) {
-          // Générer toutes les occurrences possibles et les supprimer
           const currentYear = getYear(new Date())
-          const startDate = new Date(currentYear - 1, 0, 1) // Année précédente
-          const endDate = new Date(currentYear + 2, 11, 31) // 2 ans à l'avance
+          const startDate = new Date(currentYear - 1, 0, 1)
+          const endDate = new Date(currentYear + 2, 11, 31)
 
           const occurrences = generateRecurringOccurrences(
             event,
             startDate,
             endDate,
-            'FR'
+            uiStore.selectedCountry || 'FR',
           )
 
           if (occurrences.length > 0) {
-            const dateKeys = occurrences.map(occ => {
-              const keys = getDateKeys(occ.date)
-              return occ.period === 'full' ? keys.full : keys[occ.period]
-            })
+            const dateKeys = new Set(
+              occurrences.map((occ) => {
+                const keys = getDateKeys(occ.date)
+                return occ.period === 'full' ? keys.full : keys[occ.period]
+              }),
+            )
 
-            // Supprimer les congés correspondants
-            const { error: deleteError } = await supabase
-              .from('leaves')
-              .delete()
-              .eq('user_id', authStore.user.id)
-              .in('date_key', dateKeys)
-              .eq('leave_type_id', event.leave_type_id)
-
-            if (deleteError) throw deleteError
-
-            await leavesStore.loadLeaves()
+            for (const dk of Object.keys(leavesStore.leaves)) {
+              if (
+                dateKeys.has(dk) &&
+                leavesStore.leaves[dk] === event.leave_type_id
+              ) {
+                leavesStore.removeLeave(dk)
+              }
+            }
+            await leavesStore.saveLeaves()
           }
         }
       }
 
-      // Supprimer la règle de récurrence
-      const { error: deleteError } = await supabase
-        .from('recurring_events')
-        .delete()
-        .eq('id', eventId)
-        .eq('user_id', authStore.user.id)
-
-      if (deleteError) throw deleteError
+      await apiJson(`/recurring-events/${eventId}`, { method: 'DELETE' })
 
       await loadRecurringEvents()
       logger.log('Événement récurrent supprimé')
     } catch (err) {
       const errorMessage = handleError(err, {
         context: 'RecurringEventsStore.deleteRecurringEvent',
-        showToast: false
+        showToast: false,
       })
       error.value = errorMessage
       throw err
@@ -390,13 +336,11 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
     }
   }
 
-  /**
-   * Génère les occurrences pour une année donnée (utilisé pour la régénération)
-   */
   async function generateOccurrencesForYear(recurringEvent, year) {
     const authStore = useAuthStore()
     const leavesStore = useLeavesStore()
-    if (!authStore.user || !supabase) {
+    const uiStore = useUIStore()
+    if (!authStore.user) {
       throw new Error('Utilisateur non authentifié')
     }
 
@@ -407,28 +351,11 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
       recurringEvent,
       startDate,
       endDate,
-      'FR'
+      uiStore.selectedCountry || 'FR',
     )
 
     if (occurrences.length > 0) {
-      const leavesToInsert = occurrences.map(occ => {
-        const keys = getDateKeys(occ.date)
-        const dateKey = occ.period === 'full' ? keys.full : keys[occ.period]
-        return {
-          user_id: authStore.user.id,
-          date_key: dateKey,
-          leave_type_id: occ.leaveTypeId
-        }
-      })
-
-      const { error: leavesError } = await supabase
-        .from('leaves')
-        .upsert(leavesToInsert, {
-          onConflict: 'user_id,date_key'
-        })
-
-      if (leavesError) throw leavesError
-
+      await applyOccurrencesToLeaves(leavesStore, occurrences)
       await leavesStore.loadLeaves()
     }
 
@@ -442,20 +369,16 @@ export const useRecurringEventsStore = defineStore('recurringEvents', () => {
   }
 
   return {
-    // State
     recurringEvents,
     loading,
     error,
-    // Getters
     activeRecurringEvents,
-    // Actions
     loadRecurringEvents,
     loadTeamRecurringEvents,
     createRecurringEvent,
     updateRecurringEvent,
     deleteRecurringEvent,
     generateOccurrencesForYear,
-    reset
+    reset,
   }
 })
-

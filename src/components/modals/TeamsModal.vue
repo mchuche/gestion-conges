@@ -519,7 +519,7 @@ async function declineInvitation(inv) {
 
 async function handleDeleteInvitation(invitation) {
   try {
-    await teamsService.deleteTeamInvitation(invitation.id)
+    await teamsService.deleteTeamInvitation(selectedTeam.value.id, invitation.id)
     success('Invitation annulée')
     await showTeamDetails(selectedTeam.value)
   } catch (err) {

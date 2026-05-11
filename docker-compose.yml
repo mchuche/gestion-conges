@@ -1,0 +1,65 @@
+# PostgreSQL seul : docker compose up -d
+# Stack complète (API + Nginx + Postgres), sans HTTPS pour l’instant :
+#   docker compose --profile docker up -d --build
+# → http://localhost:8080/gestion-conges/  ·  API http://localhost:3000
+# Voir docker/README.md
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gestion-conges-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gestion
+      POSTGRES_PASSWORD: gestion_dev
+      POSTGRES_DB: gestion_conges
+    ports:
+      - '5433:5432'
+    volumes:
+      - gestion_conges_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U gestion -d gestion_conges']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    profiles:
+      - docker
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: gestion-conges-api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://gestion:gestion_dev@postgres:5432/gestion_conges?schema=public
+      PORT: '3000'
+      NODE_ENV: development
+      # Origine du front servi par le conteneur web (port hôte 8080)
+      CORS_ORIGIN: http://localhost:8080,http://127.0.0.1:8080
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-docker-dev-change-me-min-32-characters-long-secret}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
+      JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    profiles:
+      - docker
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_URL: http://localhost:3000
+    container_name: gestion-conges-web
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+
+volumes:
+  gestion_conges_pgdata:

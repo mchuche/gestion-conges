@@ -155,7 +155,7 @@ import logger from '../../services/logger'
 import { handleError } from '../../services/errorHandler'
 import { getDateKey, calculateWorkingDaysFromDates } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
-import { supabase } from '../../services/supabase'
+import { apiJson } from '../../services/api'
 // Formatage de date en français
 function formatDate(date, options = {}) {
   return date.toLocaleDateString('fr-FR', {
@@ -182,36 +182,29 @@ const leaveTypes = computed(() => leaveTypesStore.leaveTypes)
 const targetUserId = computed(() => uiStore.selectedTargetUserId)
 
 // Quand un propriétaire modifie un membre d'équipe, les leaves affichés dans la matrice
-// viennent de user.leaves (pas de leavesStore.leaves). Pour afficher le bouton "Supprimer"
-// dans la modale, on recharge donc l'info du leave ciblé depuis Supabase.
+// viennent de user.leaves (pas de leavesStore.leaves). On recharge l’info via GET /leaves/team.
 const targetLeaveInfo = ref(null) // { full, morning, afternoon }
 const targetLeaveLoading = ref(false)
 
 async function loadTargetLeaveInfoForDate(date) {
-  if (!targetUserId.value || !date || !supabase) {
+  if (!targetUserId.value || !date) {
     targetLeaveInfo.value = null
     return
   }
 
   const baseKey = getDateKey(date) // YYYY-MM-DD
-  const keys = [baseKey, `${baseKey}-morning`, `${baseKey}-afternoon`]
 
   targetLeaveLoading.value = true
   try {
-    const { data, error } = await supabase
-      .from('leaves')
-      .select('date_key, leave_type_id')
-      .eq('user_id', targetUserId.value)
-      .in('date_key', keys)
-
-    if (error) throw error
+    const uid = encodeURIComponent(targetUserId.value)
+    const data = await apiJson(`/leaves/team?userIds=${uid}`, { method: 'GET' })
+    const map = (data.byUser && data.byUser[targetUserId.value]) || {}
 
     const info = { full: null, morning: null, afternoon: null }
-    ;(data || []).forEach((row) => {
-      if (row.date_key.endsWith('-morning')) info.morning = row.leave_type_id
-      else if (row.date_key.endsWith('-afternoon')) info.afternoon = row.leave_type_id
-      else info.full = row.leave_type_id
-    })
+    if (map[baseKey] != null) info.full = map[baseKey]
+    if (map[`${baseKey}-morning`] != null) info.morning = map[`${baseKey}-morning`]
+    if (map[`${baseKey}-afternoon`] != null) info.afternoon = map[`${baseKey}-afternoon`]
+
     targetLeaveInfo.value = info
   } catch (err) {
     logger.error('[LeaveModal] Erreur chargement leave du membre:', err)

@@ -1,4 +1,6 @@
-# 🚀 Migration Vue.js - Guide de Démarrage
+# [ARCHIVE] Migration Vue.js — guide de démarrage
+
+> Document d’époque : la migration Vue est **terminée** ; la stack données actuelle est l’**API Nest** (`VITE_API_URL`), pas les clients décrits ici.
 
 ## ✅ Phase 1 Terminée
 
@@ -34,7 +36,7 @@ Le serveur devrait démarrer sur `http://localhost:5173`
 - ✅ Infrastructure Vue.js 3 configurée
 - ✅ Vite configuré avec plugin PWA
 - ✅ Store Pinia pour l'authentification (code seulement)
-- ✅ Service Supabase configuré
+- ✅ Service de données (à l’époque un client BaaS ; aujourd’hui `src/services/api.js` + Nest)
 - ✅ Styles CSS migrés
 - ✅ Assets (icons, manifest) migrés
 
@@ -53,7 +55,7 @@ Une fois que vous avez testé que le serveur démarre correctement, nous continu
 
 ## 🐛 En cas d'erreur
 
-Si vous voyez des erreurs Supabase au démarrage, vérifiez que le fichier `.env` contient bien vos clés.
+Si le serveur ne démarre pas, vérifie le fichier **`.env`** à la racine (**`VITE_API_URL`**) et que l’API tourne si tu testes les données.
 
-L'application devrait quand même se charger et afficher un message basique.
+L’application devrait au minimum afficher l’interface ; les erreurs réseau vers l’API apparaissent dans la console du navigateur.
 

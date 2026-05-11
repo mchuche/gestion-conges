@@ -1,6 +1,10 @@
+/**
+ * Store des notifications — API Nest (`/notifications`)
+ */
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../services/supabase'
+import { apiJson } from '../services/api'
 import logger from '../services/logger'
 import { useAuthStore } from './auth'
 
@@ -8,18 +12,30 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const notifications = ref([])
   const loading = ref(false)
   const realtimeSubscription = ref(null)
-  // Certains environnements n'ont pas (encore) la colonne `data` (migration non exécutée / cache PostgREST).
-  // On garde un flag pour éviter de spammer des erreurs 400.
-  const supportsDataColumn = ref(true)
-  // Certains environnements n'ont pas (encore) la colonne `read_at`.
-  const supportsReadAtColumn = ref(true)
 
-  // Compteur de notifications non lues
   const unreadCount = computed(() => {
-    return notifications.value.filter(n => !n.read).length
+    return notifications.value.filter((n) => !n.read).length
   })
 
-  // Charger les notifications de l'utilisateur
+  /**
+   * Normalise la réponse API vers le format attendu par l’UI (champs proches PocketBase).
+   */
+  function mapItem(n) {
+    const created = n.created ?? n.createdAt
+    return {
+      id: n.id,
+      user_id: n.user_id ?? n.userId,
+      type: n.type,
+      title: n.title,
+      message: n.message,
+      read: n.read,
+      read_at: n.read_at ?? n.readAt,
+      data: n.data,
+      created,
+      created_at: created,
+    }
+  }
+
   async function loadNotifications() {
     const authStore = useAuthStore()
     if (!authStore.user) {
@@ -29,16 +45,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
     loading.value = true
     try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', authStore.user.id)
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      if (error) throw error
-
-      notifications.value = data || []
+      const data = await apiJson('/notifications', { method: 'GET' })
+      const items = data.items || []
+      notifications.value = items.map(mapItem)
       logger.log(`[NotificationsStore] ${notifications.value.length} notifications chargées`)
     } catch (error) {
       logger.error('[NotificationsStore] Erreur lors du chargement des notifications:', error)
@@ -47,244 +56,85 @@ export const useNotificationsStore = defineStore('notifications', () => {
     }
   }
 
-  // Créer une notification
   async function createNotification(targetUserId, type, title, message, data = null) {
-    try {
-      const basePayload = {
-        user_id: targetUserId,
+    await apiJson('/notifications', {
+      method: 'POST',
+      body: JSON.stringify({
+        targetUserId,
         type,
         title,
         message,
-        read: false
-      }
-
-      // N'envoyer `data` que si la colonne est supportée ET si on a une valeur non nulle.
-      const payload = (supportsDataColumn.value && data != null)
-        ? { ...basePayload, data }
-        : basePayload
-
-      let { error } = await supabase
-        .from('notifications')
-        .insert(payload)
-
-      // Fallback: si la colonne `data` n'existe pas (PGRST204), retenter sans `data` et mémoriser.
-      if (error && error.code === 'PGRST204' && String(error.message || '').includes("'data'")) {
-        supportsDataColumn.value = false
-        ;({ error } = await supabase.from('notifications').insert(basePayload))
-      }
-
-      if (error) throw error
-
-      logger.log('[NotificationsStore] Notification créée pour:', targetUserId)
-    } catch (error) {
-      logger.error('[NotificationsStore] Erreur lors de la création de notification:', error)
-      throw error
-    }
+        ...(data != null ? { data } : {}),
+      }),
+    })
+    logger.log('[NotificationsStore] Notification créée pour:', targetUserId)
   }
 
-  // Marquer une notification comme lue
   async function markAsRead(notificationId) {
-    try {
-      const basePatch = { read: true }
-      const patch = supportsReadAtColumn.value
-        ? { ...basePatch, read_at: new Date().toISOString() }
-        : basePatch
-
-      let { error } = await supabase
-        .from('notifications')
-        .update(patch)
-        .eq('id', notificationId)
-
-      // Fallback: si la colonne `read_at` n'existe pas (PGRST204), retenter sans `read_at` et mémoriser.
-      if (error && error.code === 'PGRST204' && String(error.message || '').includes("'read_at'")) {
-        supportsReadAtColumn.value = false
-        ;({ error } = await supabase.from('notifications').update(basePatch).eq('id', notificationId))
-      }
-
-      if (error) throw error
-
-      // Mettre à jour localement
-      const notification = notifications.value.find(n => n.id === notificationId)
-      if (notification) {
-        notification.read = true
-        if (supportsReadAtColumn.value) {
-          notification.read_at = new Date().toISOString()
-        }
-      }
-
-      logger.debug('[NotificationsStore] Notification marquée comme lue:', notificationId)
-      return true
-    } catch (error) {
-      logger.error('[NotificationsStore] Erreur lors du marquage comme lu:', error)
-      throw error
+    const patch = {
+      read: true,
+      read_at: new Date().toISOString(),
     }
+    await apiJson(`/notifications/${encodeURIComponent(notificationId)}/read`, {
+      method: 'PATCH',
+    })
+
+    const notification = notifications.value.find((n) => n.id === notificationId)
+    if (notification) {
+      notification.read = true
+      notification.read_at = patch.read_at
+    }
+    logger.debug('[NotificationsStore] Notification marquée comme lue:', notificationId)
+    return true
   }
 
-  // Marquer toutes les notifications comme lues
   async function markAllAsRead() {
     const authStore = useAuthStore()
     if (!authStore.user) return
 
-    try {
-      const basePatch = { read: true }
-      const patch = supportsReadAtColumn.value
-        ? { ...basePatch, read_at: new Date().toISOString() }
-        : basePatch
+    await apiJson('/notifications/read-all', { method: 'POST' })
 
-      let { error } = await supabase
-        .from('notifications')
-        .update(patch)
-        .eq('user_id', authStore.user.id)
-        .eq('read', false)
-
-      if (error && error.code === 'PGRST204' && String(error.message || '').includes("'read_at'")) {
-        supportsReadAtColumn.value = false
-        ;({ error } = await supabase
-          .from('notifications')
-          .update(basePatch)
-          .eq('user_id', authStore.user.id)
-          .eq('read', false))
+    const t = new Date().toISOString()
+    notifications.value.forEach((n) => {
+      if (!n.read) {
+        n.read = true
+        n.read_at = t
       }
-
-      if (error) throw error
-
-      // Mettre à jour localement
-      notifications.value.forEach(n => {
-        if (!n.read) {
-          n.read = true
-          if (supportsReadAtColumn.value) {
-            n.read_at = new Date().toISOString()
-          }
-        }
-      })
-
-      logger.log('[NotificationsStore] Toutes les notifications marquées comme lues')
-      return true
-    } catch (error) {
-      logger.error('[NotificationsStore] Erreur lors du marquage global:', error)
-      throw error
-    }
+    })
+    logger.log('[NotificationsStore] Toutes les notifications marquées comme lues')
+    return true
   }
 
-  // Supprimer une notification
   async function deleteNotification(notificationId) {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId)
-
-      if (error) throw error
-
-      // Retirer localement
-      notifications.value = notifications.value.filter(n => n.id !== notificationId)
-
-      logger.debug('[NotificationsStore] Notification supprimée:', notificationId)
-      return true
-    } catch (error) {
-      logger.error('[NotificationsStore] Erreur lors de la suppression:', error)
-      throw error
-    }
+    await apiJson(`/notifications/${encodeURIComponent(notificationId)}`, {
+      method: 'DELETE',
+    })
+    notifications.value = notifications.value.filter((n) => n.id !== notificationId)
+    logger.debug('[NotificationsStore] Notification supprimée:', notificationId)
+    return true
   }
 
-  // Supprimer toutes les notifications lues
   async function deleteAllRead() {
     const authStore = useAuthStore()
     if (!authStore.user) return
 
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('user_id', authStore.user.id)
-        .eq('read', true)
-
-      if (error) throw error
-
-      // Retirer localement
-      notifications.value = notifications.value.filter(n => !n.read)
-
-      logger.log('[NotificationsStore] Notifications lues supprimées')
-      return true
-    } catch (error) {
-      logger.error('[NotificationsStore] Erreur lors de la suppression des notifications lues:', error)
-      throw error
-    }
+    await apiJson('/notifications/read/all', {
+      method: 'DELETE',
+    })
+    notifications.value = notifications.value.filter((n) => !n.read)
+    logger.log('[NotificationsStore] Notifications lues supprimées')
+    return true
   }
 
-  // S'abonner aux mises à jour en temps réel
   function subscribeToNotifications() {
-    const authStore = useAuthStore()
-    if (!authStore.user) {
-      logger.warn('[NotificationsStore] Aucun utilisateur pour s\'abonner aux notifications')
-      return
-    }
-
-    // Désabonner si déjà abonné
-    if (realtimeSubscription.value) {
-      supabase.removeChannel(realtimeSubscription.value)
-    }
-
-    // S'abonner aux nouvelles notifications
-    realtimeSubscription.value = supabase
-      .channel(`notifications:user_id=eq.${authStore.user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${authStore.user.id}`
-        },
-        (payload) => {
-          logger.log('[NotificationsStore] Nouvelle notification reçue:', payload.new)
-          notifications.value.unshift(payload.new)
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${authStore.user.id}`
-        },
-        (payload) => {
-          logger.debug('[NotificationsStore] Notification mise à jour:', payload.new)
-          const index = notifications.value.findIndex(n => n.id === payload.new.id)
-          if (index !== -1) {
-            notifications.value[index] = payload.new
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${authStore.user.id}`
-        },
-        (payload) => {
-          logger.debug('[NotificationsStore] Notification supprimée:', payload.old)
-          notifications.value = notifications.value.filter(n => n.id !== payload.old.id)
-        }
-      )
-      .subscribe()
-
-    logger.log('[NotificationsStore] Abonnement Realtime activé')
+    logger.debug('[NotificationsStore] Realtime désactivé (API Nest)')
+    realtimeSubscription.value = null
   }
 
-  // Se désabonner des mises à jour en temps réel
   function unsubscribeFromNotifications() {
-    if (realtimeSubscription.value) {
-      supabase.removeChannel(realtimeSubscription.value)
-      realtimeSubscription.value = null
-      logger.log('[NotificationsStore] Désabonnement Realtime')
-    }
+    realtimeSubscription.value = null
   }
 
-  // Réinitialiser le store
   function resetNotifications() {
     notifications.value = []
     loading.value = false
@@ -303,7 +153,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     deleteAllRead,
     subscribeToNotifications,
     unsubscribeFromNotifications,
-    resetNotifications
+    resetNotifications,
   }
 })
-

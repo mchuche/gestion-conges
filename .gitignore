@@ -1,5 +1,10 @@
-# Configuration Supabase (contient les clés API)
-# Note: Les clés sont maintenant dans .env (géré via Vite)
+# Clés API / Nest (jamais committer)
+# Variables : .env à la racine (Vite) et api/.env
+
+# PocketBase en local (binaire + SQLite) — hors dépôt si tu réinstalles PB
+pocketbase/
+pocketbase.exe
+**/pb_data/
 
 # Backup files
 *.backup
