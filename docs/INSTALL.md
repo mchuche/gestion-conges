@@ -1,49 +1,146 @@
-# Installation (développement local)
+# Installation — référence unique (développement local)
 
-## Prérequis
+Ce fichier est la **source de vérité** pour démarrer le projet. Les autres guides (`README`, `API_LOCAL_SETUP`, `docker/README`) renvoient ici pour les commandes communes.
 
-- **Node.js 20+** (recommandé) et npm
-- **Docker** (optionnel) — **`docker/README.md`** : Postgres seul *ou* stack complète API + Nginx (`--profile docker`)
-- Fichier **`.env`** à la racine du front : copier `.env.example` → `.env` et définir **`VITE_API_URL`** (ex. `http://localhost:3000`)
+---
 
-## 1) API NestJS + PostgreSQL
+## Variables d’environnement
 
-Guide détaillé : **`docs/guides/API_LOCAL_SETUP.md`**
+Il y a **deux** fichiers `.env` distincts :
 
-Résumé :
+| Emplacement | Rôle | Copier depuis |
+|-------------|------|----------------|
+| **`.env`** à la **racine** du dépôt | Front **Vite** (`import.meta.env.VITE_*`) | `.env.example` |
+| **`api/.env`** | **NestJS** + **Prisma** (base, JWT, CORS) | `api/.env.example` |
+
+| Variable (racine) | Exemple | Usage |
+|-------------------|---------|--------|
+| `VITE_API_URL` | `http://localhost:3000` | URL de base de l’API pour le navigateur (sans slash final). |
+
+| Variables typiques (`api/.env`) | Rôle |
+|---------------------------------|------|
+| `DATABASE_URL` | PostgreSQL — avec Docker local : port hôte **5433** (voir `docker-compose.yml`) |
+| `JWT_ACCESS_SECRET` | Obligatoire ; chaîne longue et aléatoire en production |
+| `PORT` | API (défaut `3000`) |
+| `CORS_ORIGIN` | Origines du front (ex. `http://localhost:5173`) |
+
+Ne **committe jamais** les fichiers `.env` réels (déjà dans `.gitignore`).
+
+---
+
+## Parcours minimal (recommandé)
+
+**Postgres** via Docker à la racine, **API** et **front** lancés avec Node sur ta machine.
+
+### 1. PostgreSQL
 
 ```bash
 docker compose up -d
-cd api
-copy .env.example .env   # Windows ; Linux/macOS : cp
-npm install
-npx prisma migrate deploy
-npm run start:dev
 ```
 
-## 2) Application Vue (front)
+Port **5433** → base `gestion_conges` (voir `docker-compose.yml`).
 
-À la racine du dépôt :
+### 2. Dépendances et configuration API
+
+```bash
+npm run api:install
+copy api\.env.example api\.env
+```
+
+Sur Linux/macOS : `cp api/.env.example api/.env`
+
+Vérifie **`DATABASE_URL`** dans `api/.env` (utilisateur `gestion`, mot de passe `gestion_dev`, port **5433** si tu utilises le compose du dépôt).
+
+### 3. Schéma base de données
+
+```bash
+npm run prisma:generate
+npm run migrate
+```
+
+Après un **`git clone`**, les migrations sont déjà dans `api/prisma/migrations/` : `migrate` exécute `prisma migrate deploy`.
+
+Si `migrate` échoue (anciennes tables / historique incompatible), voir **Dépannage migrations** ci-dessous.
+
+### 4. Données initiales (optionnel)
+
+```bash
+npm run prisma:seed
+```
+
+Types globaux + scripts admin si tu as défini `BOOTSTRAP_*` / `PROMOTE_SUPER_ADMIN_EMAIL` dans `api/.env` — voir **`docs/guides/CREATE_FIRST_ADMIN.md`**.
+
+### 5. Lancer l’API
+
+```bash
+npm run api:dev
+```
+
+Vérification : **`GET http://localhost:3000/health`**.
+
+### 6. Front Vue
+
+À la **racine** :
 
 ```bash
 npm install
+copy .env.example .env
+```
+
+Renseigne **`VITE_API_URL=http://localhost:3000`** dans `.env`, puis :
+
+```bash
 npm run dev
 ```
 
 Navigateur : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-conges/`).
 
-## 3) Scripts Windows
+### Scripts utiles à la racine
 
-**`scripts/start-dev.ps1`** ou **`scripts/start-dev.bat`** — voir **`scripts/README.md`**.
-
-## 4) Déploiement GitHub Pages
-
-**`docs/guides/DEPLOY_GITHUB_PAGES.md`** (secret **`VITE_API_URL`** vers ton API en production).
+| Commande | Effet |
+|----------|--------|
+| `npm run api:install` | Installe les dépendances dans **`api/`** |
+| `npm run api:dev` | API Nest en mode watch (`nest start --watch`) |
+| `npm run migrate` | Applique les migrations (`prisma migrate deploy` dans `api/`) |
+| `npm run migrate:dev` | Crée une migration après modification de `schema.prisma` |
+| `npm run prisma:generate` | Régénère le client Prisma |
+| `npm run prisma:studio` | Ouvre Prisma Studio |
+| `npm run prisma:seed` | Seed + bootstrap admin si variables définies |
+| `npm run bootstrap-admin` | Premier super-admin (`BOOTSTRAP_*`) |
+| `npm run promote-super-admin` | Promouvoir un utilisateur existant (`PROMOTE_SUPER_ADMIN_EMAIL`) |
 
 ---
 
-### Index de la documentation
+## Docker
 
-- **Guides actifs** : **`docs/guides/README.md`**
-- **Notes internes** (revue, idées, exemples) : **`docs/notes/`**
-- **Archives** (anciennes migrations / docs historiques) : **`docs/archive/README.md`**
+- **Postgres seul** ou **stack complète** (API + Nginx) : **`docker/README.md`**
+- Les **variables JWT** pour les conteneurs passent par le compose ou `docker compose exec -e …`.
+
+---
+
+## Déploiement front statique (GitHub Pages)
+
+**`docs/guides/DEPLOY_GITHUB_PAGES.md`** — secret **`VITE_API_URL`** vers ton API en HTTPS.
+
+---
+
+## Dépannage migrations
+
+L’historique Prisma est une **migration baseline** (`*_init`). Si ta base locale a été créée avec un ancien jeu de migrations et que **`npm run migrate`** échoue (tables déjà présentes), réinitialise le schéma puis réapplique :
+
+```bash
+docker exec gestion-conges-db psql -U gestion -d gestion_conges -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public; GRANT ALL ON SCHEMA public TO gestion;"
+npm run migrate
+npm run prisma:seed
+```
+
+---
+
+## Suite de la doc
+
+| Fichier | Contenu |
+|---------|---------|
+| **`docs/guides/API_LOCAL_SETUP.md`** | Table des **endpoints** REST, détail Vite / sans Docker |
+| **`docs/guides/README.md`** | Index des guides |
+| **`docs/notes/`** | Notes internes (TODO, revue, etc.) |
+| **`docs/archive/`** | Archives historiques |

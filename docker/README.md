@@ -1,5 +1,11 @@
 # Docker — ce dépôt
 
+L’**installation pas à pas** (`.env`, migrations, commandes npm à la racine) est dans **`docs/INSTALL.md`**.
+
+Ce fichier décrit uniquement **docker compose** et les URLs des services.
+
+---
+
 ## Postgres seul (développement avec Node sur la machine)
 
 À la racine du repo :
@@ -8,7 +14,9 @@
 docker compose up -d
 ```
 
-Tu exposes **PostgreSQL** sur le port **5433** (voir `docker-compose.yml`). Lance l’API et Vite avec `npm` comme dans **`docs/INSTALL.md`**.
+PostgreSQL est exposé sur **`localhost:5433`** dans `docker-compose.yml` (mapping **5433** → 5432 dans le conteneur). Lance l’API et Vite comme dans **`docs/INSTALL.md`**.
+
+---
 
 ## Stack complète : Postgres + Nest + Nginx (sans HTTPS)
 
@@ -16,7 +24,7 @@ Tu exposes **PostgreSQL** sur le port **5433** (voir `docker-compose.yml`). Lanc
 docker compose --profile docker up -d --build
 ```
 
-Si le démarrage échoue sur le **port 3000**, une autre app (souvent ton API Nest lancée avec `npm`) l’utilise déjà : arrête-la ou change le mapping dans `docker-compose.yml` (ex. `3001:3000`) et rebuild le front avec `VITE_API_URL` pointant vers ce port.
+Si le démarrage échoue sur le **port 3000**, une autre app (souvent l’API Nest lancée avec `npm run api:dev`) utilise déjà le port : arrête-la ou change le mapping dans `docker-compose.yml` (ex. `3001:3000`) et rebuild le front avec **`VITE_API_URL`** pointant vers ce port.
 
 | Service | URL / port |
 |---------|------------|
@@ -24,28 +32,20 @@ Si le démarrage échoue sur le **port 3000**, une autre app (souvent ton API Ne
 | API Nest | **http://localhost:3000** |
 | Postgres | `localhost:5433` (même volume qu’en mode « Postgres seul ») |
 
-Variables utiles (fichier `.env` à la racine du repo ou environnement) :
+### Variables côté conteneur `api`
 
-- **`JWT_ACCESS_SECRET`** — si absent, une valeur de développement par défaut est utilisée (à changer en prod).
+Les secrets JWT peuvent être passés via **`docker-compose.yml`** ou `docker compose exec -e …`. En prod, **`JWT_ACCESS_SECRET`** doit être fort.
 
-Seed optionnel après premier démarrage (types de congés globaux) :
+### Seed et admins
 
 ```bash
 docker compose exec api npm run prisma:seed
-```
-
-**Premier super-admin** (si aucun n’existe encore) — préférable avant la mise en prod :
-
-```bash
 docker compose exec -e BOOTSTRAP_ADMIN_EMAIL=toi@example.com -e BOOTSTRAP_ADMIN_PASSWORD="MotDePasseSûr" api npm run bootstrap-admin
-```
-
-Promouvoir un compte déjà créé :
-
-```bash
 docker compose exec -e PROMOTE_SUPER_ADMIN_EMAIL=collegue@example.com api npm run promote-super-admin
 ```
 
-Voir **`docs/guides/CREATE_FIRST_ADMIN.md`**.
+Détails : **`docs/guides/CREATE_FIRST_ADMIN.md`**.
+
+---
 
 HTTPS en production : placer un reverse-proxy (Caddy, Traefik, Nginx + Let’s Encrypt) devant ces services — pas encore configuré ici.

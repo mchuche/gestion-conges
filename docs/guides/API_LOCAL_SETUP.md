@@ -1,70 +1,20 @@
-# API NestJS + PostgreSQL — démarrage local
+# API NestJS — référence locale
 
-Le backend vit dans le dossier `api/` (monorepo avec le front Vue).
+Le backend vit dans **`api/`**. Pour **installer Postgres, `.env`, migrations, lancer l’API et le front**, suit d’abord **`docs/INSTALL.md`** (référence unique).
 
-## Prérequis
+Ce fichier complète avec :
 
-- Node.js 20+ (recommandé)
-- Docker (pour PostgreSQL uniquement, au choix)
+- la **liste des endpoints** ;
+- des précisions **sans Docker** ;
+- l’option **tout Docker** (profil compose).
 
-## 1) Lancer PostgreSQL
+---
 
-À la racine du dépôt :
+## Vérifier que l’API répond
 
-```bash
-docker compose up -d
-```
+- **`GET http://localhost:3000/health`** → `status: ok`, `database: connected`
 
-Attendre que le conteneur soit prêt (`healthy`).
-
-PostgreSQL est exposé sur le port **5433** de la machine hôte (pour éviter un conflit avec un Postgres déjà installé sur **5432**). Si tu vois des conteneurs orphelins d’un ancien compose, tu peux lancer : `docker compose up -d --remove-orphans`.
-
-## 2) Configurer l’API
-
-```bash
-cd api
-copy .env.example .env
-```
-
-Sur Linux/macOS : `cp .env.example .env`
-
-Vérifier que `DATABASE_URL` correspond au `docker-compose.yml` (utilisateur `gestion`, mot de passe `gestion_dev`, base `gestion_conges`).
-
-Copier aussi les variables JWT depuis `.env.example` : `JWT_ACCESS_SECRET` (obligatoire), `JWT_ACCESS_EXPIRES`, `JWT_REFRESH_EXPIRES_DAYS` (durée du refresh opaque en base).
-
-## 3) Migrations Prisma + démarrage
-
-```bash
-npm install
-npm run prisma:generate
-```
-
-**Première création de schéma** (développement, génère une migration) :
-
-```bash
-npm run prisma:migrate
-```
-
-**Après un `git clone`** (migrations déjà dans le dépôt) :
-
-```bash
-npx prisma migrate deploy
-```
-
-L’historique Prisma est réduit à **une migration** (`20260511190000_init`) qui recrée tout le schéma. Si tu avais encore une base construite avec les **anciennes** migrations et que `migrate deploy` échoue (tables déjà présentes), vide le schéma puis réapplique — par exemple avec Postgres sous Docker :
-
-```bash
-docker exec gestion-conges-db psql -U gestion -d gestion_conges -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public; GRANT ALL ON SCHEMA public TO gestion;"
-cd api && npx prisma migrate deploy && npm run prisma:seed
-```
-
-```bash
-npm run start:dev
-```
-
-## 4) Vérifier
-
-- `GET http://localhost:3000/health` → `status: ok`, `database: connected`
+---
 
 ## Endpoints utiles (résumé)
 
@@ -117,20 +67,23 @@ npm run start:dev
 | PUT | `/admin/app-settings` | Bearer | Body `{ defaultLeaveTypes?, defaultQuotas? }` — au moins un champ ; enregistre aussi un log `settings_updated` |
 | GET | `/admin/audit-logs?limit=` | Bearer | `{ logs: [{ id, userId, userEmail, action, entityType, entityId, details, createdAt }] }` (actions admin : suppressions, types globaux, paramètres) |
 
-## Front
+---
 
-Dans `.env` à la racine du projet front (Vite) :
+## Front (rappel)
 
-```env
-VITE_API_URL=http://localhost:3000
-```
+`VITE_API_URL` dans **`.env` à la racine** — voir **`docs/INSTALL.md`**.
 
-Les stores **auth**, **leaves**, **leaveTypes**, **teams**, **notifications**, **quotas**, **recurringEvents**, **ui** (préférences), et l’administration (**`AdminView`** via `services/adminApi.js`) utilisent `src/services/api.js`. L’onglet **paramètres** admin persiste les JSON par défaut via **`/admin/app-settings`** ; l’onglet **audit** lit **`/admin/audit-logs`**.
+Les stores utilisent **`src/services/api.js`** ; l’admin **`AdminView`** via **`src/services/adminApi.js`**.
+
+---
 
 ## Alternative : tout Docker (API + Nginx + Postgres)
 
-Voir **`docker/README.md`** à la racine : `docker compose --profile docker up -d --build` — même URL d’API pour le navigateur (`http://localhost:3000`). HTTPS à prévoir plus tard en prod derrière un reverse-proxy.
+Sans HTTPS pour l’instant — **`docker/README.md`** : `docker compose --profile docker up -d --build`.  
+Le navigateur appelle toujours **`http://localhost:3000`** pour l’API.
+
+---
 
 ## Sans Docker
 
-Installer PostgreSQL localement, créer la base `gestion_conges` et un utilisateur, puis adapter `DATABASE_URL` dans `api/.env`.
+Installe PostgreSQL localement, crée la base **`gestion_conges`** et un utilisateur, puis adapte **`DATABASE_URL`** dans **`api/.env`**. Ensuite **`npm run migrate`** depuis la racine (ou `cd api && npx prisma migrate deploy`).

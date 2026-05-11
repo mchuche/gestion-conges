@@ -23,38 +23,21 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 - 🎯 **Interface moderne** : Design élégant et intuitif
 - 📲 **PWA (Progressive Web App)** : Installable comme une app native, fonctionne hors ligne
 
-## 🚀 Installation et Configuration
+## 🚀 Installation et configuration
 
-### Prérequis
+**Guide unique :** **`docs/INSTALL.md`** — Postgres (Docker), fichiers **`.env`** racine vs **`api/.env`**, migrations (`npm run migrate`), `npm run api:dev`, front (`npm run dev`), et **table des scripts npm** à la racine.
 
-1. **Node.js 20+** et **npm**
-2. **Docker** (recommandé) pour PostgreSQL local — voir **`docker/README.md`** (option « stack complète » avec `--profile docker`)
+| Besoin | Où lire |
+|--------|---------|
+| Liste des **endpoints** REST | **`docs/guides/API_LOCAL_SETUP.md`** |
+| **Docker** seul ou stack complète | **`docker/README.md`** |
+| Premier **super-admin** | **`docs/guides/CREATE_FIRST_ADMIN.md`** |
+| Déploiement **GitHub Pages** | **`docs/guides/DEPLOY_GITHUB_PAGES.md`** |
+| Index des guides | **`docs/guides/README.md`** |
+| Notes internes | **`docs/notes/`** |
+| Archives | **`docs/archive/README.md`** |
 
-### Configuration
-
-1. **Base de données et API** : suis **`docs/INSTALL.md`** et le guide détaillé **`docs/guides/API_LOCAL_SETUP.md`** (Prisma : `npx prisma migrate deploy` dans `api/`).
-2. **Variables d’environnement (front)** :
-   - Copie `.env.example` → `.env` à la racine
-   - Définis **`VITE_API_URL`** (ex. `http://localhost:3000`) pour pointer vers l’API Nest
-   - ⚠️ **Ne commite jamais `.env`** (déjà dans `.gitignore`)
-3. **Archives** (anciennes procédures, hors besoin courant) : **`docs/archive/`** — voir `docs/archive/README.md`.
-
-   **Pour GitHub Pages :**
-   - Secret dépôt **`VITE_API_URL`** (URL HTTPS de l’API) — voir section « Déploiement » et **`docs/guides/DEPLOY_GITHUB_PAGES.md`**
-
-4. **Installer les dépendances et lancer l'application** :
-   ```bash
-   npm install
-   npm run dev
-   ```
-   
-   Front : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-conges/`)
-
-👉 Installation : `docs/INSTALL.md`  
-👉 Index des guides : `docs/guides/README.md`  
-👉 API locale : `docs/guides/API_LOCAL_SETUP.md`  
-👉 Premier admin : `docs/guides/CREATE_FIRST_ADMIN.md`  
-👉 Notes internes : `docs/notes/`
+Après installation : front sur **`http://localhost:5173/gestion-conges/`** (base path `/gestion-conges/`).
 
 ## 📖 Utilisation
 
@@ -214,7 +197,7 @@ L'application est maintenant une **PWA complète** et peut être installée sur 
 
 ## 🗄️ Base de données
 
-Le modèle relationnel est celui de **Prisma** (`User`, `Leave`, `GlobalLeaveType`, quotas, équipes, etc.). Pour créer le schéma : **`npx prisma migrate deploy`** dans le dossier `api/`. D’anciens fichiers SQL éventuels sont rangés sous **`docs/archive/`** (voir `docs/archive/README.md`).
+Le modèle relationnel est celui de **Prisma** (`User`, `Leave`, `GlobalLeaveType`, quotas, équipes, etc.). Pour appliquer le schéma : **`npm run migrate`** à la racine (équivalent `prisma migrate deploy` dans `api/`). D’anciens fichiers SQL éventuels sont rangés sous **`docs/archive/`** (voir `docs/archive/README.md`).
 
 ## 🎨 Personnalisation
 
