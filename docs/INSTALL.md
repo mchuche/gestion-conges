@@ -108,6 +108,31 @@ Navigateur : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-co
 | `npm run prisma:seed` | Seed + bootstrap admin si variables définies |
 | `npm run bootstrap-admin` | Premier super-admin (`BOOTSTRAP_*`) |
 | `npm run promote-super-admin` | Promouvoir un utilisateur existant (`PROMOTE_SUPER_ADMIN_EMAIL`) |
+| `npm run db:reset` | **Dev uniquement** — vide la base, réapplique les migrations + **seed** (`prisma migrate reset --force`) |
+
+---
+
+## Base de données et Prisma — workflows
+
+### Modifier le schéma (`schema.prisma`)
+
+1. Éditer **`api/prisma/schema.prisma`**
+2. Lancer **`npm run migrate:dev`** — Prisma crée une migration, l’applique à ta base locale et régénère le client (tu choisis le nom de la migration).
+3. **Commit** le nouveau dossier sous **`api/prisma/migrations/`**
+
+Sur une autre machine ou après déploiement : **`npm run migrate`** (équivalent `prisma migrate deploy`).
+
+### Repartir de zéro en développement (**toutes les données perdues**)
+
+Quand l’historique Prisma et la base locale ne correspondent plus (`migrate` échoue, tables fantômes, tests ratés) :
+
+```bash
+npm run db:reset
+```
+
+Cela exécute **`prisma migrate reset --force`** dans **`api/`** : effacement des données, réapplication de **toutes** les migrations, puis **`npm run prisma:seed`** (seed Prisma configuré dans `api/package.json`).
+
+**Prérequis :** PostgreSQL joignable (`DATABASE_URL` dans `api/.env`) ; avec Docker, le service **`postgres`** doit tourner (`docker compose up -d`).
 
 ---
 
@@ -115,6 +140,18 @@ Navigateur : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-co
 
 - **Postgres seul** ou **stack complète** (API + Nginx) : **`docker/README.md`**
 - Les **variables JWT** pour les conteneurs passent par le compose ou `docker compose exec -e …`.
+
+### Lien avec Prisma / migrations (« éviter les surprises »)
+
+Les commandes **`npm run migrate`**, **`migrate:dev`**, **`db:reset`**, etc. ne remplacent **pas** Docker : elles s’exécutent **sur ton PC** (Node installé localement) et ne font qu’une chose — se connecter à PostgreSQL via **`DATABASE_URL`** dans **`api/.env`**.
+
+| Situation | Ce qu’il faut pour que ce soit cohérent |
+|-----------|----------------------------------------|
+| Tu utilises **Postgres du `docker compose`** + API **`npm run api:dev`** | **`DATABASE_URL`** doit cibler **`localhost:5433`** (port **hôte** mappé dans `docker-compose.yml`), pas `5432`, sauf si tu parles à un Postgres **autre** que ce conteneur. |
+| Le conteneur **`api`** parle à Postgres | Dans le compose, l’URL utilise **`postgres:5432`** (nom de service réseau Docker, port **interne** du conteneur) — c’est **différent** de la config sur ta machine hôte. |
+| Docker / Postgres **arrêtés** | `migrate` / `db:reset` **échouent** (rien à joindre) ou peuvent se rabattre sur une erreur réseau — pas un bug Prisma. |
+
+En résumé : **Docker** = *où* tourne le serveur PostgreSQL et *quel port* tu dois mettre dans **`DATABASE_URL`**. **Prisma** = *quel schéma* appliquer **sur cette base**. Si `DATABASE_URL` pointe vers une autre instance (ex. Postgres local sur 5432 alors que tu crois utiliser Docker), tu peux « réparer » une base pendant que l’app parle à une autre — d’où les surprises. Détail des URLs et profils : **`docker/README.md`**.
 
 ---
 
@@ -126,7 +163,11 @@ Navigateur : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-co
 
 ## Dépannage migrations
 
-L’historique Prisma est une **migration baseline** (`*_init`). Si ta base locale a été créée avec un ancien jeu de migrations et que **`npm run migrate`** échoue (tables déjà présentes), réinitialise le schéma puis réapplique :
+L’historique Prisma est une **migration baseline** (`*_init`). Si **`npm run migrate`** échoue (tables déjà présentes, `_prisma_migrations` incohérent) :
+
+1. **Le plus simple en dev** : **`npm run db:reset`** (voir section « Repartir de zéro » ci-dessus).
+
+2. **Alternative manuelle** (même effet que reset sur le schéma, sans passer par Prisma reset) :
 
 ```bash
 docker exec gestion-conges-db psql -U gestion -d gestion_conges -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public; GRANT ALL ON SCHEMA public TO gestion;"

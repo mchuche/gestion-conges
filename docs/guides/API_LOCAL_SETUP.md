@@ -86,4 +86,4 @@ Le navigateur appelle toujours **`http://localhost:3000`** pour l’API.
 
 ## Sans Docker
 
-Installe PostgreSQL localement, crée la base **`gestion_conges`** et un utilisateur, puis adapte **`DATABASE_URL`** dans **`api/.env`**. Ensuite **`npm run migrate`** depuis la racine (ou `cd api && npx prisma migrate deploy`).
+Installe PostgreSQL localement, crée la base **`gestion_conges`** et un utilisateur, puis adapte **`DATABASE_URL`** dans **`api/.env`**. Ensuite **`npm run migrate`** depuis la racine (ou `cd api && npx prisma migrate deploy`). En développement, si l’état des migrations et la base ne correspondent plus, **`npm run db:reset`** repart de zéro (migrations + seed — **toutes les données sont supprimées**) ; détail dans **`docs/INSTALL.md`**.
