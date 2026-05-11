@@ -3,6 +3,9 @@
 #   docker compose --profile docker up -d --build
 # → http://localhost:8080/gestion-conges/  ·  API http://localhost:3000
 # Voir docker/README.md
+#
+# Autre machine sur le LAN / VM : définir DOCKER_PUBLIC_API_URL et
+# DOCKER_CORS_ORIGINS (.env à la racine, ou .env.docker + --env-file)
 
 services:
   postgres:
@@ -37,8 +40,8 @@ services:
       DATABASE_URL: postgresql://gestion:gestion_dev@postgres:5432/gestion_conges?schema=public
       PORT: '3000'
       NODE_ENV: development
-      # Origine du front servi par le conteneur web (port hôte 8080)
-      CORS_ORIGIN: http://localhost:8080,http://127.0.0.1:8080
+      # Origines autorisées (navigateur). Virgules sans espace — cf. api/src/main.ts
+      CORS_ORIGIN: "${DOCKER_CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}"
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-docker-dev-change-me-min-32-characters-long-secret}
       JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
       JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
@@ -53,7 +56,8 @@ services:
       context: .
       dockerfile: Dockerfile.web
       args:
-        VITE_API_URL: http://localhost:3000
+        # URL de l'API telle que le navigateur y accède (injectée au build Vite)
+        VITE_API_URL: "${DOCKER_PUBLIC_API_URL:-http://localhost:3000}"
     container_name: gestion-conges-web
     restart: unless-stopped
     ports:

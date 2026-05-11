@@ -27,6 +27,8 @@ dist-ssr/
 
 # Environment variables
 .env
+.env.docker
+docker-compose.override.yml
 .env.local
 .env.production.local
 .env.development.local

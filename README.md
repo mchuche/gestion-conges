@@ -74,6 +74,7 @@ gestion-conges/
 ├── vite.config.js          # dont vite-plugin-pwa (manifest + service worker)
 ├── package.json
 ├── docker-compose.yml      # Postgres (dev) ; profil `docker` = API + Nginx + web
+├── .env.docker.example     # Modèle LAN / VM pour DOCKER_* (copier vers .env.docker)
 ├── docker/                 # Nginx, doc Docker
 ├── Dockerfile.web          # Image Nginx (build Vite) — profil docker
 ├── api/                    # Backend NestJS + Prisma (+ Dockerfile)

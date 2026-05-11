@@ -109,6 +109,8 @@ Navigateur : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-co
 | `npm run bootstrap-admin` | Premier super-admin (`BOOTSTRAP_*`) |
 | `npm run promote-super-admin` | Promouvoir un utilisateur existant (`PROMOTE_SUPER_ADMIN_EMAIL`) |
 | `npm run db:reset` | **Dev uniquement** — vide la base, réapplique les migrations + **seed** (`prisma migrate reset --force`) |
+| `npm run docker-stack` | Compose **profil docker** : Postgres + API + Nginx (URLs par défaut localhost) |
+| `npm run docker-stack-lan` | Idem avec **`--env-file .env.docker`** (LAN / VM — voir **`.env.docker.example`**) |
 
 ---
 
@@ -139,6 +141,7 @@ Cela exécute **`prisma migrate reset --force`** dans **`api/`** : effacement de
 ## Docker
 
 - **Postgres seul** ou **stack complète** (API + Nginx) : **`docker/README.md`**
+- Stack complète depuis une **autre machine que la VM** (navigateur ≠ hôte Docker) : fichier **`.env.docker.example`** → **`.env.docker`**, variables **`DOCKER_PUBLIC_API_URL`** et **`DOCKER_CORS_ORIGINS`**, puis **`npm run docker-stack-lan`** (ou commande équivalente dans **`docker/README.md`**).
 - Les **variables JWT** pour les conteneurs passent par le compose ou `docker compose exec -e …`.
 
 ### Lien avec Prisma / migrations (« éviter les surprises »)

@@ -9,7 +9,7 @@ RUN npm ci
 
 COPY . .
 
-# URL de l’API telle que le navigateur y accède depuis ta machine (hôte expose le port 3000)
+# Injectée au build ; sur LAN/VM utiliser la même valeur que DOCKER_PUBLIC_API_URL (docker-compose.yml)
 ARG VITE_API_URL=http://localhost:3000
 ENV VITE_API_URL=$VITE_API_URL
 
