@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
+// `import.meta.env.BASE_URL` suit le `base` de Vite (`/` en local, ou `VITE_BASE_PATH` au build Pages)
 const router = createRouter({
-  history: createWebHistory('/gestion-conges/'),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',

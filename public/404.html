@@ -4,8 +4,11 @@
     <meta charset="utf-8">
     <title>Gestionnaire de Congés</title>
     <script type="text/javascript">
-      // Rediriger vers index.html avec le chemin original en query string
-      var pathSegmentsToKeep = 1; // Nombre de segments à garder (pour /gestion-conges/)
+      // Hack SPA pour GitHub Pages : rechargement direct sur une route profonde.
+      // Avec le site servi à la racine du domaine (ex. domaine perso, `base: /`) : 0 segment à « garder ».
+      // Si tu déploies encore sur `https://user.github.io/<repo>/` avec `VITE_BASE_PATH=/<repo>/`,
+      // remets ce nombre à 1 (un segment = nom du dépôt).
+      var pathSegmentsToKeep = 0;
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
@@ -19,4 +22,3 @@
   <body>
   </body>
 </html>
-

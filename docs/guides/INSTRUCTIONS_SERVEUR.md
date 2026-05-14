@@ -33,7 +33,7 @@ Le front attend **`VITE_API_URL`** (URL de l’API Nest), voir `.env.example` à
 
 Tu dois voir dans le terminal une ligne du type **Local: http://localhost:5173/** avec le base path du projet.
 
-Ouvre le navigateur sur **`http://localhost:5173/gestion-conges/`** (le base path **`/gestion-conges/`** est requis).
+Ouvre le navigateur sur **`http://localhost:5173/`** (base Vite **`/`**).
 
 ## Arrêter le serveur
 

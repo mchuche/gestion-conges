@@ -93,7 +93,7 @@ Renseigne **`VITE_API_URL=http://localhost:3000`** dans `.env`, puis :
 npm run dev
 ```
 
-Navigateur : **`http://localhost:5173/gestion-conges/`** (base path `/gestion-conges/`).
+Navigateur : **`http://localhost:5173/`** (base Vite **`/`** ; option **`VITE_BASE_PATH`** pour GitHub Pages — voir `docs/guides/DEPLOY_GITHUB_PAGES.md`).
 
 ### Scripts utiles à la racine
 

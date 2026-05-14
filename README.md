@@ -19,7 +19,7 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 - 🔔 **Notifications** : panneau de notifications côté utilisateur
 - 📅 **Jours fériés** : plusieurs pays (ex. FR, BE, CH, CA, US, GB, DE, ES, IT, NL, LU)
 - 📊 **Statistiques et quotas** : suivi par type et par année
-- 🛡️ **Administration (comptes admin)** : **`/gestion-conges/admin`** — onglets Utilisateurs, Équipes, Types de congés, Paramètres, Statistiques, Logs d’audit
+- 🛡️ **Administration (comptes admin)** : **`/admin`** — onglets Utilisateurs, Équipes, Types de congés, Paramètres, Statistiques, Logs d’audit
 - 💾 **Données** : API NestJS + PostgreSQL (local Docker ou hébergement distant)
 - 📱 **Responsive** : ordinateur, tablette et mobile
 - 📲 **PWA** : installable (**standalone**), mise à jour du **service worker** en production ; les **données métier** passent par l’API et nécessitent en général une connexion réseau
@@ -38,7 +38,7 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 | Notes internes | **`docs/notes/`** |
 | Archives | **`docs/archive/README.md`** |
 
-Après installation : front sur **`http://localhost:5173/gestion-conges/`** (base path `/gestion-conges/`).
+Après installation : front sur **`http://localhost:5173/`** (base Vite **`/`** ; **`VITE_BASE_PATH`** pour GitHub Pages — voir **`docs/guides/DEPLOY_GITHUB_PAGES.md`**).
 
 ## 📖 Utilisation
 
@@ -58,7 +58,7 @@ Après installation : front sur **`http://localhost:5173/gestion-conges/`** (bas
 
 8. **Configurer** : ⚙️ — types, quotas, pays des jours fériés, équipes, etc.
 
-9. **Administration** : réservé aux comptes **admin** — route **`/gestion-conges/admin`** (voir **`docs/guides/CREATE_FIRST_ADMIN.md`**).
+9. **Administration** : réservé aux comptes **admin** — route **`/admin`** (voir **`docs/guides/CREATE_FIRST_ADMIN.md`**).
 
 ## 💻 Compatibilité
 
@@ -71,7 +71,7 @@ Après installation : front sur **`http://localhost:5173/gestion-conges/`** (bas
 ```
 gestion-conges/
 ├── index.html              # Point d'entrée HTML (Vite)
-├── vite.config.js          # dont vite-plugin-pwa (manifest + service worker)
+├── vite.config.js          # base `/` ou VITE_BASE_PATH ; vite-plugin-pwa
 ├── package.json
 ├── docker-compose.yml      # Postgres (dev) ; profil `docker` = API + Nginx + web
 ├── .env.docker.example     # Modèle LAN / VM pour DOCKER_* (copier vers .env.docker)

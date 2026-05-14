@@ -3,13 +3,30 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
+/**
+ * Chemin public Vite (préfixe des assets, manifest, service worker).
+ * - Par défaut **`/`** → ex. `http://localhost:5173/`, Docker Nginx à la racine.
+ * - Pour l’URL GitHub **`https://<user>.github.io/<repo>/`** sans domaine perso,
+ *   définir au build **`VITE_BASE_PATH=/<repo>/`** (voir `docs/guides/DEPLOY_GITHUB_PAGES.md`).
+ */
+function vitePublicBase() {
+  const raw = process.env.VITE_BASE_PATH
+  if (raw == null || String(raw).trim() === '') return '/'
+  let b = String(raw).trim()
+  if (!b.startsWith('/')) b = `/${b}`
+  if (!b.endsWith('/')) b = `${b}/`
+  return b
+}
+
+const base = vitePublicBase()
+
 export default defineConfig({
-  base: '/gestion-conges/',
-  // Dev : ouvre directement la bonne URL (le router Vue est en createWebHistory('/gestion-conges/'))
+  base,
+  // Ouvre la racine du dev server (cohérent avec `base` et Vue Router)
   server: {
     port: 5173,
     strictPort: false,
-    open: '/gestion-conges/',
+    open: true,
   },
   plugins: [
     vue(),
@@ -27,32 +44,31 @@ export default defineConfig({
           {
             src: 'icons/icon-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
           },
           {
             src: 'icons/icon-512x512.png',
             sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
+            type: 'image/png',
+          },
+        ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-      }
-    })
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+      },
+    }),
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
-    }
+      '@': resolve(__dirname, 'src'),
+    },
   },
   optimizeDeps: {
-    include: ['@vuepic/vue-datepicker', 'date-fns']
+    include: ['@vuepic/vue-datepicker', 'date-fns'],
   },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: false
-  }
+    sourcemap: false,
+  },
 })
-

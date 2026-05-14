@@ -80,7 +80,7 @@ Les stores utilisent **`src/services/api.js`** ; l’admin **`AdminView`** via *
 ## Alternative : tout Docker (API + Nginx + Postgres)
 
 Sans HTTPS pour l’instant — **`docker/README.md`** : `docker compose --profile docker up -d --build`.  
-Le navigateur appelle toujours **`http://localhost:3000`** pour l’API.
+Front : **`http://localhost:8080/`** ; API : **`http://localhost:3000`** (ou les URLs LAN si tu utilises **`.env.docker`**).
 
 ---
 

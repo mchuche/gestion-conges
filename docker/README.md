@@ -30,7 +30,7 @@ Si le démarrage échoue sur le **port 3000**, une autre app (souvent l’API Ne
 
 | Service | URL / port |
 |---------|------------|
-| Front (Nginx) | **http://localhost:8080/gestion-conges/** |
+| Front (Nginx) | **http://localhost:8080/** (SPA à la racine) |
 | API Nest | **http://localhost:3000** |
 | Postgres | `localhost:5433` (même volume qu’en mode « Postgres seul ») |
 

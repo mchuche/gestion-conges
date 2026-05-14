@@ -1,7 +1,7 @@
 # PostgreSQL seul : docker compose up -d
-# Stack complète (API + Nginx + Postgres), sans HTTPS pour l’instant :
+# Stack complète (API + Nginx + Postgres), sans HTTPS pour l'instant :
 #   docker compose --profile docker up -d --build
-# → http://localhost:8080/gestion-conges/  ·  API http://localhost:3000
+# → http://localhost:8080/  ·  API http://localhost:3000
 # Voir docker/README.md
 #
 # Autre machine sur le LAN / VM : définir DOCKER_PUBLIC_API_URL et

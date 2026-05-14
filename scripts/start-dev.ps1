@@ -26,7 +26,7 @@ if (-not (Test-Path ".env")) {
 
 Write-Host "✅ Configuration OK" -ForegroundColor Green
 Write-Host ""
-Write-Host "🌐 Le serveur sera accessible sur: http://localhost:5173/gestion-conges/" -ForegroundColor Green
+Write-Host "🌐 Le serveur sera accessible sur: http://localhost:5173/" -ForegroundColor Green
 Write-Host "📝 Appuyez sur Ctrl+C pour arrêter le serveur" -ForegroundColor Yellow
 Write-Host ""
 

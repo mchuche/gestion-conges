@@ -47,7 +47,10 @@ jobs:
         run: |
           echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env
 
+      # VITE_BASE_PATH : variable dépôt optionnelle (ex. /gestion-conges/ pour github.io/<repo>/)
       - name: Build with Vite
+        env:
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
         run: npm run build
 
       - name: Setup Pages
