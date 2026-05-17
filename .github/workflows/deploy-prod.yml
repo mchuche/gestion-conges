@@ -1,0 +1,37 @@
+# CD production : déploiement sur le serveur prod (branche main) via SSH + Docker Compose.
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: SSH → production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${{ secrets.PROD_DEPLOY_PATH }}"
+            DEPLOY_PATH="${DEPLOY_PATH:-/opt/gestion-conges}"
+            cd "$DEPLOY_PATH"
+            git fetch origin
+            git checkout main
+            git reset --hard origin/main
+            docker compose --env-file .env.docker --profile docker up -d --build
+            docker compose exec -T api npm run migrate:deploy
+            echo "Production deploy OK — $(git rev-parse --short HEAD)"

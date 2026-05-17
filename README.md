@@ -33,6 +33,7 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 | Liste des **endpoints** REST | **`docs/guides/API_LOCAL_SETUP.md`** |
 | **Docker** seul ou stack complète | **`docker/README.md`** |
 | Premier **super-admin** | **`docs/guides/CREATE_FIRST_ADMIN.md`** |
+| **CI/CD** (Actions, deploy SSH) | **`docs/guides/CICD_SETUP.md`** |
 | Index des guides | **`docs/guides/README.md`** |
 | Notes internes | **`docs/notes/`** |
 | Archives | **`docs/archive/README.md`** |

@@ -1,0 +1,86 @@
+# CI : build front + API, migrations Prisma sur Postgres éphémère, tests unitaires.
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  front:
+    name: Front (Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          # URL factice : le build n’appelle pas l’API, seulement l’injection Vite.
+          VITE_API_URL: http://localhost:3000
+        run: npm run build
+
+  api:
+    name: API (Nest + Prisma)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gestion
+          POSTGRES_PASSWORD: gestion_ci
+          POSTGRES_DB: gestion_conges
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gestion -d gestion_conges"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://gestion:gestion_ci@localhost:5432/gestion_conges?schema=public
+      JWT_ACCESS_SECRET: ci-jwt-secret-minimum-32-characters-long
+      JWT_ACCESS_EXPIRES: 15m
+      JWT_REFRESH_EXPIRES_DAYS: 7
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install API dependencies
+        working-directory: api
+        run: npm ci
+
+      - name: Prisma generate
+        working-directory: api
+        run: npm run prisma:generate
+
+      - name: Apply migrations
+        working-directory: api
+        run: npm run migrate:deploy
+
+      - name: Build API
+        working-directory: api
+        run: npm run build
+
+      - name: Unit tests
+        working-directory: api
+        run: npm test

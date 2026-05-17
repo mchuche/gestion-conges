@@ -7,6 +7,7 @@ Documentation **à jour** pour faire tourner et déployer l’app (**Vue 3 + Vit
 | [INSTALL.md](../INSTALL.md) | **Référence unique** : `.env`, Postgres, `npm run migrate`, `api:dev`, front |
 | [API_LOCAL_SETUP.md](./API_LOCAL_SETUP.md) | Table des **endpoints** REST + sans Docker / Docker complet |
 | [CREATE_FIRST_ADMIN.md](./CREATE_FIRST_ADMIN.md) | `bootstrap-admin`, `promote-super-admin`, ou SQL manuel |
+| [CICD_SETUP.md](./CICD_SETUP.md) | **CI/CD** GitHub Actions (build, deploy préprod/prod SSH) |
 | [INSTRUCTIONS_SERVEUR.md](./INSTRUCTIONS_SERVEUR.md) | Lancer Vite en dev (`scripts/`, port) |
 | [MIGRATION_GLOBAL_LEAVE_TYPES.md](./MIGRATION_GLOBAL_LEAVE_TYPES.md) | Modèle métier types globaux vs personnalisations (Prisma) |
 

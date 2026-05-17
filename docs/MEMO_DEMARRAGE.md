@@ -196,6 +196,10 @@ Navigateur : `http://IP_DU_LXC:8080/` · test API : `http://IP_DU_LXC:3000/healt
 
 ### Mise à jour après un push sur `develop`
 
+**Automatique** si le CI/CD est configuré : voir **`docs/guides/CICD_SETUP.md`**.
+
+**Manuel** :
+
 ```bash
 cd /opt/gestion-conges
 git pull origin develop
@@ -206,6 +210,10 @@ docker compose exec api npm run migrate:deploy
 ---
 
 ## VM / production (branche `main`)
+
+**Automatique** sur push `main` si secrets GitHub configurés : **`docs/guides/CICD_SETUP.md`**.
+
+**Manuel** :
 
 ```bash
 cd /opt/gestion-conges   # ou le chemin sur le LXC prod

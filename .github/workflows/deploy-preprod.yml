@@ -1,0 +1,37 @@
+# CD préprod : déploiement sur le LXC (branche develop) via SSH + Docker Compose.
+name: Deploy preprod
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-preprod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: SSH → LXC préprod
+    runs-on: ubuntu-latest
+    environment: preproduction
+
+    steps:
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PREPROD_SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${{ secrets.PREPROD_DEPLOY_PATH }}"
+            DEPLOY_PATH="${DEPLOY_PATH:-/opt/gestion-conges}"
+            cd "$DEPLOY_PATH"
+            git fetch origin
+            git checkout develop
+            git reset --hard origin/develop
+            docker compose --env-file .env.docker --profile docker up -d --build
+            docker compose exec -T api npm run migrate:deploy
+            echo "Preprod deploy OK — $(git rev-parse --short HEAD)"
