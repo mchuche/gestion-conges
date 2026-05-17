@@ -3,6 +3,7 @@
     :open="modelValue"
     @close="handleClose"
     class="modal-dialog"
+    :class="{ 'modal-dialog--elevated': elevated }"
     :static="!closeOnBackdrop"
   >
     <div class="modal-backdrop" aria-hidden="true" />
@@ -61,6 +62,11 @@ const props = defineProps({
   contentClass: {
     type: String,
     default: ''
+  },
+  /** Au-dessus des autres modales (ex. récurrence après LeaveModal) */
+  elevated: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -81,6 +87,18 @@ function handleBackdropClick() {
 </script>
 
 <style scoped>
+.modal-dialog--elevated {
+  z-index: 10050;
+}
+
+.modal-dialog--elevated .modal-container {
+  z-index: 10050;
+}
+
+.modal-dialog--elevated .modal-content {
+  z-index: 10051;
+}
+
 .modal-dialog {
   position: fixed;
   inset: 0;

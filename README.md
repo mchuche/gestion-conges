@@ -26,7 +26,7 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 
 ## 🚀 Installation et configuration
 
-**Guide unique :** **`docs/INSTALL.md`** — Postgres (Docker), fichiers **`.env`** racine vs **`api/.env`**, migrations (`npm run migrate`, `migrate:dev`), réinitialisation dev (`npm run db:reset` si besoin), `npm run api:dev`, front (`npm run dev`), **table des scripts npm**.
+**Guide unique :** **`docs/INSTALL.md`** — Postgres (Docker), fichiers **`.env`** racine vs **`api/.env`**, migrations (`npm run migrate`, `migrate:dev`), réinitialisation dev (`npm run db:reset` si besoin), `npm run api:dev`, front (`npm run dev`), **table des scripts npm**. **Mémo démarrage :** **`docs/MEMO_DEMARRAGE.md`**
 
 | Besoin | Où lire |
 |--------|---------|

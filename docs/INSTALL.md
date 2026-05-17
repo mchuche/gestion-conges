@@ -2,6 +2,8 @@
 
 Ce fichier est la **source de vérité** pour démarrer le projet. Les autres guides (`README`, `API_LOCAL_SETUP`, `docker/README`) renvoient ici pour les commandes communes.
 
+**Mémo rapide (démarrage / arrêt Docker vs dev) :** **`docs/MEMO_DEMARRAGE.md`**
+
 ---
 
 ## Variables d’environnement

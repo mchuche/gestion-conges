@@ -1,5 +1,6 @@
 <template>
-  <Modal :model-value="showModal" @close="closeModal">
+  <!-- v-if : démonte le Dialog Headless UI à la fermeture (évite un calque invisible qui bloque la modale récurrence) -->
+  <Modal v-if="showModal" :model-value="true" @close="closeModal">
     <template #header>
       <h3>Sélectionner un type de congé</h3>
     </template>
@@ -19,22 +20,6 @@
                   {{ date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) }}
                 </li>
               </ul>
-            </div>
-          </div>
-          <div class="date-picker-section">
-            <button @click="showDatePicker = !showDatePicker" class="btn-secondary">
-              📅 {{ showDatePicker ? 'Masquer' : 'Sélectionner une plage de dates' }}
-            </button>
-            <div v-if="showDatePicker" class="date-picker-container">
-              <Datepicker
-                v-model="pickerDates"
-                :enable-time-picker="false"
-                :locale="fr"
-                range
-                auto-apply
-                @update:model-value="handleDatePickerChange"
-                placeholder="Sélectionner une plage de dates"
-              />
             </div>
           </div>
         </div>
@@ -115,10 +100,18 @@
           </div>
         </div>
 
-        <!-- Bouton pour créer un événement récurrent -->
-        <div class="recurring-event-button-section">
-          <button 
-            class="btn-primary btn-recurring-event" 
+        <!-- Outils : chaque action ouvre sa propre modale (comme la récurrence) -->
+        <div class="leave-modal-tools">
+          <button
+            type="button"
+            class="btn-primary btn-tool"
+            @click="openDateRangeModal"
+          >
+            📅 Sélectionner une plage de dates
+          </button>
+          <button
+            type="button"
+            class="btn-primary btn-tool"
             @click="openRecurringEventModal"
           >
             🔄 Créer un événement récurrent
@@ -140,10 +133,7 @@
 </template>
 
 <script setup>
-import { computed, watch, ref } from 'vue'
-import { VueDatePicker as Datepicker } from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
-import { fr } from 'date-fns/locale/fr'
+import { computed, watch, ref, nextTick } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useAuthStore } from '../../stores/auth'
 import { useLeavesStore } from '../../stores/leaves'
@@ -272,51 +262,9 @@ const workingDaysCount = computed(() => {
   return calculateWorkingDaysFromDates(selectedDates.value, uiStore.selectedCountry, getPublicHolidays)
 })
 
-const showDatePicker = ref(false)
-const pickerDates = ref(null)
-
-function formatDatePicker(date) {
-  if (!date) return ''
-  if (Array.isArray(date) && date.length === 2) {
-    return `${date[0].toLocaleDateString('fr-FR')} - ${date[1].toLocaleDateString('fr-FR')}`
-  }
-  return date.toLocaleDateString('fr-FR')
-}
-
-function handleDatePickerChange(dates) {
-  if (!dates || !Array.isArray(dates) || dates.length !== 2) return
-  
-  const [startDate, endDate] = dates
-  const selectedDatesArray = []
-  
-  // Générer toutes les dates entre startDate et endDate
-  const currentDate = new Date(startDate)
-  currentDate.setHours(0, 0, 0, 0)
-  const end = new Date(endDate)
-  end.setHours(0, 0, 0, 0)
-  
-  // Filtrer les weekends et jours fériés
-  while (currentDate <= end) {
-    // Ne pas inclure les weekends et jours fériés
-    if (!isWeekendOrHoliday(currentDate)) {
-      selectedDatesArray.push(new Date(currentDate))
-    }
-    currentDate.setDate(currentDate.getDate() + 1)
-  }
-  
-  // Mettre à jour le store avec les dates sélectionnées
-  if (selectedDatesArray.length > 0) {
-    uiStore.clearSelectedDates()
-    selectedDatesArray.forEach(date => {
-      uiStore.addOrRemoveSelectedDate(date)
-    })
-    // Définir la première date comme date principale
-    uiStore.setSelectedDate(selectedDatesArray[0])
-  } else {
-    showErrorToast('Aucune date valide dans cette plage. Les weekends et jours fériés sont exclus.')
-  }
-  
-  showDatePicker.value = false
+/** Ouvre la modale dédiée à la plage (conserve la sélection courante). */
+function openDateRangeModal() {
+  uiStore.openDateRangeModal()
 }
 
 function setPeriod(period) {
@@ -517,22 +465,11 @@ function openSelectionModal() {
   showSelectionList.value = !showSelectionList.value
 }
 
-function openRecurringEventModal() {
-  // IMPORTANT: closeModal() remet uiStore.selectedDate à null.
-  // On préserve donc la date sélectionnée pour l'utiliser comme date proposée dans la modale de récurrence.
-  const preservedDate = selectedDate.value ? new Date(selectedDate.value) : null
-  const preservedPeriod = uiStore.selectedPeriod
-
-  // Fermer d'abord la modale de sélection de congé
-  closeModal()
-
-  // Puis ouvrir la modale d'événements récurrents sans type d'événement pré-sélectionné
-  // Utiliser un petit délai pour éviter les conflits de rendu
-  setTimeout(() => {
-    if (preservedDate) uiStore.setSelectedDate(preservedDate)
-    if (preservedPeriod) uiStore.setSelectedPeriod(preservedPeriod)
-    uiStore.openRecurringEventModal(null)
-  }, 100)
+/** Ouvre la modale récurrence sans effacer la sélection (hideLeaveModal). */
+async function openRecurringEventModal() {
+  uiStore.hideLeaveModal()
+  await nextTick()
+  uiStore.openRecurringEventModal(null)
 }
 
 // Ajuster la période selon le congé existant
@@ -750,20 +687,24 @@ watch(leaveInfo, (newInfo) => {
   background: #c0392b;
 }
 
-.date-picker-section {
-  margin-top: 15px;
+.leave-modal-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color, #e0e0e0);
 }
 
-.date-picker-container {
-  margin-top: 15px;
-}
-
-.date-picker-container :deep(.dp__main) {
-  font-family: inherit;
-}
-
-.date-picker-container :deep(.dp__input_wrap) {
+.btn-tool {
   width: 100%;
+  padding: 12px 24px;
+  font-size: 1em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .event-info {
@@ -781,19 +722,4 @@ watch(leaveInfo, (newInfo) => {
   opacity: 0.7;
 }
 
-.recurring-event-button-section {
-  margin-top: 20px;
-  padding-top: 15px;
-}
-
-.btn-recurring-event {
-  width: 100%;
-  padding: 12px 24px;
-  font-size: 1em;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
 </style>

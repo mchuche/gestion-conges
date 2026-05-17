@@ -1,12 +1,16 @@
 <template>
-  <Modal :model-value="showModal" @close="closeModal">
+  <Modal v-if="showModal" :model-value="true" elevated @close="closeModal">
     <template #header>
       <h3>Créer un événement récurrent</h3>
     </template>
     
     <template #body>
-      <div>
-        <div v-if="selectedDate" class="selected-date-info">
+      <p class="intro">
+        Choisissez un <strong>type</strong>, une <strong>période</strong>, la date de début et les règles de récurrence.
+        Un aperçu des occurrences s'affiche avant validation.
+      </p>
+
+      <div v-if="selectedDate" class="selected-date-info">
           <p class="date-display">{{ formattedDate }}</p>
           <div v-if="recurringDateRange" class="date-range-info">
             <p class="range-display">
@@ -15,32 +19,46 @@
           </div>
         </div>
 
-        <!-- Sélection du type d'événement -->
-        <div v-if="!selectedEventTypeId && eventTypesList.length > 0" class="event-type-selection">
+        <!-- Types : grilles toujours visibles -->
+        <div v-if="eventTypesList.length > 0" class="type-selection">
           <h4>Sélectionner un type d'événement :</h4>
-          <div class="event-types-grid">
+          <div class="type-buttons-grid">
             <button
               v-for="type in eventTypesList"
               :key="type.id"
-              :class="['event-type-btn', { active: selectedEventTypeId === type.id }]"
-              :style="{ borderColor: type.color, backgroundColor: selectedEventTypeId === type.id ? type.color : 'transparent' }"
-              @click="selectedEventTypeId = type.id"
+              type="button"
+              :class="['type-btn', { active: selectedTypeId === type.id }]"
+              :style="getTypeButtonStyle(type)"
+              @click.stop="selectType(type.id)"
             >
-              <span :style="{ color: selectedEventTypeId === type.id ? 'white' : type.color }">
-                {{ type.name }}
-              </span>
+              {{ type.name }}
             </button>
           </div>
         </div>
-        
-        <!-- Message si aucun type d'événement disponible -->
-        <div v-if="!selectedEventTypeId && eventTypesList.length === 0" class="no-events-message">
-          <p>Aucun type d'événement disponible. Veuillez d'abord créer un type d'événement dans les paramètres.</p>
+
+        <div v-if="leaveTypesList.length > 0" class="type-selection">
+          <h4>Sélectionner un type de congé :</h4>
+          <div class="type-buttons-grid">
+            <button
+              v-for="type in leaveTypesList"
+              :key="type.id"
+              type="button"
+              :class="['type-btn', { active: selectedTypeId === type.id }]"
+              :style="getTypeButtonStyle(type)"
+              @click.stop="selectType(type.id)"
+            >
+              {{ type.name }}
+            </button>
+          </div>
         </div>
 
-        <div v-if="selectedEventType" class="selected-event-type">
-          <span class="event-type-badge" :style="{ backgroundColor: selectedEventType.color }">
-            {{ selectedEventType.name }}
+        <p v-if="!hasAnyLeaveType" class="no-types-message">
+          Aucun type disponible. Créez des types dans les paramètres.
+        </p>
+
+        <div v-if="selectedType" class="selected-type-badge">
+          <span class="type-badge" :style="{ backgroundColor: selectedType.color }">
+            {{ selectedType.name }}
           </span>
         </div>
 
@@ -49,14 +67,18 @@
           <h4>Date de début :</h4>
           <Datepicker
             v-model="startDatePicker"
-            :enable-time-picker="false"
+            :dark="isDarkTheme"
+            :time-picker="false"
             :locale="fr"
+            :formats="dateFormats"
+            :teleport="false"
+            auto-apply
             @update:model-value="handleStartDateChange"
-            placeholder="Sélectionner une date de début"
+            placeholder="Choisir le premier jour"
           />
         </div>
 
-        <div v-if="selectedDate" class="period-selection">
+        <div class="period-selection">
           <h4>Période :</h4>
           <div class="period-buttons">
             <button
@@ -160,12 +182,17 @@
             <div v-else class="end-date-picker">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <label>Date de fin :</label>
-                <Datepicker 
+                <Datepicker
                   v-model="recurrenceEndDate"
+                  :dark="isDarkTheme"
+                  :time-picker="false"
+                  :locale="fr"
+                  :formats="dateFormats"
+                  :teleport="false"
+                  auto-apply
                   :min-date="selectedDate"
                   :max-date="selectedDate ? getEndOfYear(selectedDate) : null"
-                  :locale="fr"
-                  placeholder="Sélectionner une date de fin"
+                  placeholder="Choisir le dernier jour"
                 />
               </div>
               <span class="date-hint" v-if="selectedDate">
@@ -192,19 +219,27 @@
           </div>
         </div>
 
-        <div class="modal-actions">
-          <button class="btn-secondary" @click="closeModal">
-            Annuler
-          </button>
-          <button 
-            v-if="selectedEventTypeId && selectedDate"
-            class="btn-primary" 
-            @click="createRecurringEvent"
-            :disabled="recurrencePreview.length === 0"
-          >
-            Créer en récurrent ({{ recurrencePreview.length }} occurrences)
-          </button>
-        </div>
+      <p v-if="!selectedTypeId && selectedDate" class="hint-select-type">
+        Sélectionnez un type de congé ou d'événement pour activer la création.
+      </p>
+      <p v-if="selectedTypeId && selectedDate && recurrencePreview.length === 0" class="hint-select-type">
+        Complétez la configuration de récurrence (jours, date de fin…) pour générer un aperçu.
+      </p>
+    </template>
+
+    <template #footer>
+      <div class="footer-actions">
+        <button type="button" class="btn-secondary" :disabled="isCreating" @click="closeModal">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          :disabled="!canCreate"
+          @click="createRecurringEvent"
+        >
+          {{ createButtonLabel }}
+        </button>
       </div>
     </template>
   </Modal>
@@ -247,23 +282,63 @@ const selectedDate = computed(() => {
   return uiStore.selectedDate || null
 })
 
-// Synchroniser selectedEventTypeId avec le store
-const selectedEventTypeId = ref(uiStore.selectedEventTypeId || null)
+// Type choisi (congé ou événement) — état local uniquement (comme DateRangeModal)
+const selectedTypeId = ref(null)
 
-// Surveiller les changements de selectedEventTypeId dans le store
-watch(() => uiStore.selectedEventTypeId, (newId) => {
-  selectedEventTypeId.value = newId || null
-}, { immediate: true })
+/** Sélection du type : pas d’écriture dans le store (évite les watchers qui réinitialisent). */
+function selectType(typeId) {
+  selectedTypeId.value = typeId
+}
 
 // Liste des types d'événements
 const eventTypesList = computed(() => {
   return leaveTypesStore.leaveTypes.filter(type => type.category === 'event')
 })
 
-const selectedEventType = computed(() => {
-  if (!selectedEventTypeId.value) return null
-  return leaveTypesStore.getLeaveType(selectedEventTypeId.value)
+const selectedType = computed(() => {
+  if (!selectedTypeId.value) return null
+  return leaveTypesStore.getLeaveType(selectedTypeId.value)
 })
+
+const leaveTypesList = computed(() =>
+  leaveTypesStore.leaveTypes.filter((type) => type.category !== 'event'),
+)
+
+const hasAnyLeaveType = computed(
+  () => leaveTypesList.value.length > 0 || eventTypesList.value.length > 0,
+)
+
+const isDarkTheme = computed(() => uiStore.theme === 'dark')
+const dateFormats = { input: 'dd/MM/yyyy', preview: 'dd/MM/yyyy' }
+const isCreating = ref(false)
+
+const canCreate = computed(
+  () =>
+    !isCreating.value &&
+    !!selectedTypeId.value &&
+    !!selectedDate.value &&
+    recurrencePreview.value.length > 0,
+)
+
+const createButtonLabel = computed(() => {
+  if (isCreating.value) return 'Création…'
+  if (!selectedTypeId.value) return 'Choisir un type'
+  if (!selectedDate.value) return 'Choisir une date de début'
+  if (recurrencePreview.value.length === 0) return 'Configurer la récurrence'
+  const n = recurrencePreview.value.length
+  return `Créer en récurrent (${n} occurrence${n > 1 ? 's' : ''})`
+})
+
+function getTypeButtonStyle(type) {
+  const isSelected = selectedTypeId.value === type.id
+  const isDark = isDarkTheme.value
+  const defaultBg = isDark ? 'var(--card-bg)' : 'transparent'
+  return {
+    borderColor: type.color,
+    backgroundColor: isSelected ? type.color : defaultBg,
+    color: isSelected ? 'white' : type.color,
+  }
+}
 
 // Synchroniser selectedPeriod avec le store
 const selectedPeriod = ref(uiStore.selectedPeriod || 'full')
@@ -330,7 +405,7 @@ function handleStartDateChange(date) {
       selectedDays.value = [date.getDay()]
     }
     // Mettre à jour la prévisualisation si un type d'événement est sélectionné
-    if (selectedEventTypeId.value) {
+    if (selectedTypeId.value) {
       updateRecurrencePreview()
     }
   }
@@ -347,8 +422,8 @@ function handleRecurrenceTypeChange() {
 }
 
 // Surveiller les changements pour mettre à jour la prévisualisation
-watch([selectedDays, recurrenceInterval, recurrenceType, recurrenceEndDate, monthlyRecurrenceMode, monthlyWeekOfMonth, monthlyDayOfWeek, selectedDate, selectedPeriod, recurringDateRange, selectedEventTypeId], () => {
-  if (selectedDate.value && selectedEventTypeId.value) {
+watch([selectedDays, recurrenceInterval, recurrenceType, recurrenceEndDate, monthlyRecurrenceMode, monthlyWeekOfMonth, monthlyDayOfWeek, selectedDate, selectedPeriod, recurringDateRange, selectedTypeId], () => {
+  if (selectedDate.value && selectedTypeId.value) {
     updateRecurrencePreview()
   }
 }, { deep: true })
@@ -361,36 +436,30 @@ function getEndOfYear(date) {
   return endOfYear
 }
 
-// Surveiller l'ouverture de la modale pour initialiser/réinitialiser certaines valeurs
-watch(showModal, (isOpen) => {
-  if (isOpen) {
-    // Si un eventTypeId est passé depuis le store, l'utiliser, sinon réinitialiser à null
-    // Cela permet d'afficher la sélection de type si aucun type n'est pré-sélectionné
-    if (uiStore.selectedEventTypeId) {
-      selectedEventTypeId.value = uiStore.selectedEventTypeId
-    } else {
-      selectedEventTypeId.value = null
-    }
-    
-    // Initialiser startDatePicker si une date est sélectionnée dans le store et qu'aucune plage de dates n'est définie
-    if (uiStore.selectedDate && !recurringDateRange.value) {
-      startDatePicker.value = uiStore.selectedDate
-    }
-    
-    // Initialiser la date de fin par défaut (fin de l'année) si pas déjà définie
-    if (!recurrenceEndDate.value && selectedDate.value) {
-      recurrenceEndDate.value = getEndOfYear(selectedDate.value)
-    }
-    
-    // Initialiser les jours sélectionnés si récurrence hebdomadaire et qu'aucun jour n'est sélectionné
-    if (selectedDate.value && recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
-      selectedDays.value = [selectedDate.value.getDay()]
-    }
-    
-    // Réinitialiser la prévisualisation (sera recalculée par les autres watches)
-    recurrencePreview.value = []
+// À l’ouverture uniquement (pas à chaque re-render)
+watch(showModal, (isOpen, wasOpen) => {
+  if (!isOpen || wasOpen) return
+
+  // Nettoyer d’éventuels calendriers téléportés restés dans le DOM (bloquaient les clics)
+  document.querySelectorAll('.dp--menu-wrapper').forEach((el) => el.remove())
+
+  selectedTypeId.value = uiStore.selectedEventTypeId || null // type pré-sélectionné à l’ouverture si fourni
+
+  // Initialiser startDatePicker si une date est sélectionnée dans le store
+  if (uiStore.selectedDate && !recurringDateRange.value) {
+    startDatePicker.value = new Date(uiStore.selectedDate)
   }
-}, { immediate: true })
+
+  if (!recurrenceEndDate.value && selectedDate.value) {
+    recurrenceEndDate.value = getEndOfYear(selectedDate.value)
+  }
+
+  if (selectedDate.value && recurrenceType.value === 'weekly' && selectedDays.value.length === 0) {
+    selectedDays.value = [selectedDate.value.getDay()]
+  }
+
+  recurrencePreview.value = []
+})
 
 // Mettre à jour la date de fin quand la date de début change
 watch(selectedDate, (newDate) => {
@@ -410,19 +479,20 @@ watch(selectedDate, (newDate) => {
       selectedDays.value = [newDate.getDay()]
     }
     // Mettre à jour la prévisualisation si un type d'événement est sélectionné
-    if (selectedEventTypeId.value) {
+    if (selectedTypeId.value) {
       updateRecurrencePreview()
     }
   }
 })
 
 function updateRecurrencePreview() {
-  if (!selectedDate.value || !selectedEventTypeId.value) {
+  if (!selectedDate.value || !selectedTypeId.value) {
     recurrencePreview.value = []
     return
   }
   
-  const eventType = selectedEventType.value
+  // Type choisi (congé ou événement) — selectedType, pas selectedEventType (ref inexistante)
+  const eventType = selectedType.value
   if (!eventType) {
     recurrencePreview.value = []
     return
@@ -453,7 +523,7 @@ function updateRecurrencePreview() {
     recurrence_type: recurrenceType.value,
     recurrence_pattern: pattern,
     period: selectedPeriod.value || 'full',
-    leave_type_id: selectedEventTypeId.value,
+    leave_type_id: selectedTypeId.value,
     max_occurrences: null
   }
 
@@ -515,8 +585,10 @@ function buildRecurrencePattern() {
 }
 
 async function createRecurringEvent() {
-  if (!selectedEventTypeId.value || !selectedDate.value) {
-    showErrorToast('Configuration incomplète')
+  if (!canCreate.value) {
+      if (!selectedTypeId.value) showErrorToast("Sélectionnez un type de congé ou d'événement.")
+    else if (!selectedDate.value) showErrorToast('Sélectionnez une date de début.')
+    else showErrorToast('Configuration de récurrence invalide ou sans occurrence.')
     return
   }
 
@@ -526,6 +598,7 @@ async function createRecurringEvent() {
     return
   }
 
+  isCreating.value = true
   try {
     const startDate = selectedDate.value
     // Si une plage de dates est fournie, l'utiliser comme période de validité
@@ -541,7 +614,7 @@ async function createRecurringEvent() {
     }
 
     await recurringEventsStore.createRecurringEvent({
-      leave_type_id: selectedEventTypeId.value,
+      leave_type_id: selectedTypeId.value,
       period: selectedPeriod.value || 'full',
       recurrence_type: recurrenceType.value,
       recurrence_pattern: pattern,
@@ -560,12 +633,14 @@ async function createRecurringEvent() {
       context: 'RecurringEventModal.createRecurringEvent',
       showToast: true
     })
+  } finally {
+    isCreating.value = false
   }
 }
 
 function closeModal() {
   // Réinitialiser les valeurs locales
-  selectedEventTypeId.value = null
+  selectedTypeId.value = null
   selectedPeriod.value = 'full'
   recurrenceType.value = 'weekly'
   recurrenceInterval.value = 1
@@ -576,7 +651,8 @@ function closeModal() {
   monthlyDayOfWeek.value = 1
   recurrencePreview.value = []
   startDatePicker.value = null
-  
+  isCreating.value = false
+
   // Fermer la modale (cela réinitialisera aussi selectedEventTypeId dans le store)
   uiStore.closeRecurringEventModal()
 }
@@ -584,6 +660,26 @@ function closeModal() {
 
 <style scoped>
 /* Le padding est déjà géré par le composant Modal */
+
+.intro {
+  margin: 0 0 16px;
+  font-size: 0.95em;
+  color: var(--text-color);
+  line-height: 1.45;
+}
+
+.hint-select-type {
+  margin: 0 0 12px;
+  font-size: 0.9em;
+  color: var(--warning-color, #e67e22);
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
 .selected-date-info {
   margin-bottom: 20px;
@@ -597,8 +693,9 @@ function closeModal() {
   margin-bottom: 10px;
 }
 
-.selected-event-type {
-  margin-top: 10px;
+.selected-type-badge {
+  margin: 0 0 16px;
+  text-align: center;
 }
 
 .date-range-info {
@@ -630,24 +727,36 @@ function closeModal() {
   font-style: italic;
 }
 
-.event-type-selection {
-  margin-bottom: 20px;
+/* Titres à gauche, boutons centrés (z-index > menus datepicker) */
+.type-selection {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 18px;
 }
 
-.event-type-selection h4 {
-  margin-bottom: 15px;
+.type-selection h4 {
+  margin: 0 0 10px;
+  padding-left: 8px;
   font-size: 1em;
   color: var(--text-color);
+  font-weight: 600;
+  text-align: left;
 }
 
-.event-types-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+.type-buttons-grid {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 
-.event-type-btn {
-  padding: 10px 16px;
+.type-btn {
+  position: relative;
+  z-index: 10;
+  min-width: 140px;
+  padding: 10px 14px;
   border: 2px solid;
   border-radius: 4px;
   background: var(--card-bg);
@@ -655,14 +764,18 @@ function closeModal() {
   transition: all 0.2s ease;
   font-size: 0.9em;
   font-weight: 500;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.event-type-btn:hover {
-  opacity: 0.8;
-  transform: translateY(-2px);
+.type-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
-.event-type-btn.active {
+.type-btn.active {
   color: white;
 }
 
@@ -671,8 +784,15 @@ function closeModal() {
   text-align: center;
 }
 
+/* Menus datepicker : ne pas recouvrir la grille de types (téléport désactivé) */
+:deep(.dp--menu-wrapper) {
+  z-index: 1 !important;
+}
+
 .date-selection {
   margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .date-selection h4 {
@@ -681,7 +801,7 @@ function closeModal() {
   color: var(--text-color);
 }
 
-.event-type-badge {
+.type-badge {
   display: inline-block;
   padding: 8px 16px;
   border-radius: 4px;
@@ -928,8 +1048,13 @@ function closeModal() {
   color: var(--text-color);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: #d0d0d0;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Mode sombre - styles supprimés pour simplifier */
@@ -939,7 +1064,7 @@ function closeModal() {
   border-color: var(--border-color, #404040);
 }
 
-.no-events-message {
+.no-types-message {
   padding: 20px;
   text-align: center;
   color: var(--text-color);
@@ -953,4 +1078,3 @@ function closeModal() {
   font-size: 0.9em;
 }
 </style>
-

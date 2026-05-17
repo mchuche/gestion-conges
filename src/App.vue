@@ -17,6 +17,7 @@
       <HelpModal />
       <TeamsModal />
       <LeaveRecapModal />
+      <DateRangeModal />
       <RecurringEventModal />
       
       <!-- Système de toasts -->
@@ -44,6 +45,7 @@ import ConfigModal from './components/modals/ConfigModal.vue'
 import HelpModal from './components/modals/HelpModal.vue'
 import TeamsModal from './components/modals/TeamsModal.vue'
 import LeaveRecapModal from './components/modals/LeaveRecapModal.vue'
+import DateRangeModal from './components/modals/DateRangeModal.vue'
 import RecurringEventModal from './components/modals/RecurringEventModal.vue'
 import ToastContainer from './components/common/ToastContainer.vue'
 import logger from './services/logger'

@@ -42,6 +42,7 @@ export const useUIStore = defineStore('ui', () => {
   const showTeamsModal = ref(false)
   const showLeaveRecapModal = ref(false)
   const showRecurringEventModal = ref(false)
+  const showDateRangeModal = ref(false)
   const selectedEventTypeId = ref(null) // Pour la modale d'événements récurrents
   const recurringEventDateRange = ref(null) // Plage de dates pour la récurrence [startDate, endDate]
 
@@ -528,9 +529,12 @@ export const useUIStore = defineStore('ui', () => {
 
   // Modales
   function openModal() {
-    // Fermer la modale d'événements récurrents si elle est ouverte
+    // Fermer les modales « outils » si elles sont ouvertes
     if (showRecurringEventModal.value) {
       showRecurringEventModal.value = false
+    }
+    if (showDateRangeModal.value) {
+      showDateRangeModal.value = false
     }
     showModal.value = true
   }
@@ -593,6 +597,36 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   /**
+   * Masque la modale congé sans effacer la sélection (passage vers plage / récurrence).
+   */
+  function hideLeaveModal() {
+    showModal.value = false
+  }
+
+  /** Ouvre la modale de plage de dates (ferme la modale congé, conserve selectedDates). */
+  function openDateRangeModal() {
+    if (showRecurringEventModal.value) {
+      showRecurringEventModal.value = false
+    }
+    showModal.value = false
+    showDateRangeModal.value = true
+  }
+
+  /**
+   * Ferme la modale plage ; rouvre la modale congé si une date est encore sélectionnée.
+   * @param {{ reopenLeave?: boolean }} [options]
+   */
+  function closeDateRangeModal(options = { reopenLeave: true }) {
+    showDateRangeModal.value = false
+    const shouldReopen =
+      options.reopenLeave &&
+      (selectedDate.value != null || selectedDates.value.length > 0)
+    if (shouldReopen) {
+      showModal.value = true
+    }
+  }
+
+  /**
    * Nettoyage "logout" : vider les sélections et fermer les modales,
    * sans toucher aux préférences UI (thème, fullWidth, etc.).
    * On invalide quand même le cache serveur pour le prochain utilisateur.
@@ -615,6 +649,7 @@ export const useUIStore = defineStore('ui', () => {
     showTeamsModal.value = false
     showLeaveRecapModal.value = false
     showRecurringEventModal.value = false
+    showDateRangeModal.value = false
 
     // Événements récurrents
     selectedEventTypeId.value = null
@@ -645,6 +680,7 @@ export const useUIStore = defineStore('ui', () => {
     showHelpModal.value = false
     showTeamsModal.value = false
     showLeaveRecapModal.value = false
+    showDateRangeModal.value = false
   }
 
   return {
@@ -723,10 +759,14 @@ export const useUIStore = defineStore('ui', () => {
     openLeaveRecapModal,
     closeLeaveRecapModal,
     showRecurringEventModal,
+    showDateRangeModal,
     selectedEventTypeId,
     recurringEventDateRange,
     openRecurringEventModal,
     closeRecurringEventModal,
+    hideLeaveModal,
+    openDateRangeModal,
+    closeDateRangeModal,
     resetForLogout,
     resetPreferencesCache,
     reset
