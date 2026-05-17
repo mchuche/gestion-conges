@@ -160,11 +160,59 @@ npm run dev
 
 ---
 
-## VM / production (rappel)
+## Préproduction (LXC Proxmox, branche `develop`)
+
+**Branche Git :** `develop` (préprod) · `main` (production).
+
+### Première installation sur le LXC
 
 ```bash
-git pull
+cd /opt
+git clone https://github.com/mchuche/gestion-conges.git
+cd gestion-conges
+git fetch origin
+git checkout develop
+
+cp .env.docker.example .env.docker
+nano .env.docker   # voir ci-dessous
 docker compose --env-file .env.docker --profile docker up -d --build
+
+docker compose exec api npm run migrate:deploy
+docker compose exec api npm run prisma:seed
+docker compose exec -e BOOTSTRAP_ADMIN_EMAIL=toi@example.com \
+  -e BOOTSTRAP_ADMIN_PASSWORD="MotDePasse" \
+  api npm run bootstrap-admin
+```
+
+**`.env.docker` (exemple)** — remplacer `IP_DU_LXC` par l’IP du conteneur Proxmox :
+
+```env
+DOCKER_PUBLIC_API_URL=http://IP_DU_LXC:3000
+DOCKER_CORS_ORIGINS=http://IP_DU_LXC:8080,http://127.0.0.1:8080
+JWT_ACCESS_SECRET=secret-preprod-long-minimum-32-caracteres-differents-de-la-prod
+```
+
+Navigateur : `http://IP_DU_LXC:8080/` · test API : `http://IP_DU_LXC:3000/health`
+
+### Mise à jour après un push sur `develop`
+
+```bash
+cd /opt/gestion-conges
+git pull origin develop
+docker compose --env-file .env.docker --profile docker up -d --build
+docker compose exec api npm run migrate:deploy
+```
+
+---
+
+## VM / production (branche `main`)
+
+```bash
+cd /opt/gestion-conges   # ou le chemin sur le LXC prod
+git checkout main
+git pull origin main
+docker compose --env-file .env.docker --profile docker up -d --build
+docker compose exec api npm run migrate:deploy
 ```
 
 URLs : `https://freetime.chuche.eu/` · `https://api.freetime.chuche.eu/health`
