@@ -177,7 +177,7 @@ onMounted(async () => {
   try {
     await authStore.checkSession()
     
-    // Recharger le thème après la connexion pour synchroniser avec Supabase
+    // Recharger le thème après la connexion (préférences utilisateur via l’API)
     if (authStore.isAuthenticated && typeof uiStore.loadThemePreference === 'function') {
       await uiStore.loadThemePreference()
     }

@@ -33,12 +33,11 @@ Une application web moderne et responsive pour gérer vos jours de congé avec u
 | Liste des **endpoints** REST | **`docs/guides/API_LOCAL_SETUP.md`** |
 | **Docker** seul ou stack complète | **`docker/README.md`** |
 | Premier **super-admin** | **`docs/guides/CREATE_FIRST_ADMIN.md`** |
-| Déploiement **GitHub Pages** | **`docs/guides/DEPLOY_GITHUB_PAGES.md`** |
 | Index des guides | **`docs/guides/README.md`** |
 | Notes internes | **`docs/notes/`** |
 | Archives | **`docs/archive/README.md`** |
 
-Après installation : front sur **`http://localhost:5173/`** (base Vite **`/`** ; **`VITE_BASE_PATH`** pour GitHub Pages — voir **`docs/guides/DEPLOY_GITHUB_PAGES.md`**).
+Après installation : front sur **`http://localhost:5173/`** (base Vite **`/`**). Déploiement production : **`docker/README.md`** (stack Docker) ou build Vite + hébergeur statique avec **`VITE_API_URL`**.
 
 ## 📖 Utilisation
 
@@ -71,7 +70,7 @@ Après installation : front sur **`http://localhost:5173/`** (base Vite **`/`** 
 ```
 gestion-conges/
 ├── index.html              # Point d'entrée HTML (Vite)
-├── vite.config.js          # base `/` ou VITE_BASE_PATH ; vite-plugin-pwa
+├── vite.config.js          # base `/` ; vite-plugin-pwa
 ├── package.json
 ├── docker-compose.yml      # Postgres (dev) ; profil `docker` = API + Nginx + web
 ├── .env.docker.example     # Modèle LAN / VM pour DOCKER_* (copier vers .env.docker)
@@ -80,7 +79,7 @@ gestion-conges/
 ├── api/                    # Backend NestJS + Prisma (+ Dockerfile)
 ├── scripts/                # start-dev.*, generate-icons.html, README
 ├── docs/                   # INSTALL, guides, notes (docs/notes/)
-├── public/                 # Statiques (404.html, manifest.json de réf., icons/)
+├── public/                 # Statiques (manifest.json de réf., icons/)
 ├── src/
 │   ├── main.js
 │   ├── App.vue
@@ -103,8 +102,6 @@ gestion-conges/
 │   ├── utils/
 │   ├── plugins/
 │   └── i18n/
-├── .github/workflows/
-│   └── deploy.yml          # Déploiement GitHub Pages
 ├── .env.example
 ├── docs/archive/
 └── README.md
@@ -143,10 +140,6 @@ L’application peut être **installée** sur téléphone, tablette ou poste (ex
 - **PostgreSQL**
 - **Prisma** (`api/prisma/` — dont par exemple `User`, `Leave`, `Team`, `RecurringEvent`, `Notification`, `AppSetting`, `AuditLog`, quotas…)
 
-### Déploiement et CI/CD
-
-- **GitHub Pages** + **GitHub Actions** (`deploy.yml`, secret **`VITE_API_URL`**)
-
 ### Développement
 
 - **Prisma Studio** : `npm run prisma:studio` à la racine (voir **`docs/INSTALL.md`**)
@@ -175,13 +168,8 @@ Modèle **Prisma** sur PostgreSQL. Application du schéma : **`npm run migrate`*
 
 ## 🚀 Déploiement
 
-### GitHub Pages
-
-Workflow **`.github/workflows/deploy.yml`** : build du front, publication de **`dist/`**. Secret **`VITE_API_URL`** (URL HTTPS de l’API). **CORS** côté Nest pour l’origine Pages — détail : **`docs/guides/DEPLOY_GITHUB_PAGES.md`**.
-
-### Autres hébergeurs
-
-Même principe : **`VITE_API_URL`** au build, API et CORS configurés séparément.
+- **Docker (recommandé)** : profil `docker` dans `docker-compose.yml` — voir **`docker/README.md`**
+- **Front statique ailleurs** : `npm run build` avec **`VITE_API_URL`** pointant vers l’API Nest en HTTPS ; configurer **CORS** côté API pour l’origine du site
 
 ## 📝 Licence
 

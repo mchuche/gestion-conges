@@ -37,23 +37,5 @@ app.use(router)
 app.use(i18n)
 app.use(autoAnimatePlugin)
 
-// Gérer la redirection depuis 404.html (GitHub Pages)
-// Le 404.html redirige vers index.html?/path, il faut extraire le chemin
-if (window.location.search.includes('?/')) {
-  const path = window.location.search.replace('?/', '')
-  const cleanPath = path.split('&')[0].replace(/~and~/g, '&')
-  const hash = window.location.hash
-  const fullPath = cleanPath + hash
-  
-  // Nettoyer l'URL et naviguer vers le bon chemin
-  router.isReady().then(() => {
-    router.replace(fullPath).then(() => {
-      // Nettoyer l'URL après la navigation
-      const newUrl = window.location.origin + router.resolve(fullPath).href
-      window.history.replaceState({}, '', newUrl)
-    })
-  })
-}
-
 app.mount('#app')
 

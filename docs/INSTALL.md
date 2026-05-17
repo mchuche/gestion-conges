@@ -95,7 +95,7 @@ Renseigne **`VITE_API_URL=http://localhost:3000`** dans `.env`, puis :
 npm run dev
 ```
 
-Navigateur : **`http://localhost:5173/`** (base Vite **`/`** ; option **`VITE_BASE_PATH`** pour GitHub Pages — voir `docs/guides/DEPLOY_GITHUB_PAGES.md`).
+Navigateur : **`http://localhost:5173/`** (base Vite **`/`**).
 
 ### Scripts utiles à la racine
 
@@ -157,12 +157,6 @@ Les commandes **`npm run migrate`**, **`migrate:dev`**, **`db:reset`**, etc. ne 
 | Docker / Postgres **arrêtés** | `migrate` / `db:reset` **échouent** (rien à joindre) ou peuvent se rabattre sur une erreur réseau — pas un bug Prisma. |
 
 En résumé : **Docker** = *où* tourne le serveur PostgreSQL et *quel port* tu dois mettre dans **`DATABASE_URL`**. **Prisma** = *quel schéma* appliquer **sur cette base**. Si `DATABASE_URL` pointe vers une autre instance (ex. Postgres local sur 5432 alors que tu crois utiliser Docker), tu peux « réparer » une base pendant que l’app parle à une autre — d’où les surprises. Détail des URLs et profils : **`docker/README.md`**.
-
----
-
-## Déploiement front statique (GitHub Pages)
-
-**`docs/guides/DEPLOY_GITHUB_PAGES.md`** — secret **`VITE_API_URL`** vers ton API en HTTPS.
 
 ---
 

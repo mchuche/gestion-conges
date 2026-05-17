@@ -72,12 +72,12 @@ function detectErrorType(error) {
     return ErrorType.NETWORK
   }
 
-  // Erreurs Supabase Auth
+  // Erreurs auth API (JWT, etc.)
   if (error.code?.startsWith('auth/') || error.status === 401 || error.status === 403) {
     return ErrorType.AUTH
   }
 
-  // Erreurs Supabase Database
+  // Erreurs base / API (codes Postgres, HTTP 404/409…)
   if (error.code?.startsWith('PGRST') || error.code?.startsWith('235') || error.status === 404 || error.status === 409) {
     return ErrorType.DATABASE
   }
@@ -225,23 +225,6 @@ export async function handleAsyncError(promise, context = '', options = {}) {
 }
 
 /**
- * Handler spécifique pour les erreurs Supabase
- */
-export function handleSupabaseError(error, context = '') {
-  if (!error) return null
-
-  // Les erreurs Supabase ont souvent un format spécifique
-  const supabaseError = error.error || error
-  const message = supabaseError.message || error.message || ''
-
-  return handleError(error, {
-    context: context || 'Supabase',
-    showToast: true,
-    logError: true
-  })
-}
-
-/**
  * Handler pour les erreurs de validation (VeeValidate, etc.)
  */
 export function handleValidationError(error, context = '') {
@@ -255,7 +238,6 @@ export function handleValidationError(error, context = '') {
 export default {
   handleError,
   handleAsyncError,
-  handleSupabaseError,
   handleValidationError,
   ErrorType
 }

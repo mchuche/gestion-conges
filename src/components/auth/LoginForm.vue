@@ -98,32 +98,27 @@ const { error: showErrorToast, success: showSuccessToast } = useToast()
 const loading = ref(false)
 const authError = ref(null)
 
-// Fonction pour nettoyer tous les cookies et données de session
+// Nettoie session JWT, stockage local et cookies accessibles
 async function clearAllCookies() {
   try {
-    // D'abord, utiliser signOut() de Supabase qui gère correctement les cookies HttpOnly
-    // (cela évite les problèmes CORS avec fetch direct)
     try {
       await authStore.signOut()
-      logger.log('signOut() Supabase appelé pour nettoyer les cookies HttpOnly')
+      logger.log('signOut() appelé pour invalider la session côté API')
     } catch (signOutError) {
-      // Même si signOut échoue, continuer le nettoyage
       logger.debug('Erreur lors de signOut (non bloquant):', signOutError)
     }
-    
-    // Nettoyer localStorage
-    const supabaseKeys = Object.keys(localStorage).filter(key => 
-      key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')
+
+    const authStorageKeys = Object.keys(localStorage).filter(
+      (key) => key.startsWith('sb-') || key.includes('auth') || key.includes('token'),
     )
-    supabaseKeys.forEach(key => localStorage.removeItem(key))
-    logger.log(`Nettoyé ${supabaseKeys.length} clés localStorage`)
-    
-    // Nettoyer sessionStorage
-    const supabaseSessionKeys = Object.keys(sessionStorage).filter(key => 
-      key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')
+    authStorageKeys.forEach((key) => localStorage.removeItem(key))
+    logger.log(`Nettoyé ${authStorageKeys.length} clés localStorage`)
+
+    const authSessionKeys = Object.keys(sessionStorage).filter(
+      (key) => key.startsWith('sb-') || key.includes('auth') || key.includes('token'),
     )
-    supabaseSessionKeys.forEach(key => sessionStorage.removeItem(key))
-    logger.log(`Nettoyé ${supabaseSessionKeys.length} clés sessionStorage`)
+    authSessionKeys.forEach((key) => sessionStorage.removeItem(key))
+    logger.log(`Nettoyé ${authSessionKeys.length} clés sessionStorage`)
     
     // Nettoyer tous les cookies accessibles (non-HttpOnly)
     const allCookies = document.cookie.split(';').map(c => c.trim()).filter(c => c)

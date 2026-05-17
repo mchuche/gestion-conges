@@ -3,25 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
-/**
- * Chemin public Vite (préfixe des assets, manifest, service worker).
- * - Par défaut **`/`** → ex. `http://localhost:5173/`, Docker Nginx à la racine.
- * - Pour l’URL GitHub **`https://<user>.github.io/<repo>/`** sans domaine perso,
- *   définir au build **`VITE_BASE_PATH=/<repo>/`** (voir `docs/guides/DEPLOY_GITHUB_PAGES.md`).
- */
-function vitePublicBase() {
-  const raw = process.env.VITE_BASE_PATH
-  if (raw == null || String(raw).trim() === '') return '/'
-  let b = String(raw).trim()
-  if (!b.startsWith('/')) b = `/${b}`
-  if (!b.endsWith('/')) b = `${b}/`
-  return b
-}
-
-const base = vitePublicBase()
-
 export default defineConfig({
-  base,
+  base: '/',
   // Ouvre la racine du dev server (cohérent avec `base` et Vue Router)
   server: {
     port: 5173,

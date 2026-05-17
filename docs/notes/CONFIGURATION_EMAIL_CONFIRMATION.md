@@ -5,7 +5,7 @@
 L’authentification passe par l’**API Nest** (inscription / login, JWT). Il n’y a **pas** de tableau de bord tiers à configurer pour des liens de confirmation dans ce dépôt.
 
 - En **développement** : utilise l’URL locale du front, ex. `http://localhost:5173/`.
-- En **production** : assure-toi que **`VITE_API_URL`** pointe vers ton API HTTPS ; configure CORS côté Nest pour l’origine exacte de ton site (GitHub Pages ou autre).
+- En **production** : assure-toi que **`VITE_API_URL`** pointe vers ton API HTTPS ; configure CORS côté Nest pour l’origine exacte de ton site (Docker, domaine perso, etc.).
 
 ## Si tu ajoutes plus tard une confirmation par e-mail
 
