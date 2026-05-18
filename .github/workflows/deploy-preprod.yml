@@ -1,4 +1,5 @@
-# CD préprod : déploiement sur le LXC (branche develop) via SSH + Docker Compose.
+# CD préprod : runner self-hosted (LAN) puis SSH vers le LXC préprod.
+# Nécessite un runner installé sur le réseau local — voir docs/guides/CICD_SETUP.md
 name: Deploy preprod
 
 on:
@@ -13,7 +14,8 @@ concurrency:
 jobs:
   deploy:
     name: SSH → LXC préprod
-    runs-on: ubuntu-latest
+    # Runner « client » sur ton réseau (192.168.x.x), pas ubuntu-latest (cloud).
+    runs-on: [self-hosted, gestion-conges]
     environment: preproduction
 
     steps:
@@ -23,6 +25,7 @@ jobs:
           host: ${{ secrets.PREPROD_SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           script_stop: true
           script: |
             set -euo pipefail

@@ -1,4 +1,4 @@
-# CD production : déploiement sur le serveur prod (branche main) via SSH + Docker Compose.
+# CD production : runner self-hosted (LAN) puis SSH vers le serveur prod.
 name: Deploy production
 
 on:
@@ -13,7 +13,7 @@ concurrency:
 jobs:
   deploy:
     name: SSH → production
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, gestion-conges]
     environment: production
 
     steps:
@@ -23,6 +23,7 @@ jobs:
           host: ${{ secrets.PROD_SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           script_stop: true
           script: |
             set -euo pipefail
