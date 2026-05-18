@@ -17,22 +17,41 @@ jobs:
     environment: production
 
     steps:
-      - name: Deploy on server
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.PROD_SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            DEPLOY_PATH="${{ secrets.PROD_DEPLOY_PATH }}"
-            DEPLOY_PATH="${DEPLOY_PATH:-/opt/gestion-conges}"
-            cd "$DEPLOY_PATH"
-            git fetch origin
-            git checkout main
-            git reset --hard origin/main
-            docker compose --env-file .env.docker --profile docker up -d --build
-            docker compose exec -T api npm run migrate:deploy
-            echo "Production deploy OK — $(git rev-parse --short HEAD)"
+      - name: Vérifier les secrets requis
+        run: |
+          set -euo pipefail
+          test -n "${{ secrets.PROD_SSH_HOST }}" || { echo "::error::Secret PROD_SSH_HOST manquant"; exit 1; }
+          test -n "${{ secrets.SSH_USER }}" || { echo "::error::Secret SSH_USER manquant"; exit 1; }
+          test -n "${{ secrets.SSH_PRIVATE_KEY }}" || { echo "::error::Secret SSH_PRIVATE_KEY manquant"; exit 1; }
+
+      - name: Déployer en production
+        env:
+          SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH || '/opt/gestion-conges' }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          INSTALL_DIR="${{ runner.temp }}/ssh-deploy"
+          mkdir -p "$INSTALL_DIR"
+          KEY_FILE="$INSTALL_DIR/deploy_key"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> "$INSTALL_DIR/known_hosts" 2>/dev/null || true
+
+          ssh -i "$KEY_FILE" -p "$SSH_PORT" \
+            -o UserKnownHostsFile="$INSTALL_DIR/known_hosts" \
+            -o StrictHostKeyChecking=accept-new \
+            "${SSH_USER}@${SSH_HOST}" bash -s << EOF
+          set -euo pipefail
+          DEPLOY_PATH="${DEPLOY_PATH:-/opt/gestion-conges}"
+          cd "\$DEPLOY_PATH"
+          git fetch origin
+          git checkout main
+          git reset --hard origin/main
+          docker compose --env-file .env.docker --profile docker up -d --build
+          docker compose exec -T api npm run migrate:deploy
+          echo "Production deploy OK — \$(git rev-parse --short HEAD)"
+          EOF

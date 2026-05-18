@@ -26,10 +26,18 @@ Lors de la configuration, ajouter le label personnalisé :
 
 (Si le label est déjà passé par l’interface GitHub, vérifier qu’il contient bien `gestion-conges`.)
 
-4. Installer en service (recommandé) :
+4. Paquets utiles sur le LXC runner :
 
 ```bash
-sudo ./svc.sh install
+sudo apt install -y openssh-client
+```
+
+(Docker **n’est pas** requis sur le runner : le déploiement utilise `ssh` en natif.)
+
+5. Installer en service (recommandé) — depuis le dossier du runner, après `config.sh` :
+
+```bash
+sudo ./svc.sh install github-runner
 sudo ./svc.sh start
 ```
 
@@ -165,6 +173,9 @@ Déploiement manuel : **Actions** → **Deploy preprod** ou **Deploy production*
 | `Permission denied (publickey)` | `SSH_PRIVATE_KEY` + `authorized_keys` sur le bon serveur |
 | `git fetch` échoue | Deploy key sur le LXC cible |
 | `PREPROD_SSH_HOST` / `PROD_SSH_HOST` vide | Ajouter les secrets manquants |
+| Échec en ~6 s | Vérifier secrets + `openssh-client` sur le runner ; voir logs GitHub |
+| `docker compose` introuvable | Docker sur le **serveur cible** (préprod/prod), pas sur le runner |
+| `ssh: command not found` | `apt install -y openssh-client` sur **CT-RUNNER** |
 | CI échoue | Migrations / tests — voir logs **CI** (cloud) |
 
 ---

@@ -1,5 +1,5 @@
 # CD préprod : runner self-hosted (LAN) puis SSH vers le LXC préprod.
-# Nécessite un runner installé sur le réseau local — voir docs/guides/CICD_SETUP.md
+# Déploiement en shell natif (pas d’action Docker) — le runner n’a pas besoin de Docker.
 name: Deploy preprod
 
 on:
@@ -14,27 +14,46 @@ concurrency:
 jobs:
   deploy:
     name: SSH → LXC préprod
-    # Runner « client » sur ton réseau (192.168.x.x), pas ubuntu-latest (cloud).
     runs-on: [self-hosted, gestion-conges]
     environment: preproduction
 
     steps:
-      - name: Deploy on server
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.PREPROD_SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            DEPLOY_PATH="${{ secrets.PREPROD_DEPLOY_PATH }}"
-            DEPLOY_PATH="${DEPLOY_PATH:-/opt/gestion-conges}"
-            cd "$DEPLOY_PATH"
-            git fetch origin
-            git checkout develop
-            git reset --hard origin/develop
-            docker compose --env-file .env.docker --profile docker up -d --build
-            docker compose exec -T api npm run migrate:deploy
-            echo "Preprod deploy OK — $(git rev-parse --short HEAD)"
+      - name: Vérifier les secrets requis
+        run: |
+          set -euo pipefail
+          test -n "${{ secrets.PREPROD_SSH_HOST }}" || { echo "::error::Secret PREPROD_SSH_HOST manquant"; exit 1; }
+          test -n "${{ secrets.SSH_USER }}" || { echo "::error::Secret SSH_USER manquant"; exit 1; }
+          test -n "${{ secrets.SSH_PRIVATE_KEY }}" || { echo "::error::Secret SSH_PRIVATE_KEY manquant"; exit 1; }
+
+      - name: Déployer sur la préprod
+        env:
+          SSH_HOST: ${{ secrets.PREPROD_SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          DEPLOY_PATH: ${{ secrets.PREPROD_DEPLOY_PATH || '/opt/gestion-conges' }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          INSTALL_DIR="${{ runner.temp }}/ssh-deploy"
+          mkdir -p "$INSTALL_DIR"
+          KEY_FILE="$INSTALL_DIR/deploy_key"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> "$INSTALL_DIR/known_hosts" 2>/dev/null || true
+          export GIT_SSH_COMMAND="ssh -i $KEY_FILE -p $SSH_PORT -o UserKnownHostsFile=$INSTALL_DIR/known_hosts -o StrictHostKeyChecking=accept-new"
+
+          ssh -i "$KEY_FILE" -p "$SSH_PORT" \
+            -o UserKnownHostsFile="$INSTALL_DIR/known_hosts" \
+            -o StrictHostKeyChecking=accept-new \
+            "${SSH_USER}@${SSH_HOST}" bash -s << EOF
+          set -euo pipefail
+          DEPLOY_PATH="${DEPLOY_PATH:-/opt/gestion-conges}"
+          cd "\$DEPLOY_PATH"
+          git fetch origin
+          git checkout develop
+          git reset --hard origin/develop
+          docker compose --env-file .env.docker --profile docker up -d --build
+          docker compose exec -T api npm run migrate:deploy
+          echo "Preprod deploy OK — \$(git rev-parse --short HEAD)"
+          EOF
