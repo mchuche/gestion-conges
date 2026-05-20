@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsNumber,
@@ -41,4 +42,9 @@ export class PatchPreferencesDto {
   @IsArray()
   @IsString({ each: true })
   mainBalanceTypeIds?: string[];
+
+  /** Autoriser la pose sur week-ends et jours fériés. */
+  @IsOptional()
+  @IsBoolean()
+  allowWeekendHolidayLeave?: boolean;
 }

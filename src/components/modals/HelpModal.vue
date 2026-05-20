@@ -55,6 +55,7 @@
             <li>Le jour actuel est mis en évidence avec une bordure</li>
             <li>Les jours fériés sont automatiquement détectés selon le pays sélectionné</li>
             <li>Les weekends sont visuellement différenciés</li>
+            <li>Option en Configuration : poser des absences/événements les week-ends et fériés si vous travaillez ces jours</li>
           </ul>
         </section>
       </div>

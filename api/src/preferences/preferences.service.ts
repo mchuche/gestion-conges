@@ -18,6 +18,7 @@ export class PreferencesService {
     holidayWeekendIntensity: string;
     themeMode: string;
     mainBalanceTypeIds: Prisma.JsonValue;
+    allowWeekendHolidayLeave: boolean;
   }) {
     return {
       selected_country: p.selectedCountry,
@@ -26,6 +27,7 @@ export class PreferencesService {
       holiday_weekend_intensity: p.holidayWeekendIntensity,
       theme_mode: p.themeMode,
       main_balance_type_ids: normalizeMainBalanceTypeIds(p.mainBalanceTypeIds),
+      allow_weekend_holiday_leave: p.allowWeekendHolidayLeave,
     };
   }
 
@@ -85,6 +87,9 @@ export class PreferencesService {
         ...(mainBalancePatch !== undefined && {
           mainBalanceTypeIds: mainBalancePatch,
         }),
+        ...(dto.allowWeekendHolidayLeave != null && {
+          allowWeekendHolidayLeave: dto.allowWeekendHolidayLeave,
+        }),
       },
       update: {
         ...(dto.selectedCountry != null && { selectedCountry: dto.selectedCountry }),
@@ -96,6 +101,9 @@ export class PreferencesService {
         ...(dto.themeMode != null && { themeMode: dto.themeMode }),
         ...(mainBalancePatch !== undefined && {
           mainBalanceTypeIds: mainBalancePatch,
+        }),
+        ...(dto.allowWeekendHolidayLeave != null && {
+          allowWeekendHolidayLeave: dto.allowWeekendHolidayLeave,
         }),
       },
     });

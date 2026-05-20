@@ -206,6 +206,8 @@ model UserPreferences {
   themeMode               String   @default("auto")
   /// IDs GlobalLeaveType inclus dans le bandeau « Jours restants » (choix perso).
   mainBalanceTypeIds      Json     @default("[]")
+  /// Si true : pose possible les samedi, dimanche et jours fériés (défaut = jours ouvrés seulement).
+  allowWeekendHolidayLeave Boolean @default(false)
   updatedAt               DateTime @updatedAt
 }
 

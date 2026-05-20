@@ -124,9 +124,11 @@ export function useLeaves() {
     return leaveTypesStore.getLeaveType(leaveTypeId)
   }
 
-  // Vérifier si une date est un weekend ou un jour férié
+  // Week-end / férié : bloquant pour la pose sauf si l'utilisateur a activé l'option en Configuration.
   function isWeekendOrHoliday(date) {
-    // Vérifier si c'est un weekend
+    if (uiStore.allowWeekendHolidayLeave) {
+      return false
+    }
     const dayOfWeek = getDay(date)
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
     

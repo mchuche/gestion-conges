@@ -34,6 +34,8 @@ export const useUIStore = defineStore('ui', () => {
   const minimizeHeader = ref(false) // Mode header minimal
   /** IDs des types inclus dans le bandeau « Jours restants » (préférence utilisateur). */
   const mainBalanceTypeIds = ref([])
+  /** Pose autorisée les samedi, dimanche et jours fériés. */
+  const allowWeekendHolidayLeave = ref(false)
 
   // Formats de vue annuelle autorisés
   const ALLOWED_YEAR_VIEW_FORMATS = ['columns', 'presence-vertical']
@@ -164,6 +166,9 @@ export const useUIStore = defineStore('ui', () => {
     if (p.main_balance_type_ids) {
       mainBalanceTypeIds.value = normalizeMainBalanceTypeIds(p.main_balance_type_ids)
     }
+    if (p.allow_weekend_holiday_leave != null) {
+      allowWeekendHolidayLeave.value = Boolean(p.allow_weekend_holiday_leave)
+    }
   }
 
   /** PATCH partiel ; invalide le cache pour le prochain GET. */
@@ -175,6 +180,28 @@ export const useUIStore = defineStore('ui', () => {
       body: JSON.stringify(partial),
     })
     prefsCache = null
+  }
+
+  async function loadAllowWeekendHolidayLeave() {
+    const authStore = useAuthStore()
+    if (!authStore.user) {
+      allowWeekendHolidayLeave.value = false
+      return
+    }
+    try {
+      const p = await fetchPreferencesPayload()
+      applyPreferencesPayload(p)
+    } catch (err) {
+      logger.error('Erreur chargement option week-end/férié:', err)
+      allowWeekendHolidayLeave.value = false
+    }
+  }
+
+  async function saveAllowWeekendHolidayLeave(value) {
+    const authStore = useAuthStore()
+    if (!authStore.user) return
+    allowWeekendHolidayLeave.value = Boolean(value)
+    await patchPreferences({ allowWeekendHolidayLeave: allowWeekendHolidayLeave.value })
   }
 
   async function loadMainBalanceTypeIds() {
@@ -692,6 +719,7 @@ export const useUIStore = defineStore('ui', () => {
     selectedEventTypeId.value = null
     recurringEventDateRange.value = null
     mainBalanceTypeIds.value = []
+    allowWeekendHolidayLeave.value = false
   }
 
   function reset() {
@@ -743,6 +771,7 @@ export const useUIStore = defineStore('ui', () => {
     fullWidth,
     minimizeHeader,
     mainBalanceTypeIds,
+    allowWeekendHolidayLeave,
     showModal,
     showConfigModal,
     showHelpModal,
@@ -765,6 +794,8 @@ export const useUIStore = defineStore('ui', () => {
     loadMainBalanceTypeIds,
     saveMainBalanceTypeIds,
     isTypeInMainBalance,
+    loadAllowWeekendHolidayLeave,
+    saveAllowWeekendHolidayLeave,
     loadSelectedCountry,
     saveSelectedCountry,
     setSelectedCountry,

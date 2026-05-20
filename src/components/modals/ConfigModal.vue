@@ -71,6 +71,21 @@
           <p class="opacity-hint">Règle l'intensité des couleurs pour les jours fériés et weekends</p>
         </div>
 
+        <!-- Pose les week-ends et jours fériés (profil individuel) -->
+        <div class="weekend-holiday-leave-option">
+          <label class="main-balance-option">
+            <input
+              type="checkbox"
+              :checked="uiStore.allowWeekendHolidayLeave"
+              @change="handleAllowWeekendHolidayLeaveChange($event.target.checked)"
+            />
+            <span>Je peux poser des absences et événements les week-ends et jours fériés</span>
+          </label>
+          <p class="config-hint">
+            Décoché par défaut (jours ouvrés uniquement). À activer si vous travaillez parfois ces jours-là.
+          </p>
+        </div>
+
         <!-- Bandeau « Jours restants » : choix personnel -->
         <div class="main-balance-config">
           <h4>Mon résumé congés (bandeau)</h4>
@@ -305,6 +320,7 @@ watch(showModal, async (isOpen) => {
         await leaveTypesStore.loadLeaveTypes()
       }
       await uiStore.loadMainBalanceTypeIds()
+      await uiStore.loadAllowWeekendHolidayLeave()
       devLogger.log('[ConfigModal] LeaveTypes chargés:', leaveTypes.value.length)
       await loadQuotas()
       devLogger.log('[ConfigModal] Quotas chargés:', quotas.value)
@@ -360,6 +376,10 @@ function handleEventOpacityChange() {
   } catch (e) {
     logger.error('[ConfigModal] Erreur lors de la modification de eventOpacity:', e)
   }
+}
+
+function handleAllowWeekendHolidayLeaveChange(checked) {
+  uiStore.allowWeekendHolidayLeave = Boolean(checked)
 }
 
 function handleHolidayWeekendIntensityChange() {
@@ -497,6 +517,7 @@ async function handleResetEventsForCurrentYear() {
 async function handleSave() {
   try {
     await uiStore.saveMainBalanceTypeIds([...uiStore.mainBalanceTypeIds])
+    await uiStore.saveAllowWeekendHolidayLeave(uiStore.allowWeekendHolidayLeave)
     // Sauvegarder les types (les changements sont déjà dans le store via v-model)
     await leaveTypesStore.saveLeaveTypes()
     // Sauvegarder les quotas
@@ -650,6 +671,14 @@ function closeModal() {
   font-size: 0.85em;
   color: var(--text-color);
   opacity: 0.7;
+}
+
+.weekend-holiday-leave-option {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--bg-color);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
 .main-balance-config {

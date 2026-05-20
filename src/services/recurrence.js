@@ -3,6 +3,7 @@ import { addDays, addWeeks, addMonths, addYears, getDay, startOfMonth, endOfMont
 import { getDateKey } from './utils'
 import { getPublicHolidays } from './holidays'
 import logger from './logger'
+import { useUIStore } from '../stores/ui'
 
 /**
  * Génère les occurrences d'un événement récurrent
@@ -64,11 +65,15 @@ export function generateRecurringOccurrences(recurringEvent, targetStartDate, ta
     if (matchesRecurrencePattern(currentDate, recurringEvent)) {
       // Vérifier les exclusions
       if (!isExcluded(currentDate, recurringEvent.excluded_dates || [])) {
-        // Exclure les jours fériés
         const dateKey = getDateKey(currentDate)
         const isHoliday = holidays[dateKey] !== undefined
-        
-        if (!isHoliday) {
+        const dayOfWeek = getDay(currentDate)
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+        const uiStore = useUIStore()
+        const skipNonWorking =
+          !uiStore.allowWeekendHolidayLeave && (isHoliday || isWeekend)
+
+        if (!skipNonWorking) {
           occurrences.push({
             date: new Date(currentDate),
             period: recurringEvent.period || 'full',

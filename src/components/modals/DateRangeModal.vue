@@ -7,7 +7,7 @@
     <template #body>
       <p class="intro">
         Choisissez un <strong>type</strong>, une <strong>période</strong>, puis les dates de début et de fin.
-        Les jours ouvrés de la plage seront posés d’un coup (week-ends et fériés exclus).
+        {{ rangeIntroHint }}
       </p>
 
       <div v-if="anchorDateLabel" class="anchor-hint">
@@ -187,6 +187,11 @@ const { isWeekendOrHoliday, setLeave } = useLeaves()
 const { error: showErrorToast, success: showSuccessToast } = useToast()
 
 const showModal = computed(() => uiStore.showDateRangeModal)
+const rangeIntroHint = computed(() =>
+  uiStore.allowWeekendHolidayLeave
+    ? 'Tous les jours de la plage seront posés d’un coup (y compris week-ends et fériés).'
+    : 'Seuls les jours ouvrés de la plage seront posés (week-ends et fériés exclus).',
+)
 const isDarkTheme = computed(() => uiStore.theme === 'dark')
 const selectedPeriod = computed(() => uiStore.selectedPeriod)
 

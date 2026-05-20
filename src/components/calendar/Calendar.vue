@@ -52,6 +52,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { useUIStore } from '../../stores/ui'
 import { useLeavesStore } from '../../stores/leaves'
+import { useLeaves } from '../../composables/useLeaves'
 import logger from '../../services/logger'
 import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
@@ -70,6 +71,7 @@ import { getPublicHolidays } from '../../services/holidays'
 
 const uiStore = useUIStore()
 const leavesStore = useLeavesStore()
+const { isWeekendOrHoliday } = useLeaves()
 const leaveTypesStore = useLeaveTypesStore()
 const quotasStore = useQuotasStore()
 const authStore = useAuthStore()
@@ -113,6 +115,7 @@ async function loadAllData() {
       quotasStore.loadQuotas(),
       uiStore.loadSelectedCountry(),
       uiStore.loadMainBalanceTypeIds(),
+      uiStore.loadAllowWeekendHolidayLeave(),
       uiStore.loadTheme(),
       uiStore.loadFullWidth()
     ])
@@ -137,16 +140,7 @@ function toggleMinimizeHeader() {
 }
 
 function handleDayClick(date, event, targetUserId = null) {
-  // Vérifier si c'est un weekend ou un jour férié
-  const dayOfWeek = getDay(date)
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-  const year = date.getFullYear()
-  const holidays = getPublicHolidays(uiStore.selectedCountry, year)
-  const dateKey = getDateKey(date)
-  const isHoliday = holidays[dateKey] !== undefined
-  
-  if (isWeekend || isHoliday) {
-    // Ne pas ouvrir la modale pour les weekends et jours fériés
+  if (isWeekendOrHoliday(date)) {
     return
   }
   
@@ -186,16 +180,7 @@ function handleDayClick(date, event, targetUserId = null) {
 }
 
 function handleDayMouseDown(date, event, targetUserId = null) {
-  // Vérifier si c'est un weekend ou un jour férié
-  const dayOfWeek = getDay(date)
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-  const year = date.getFullYear()
-  const holidays = getPublicHolidays(uiStore.selectedCountry, year)
-  const dateKey = getDateKey(date)
-  const isHoliday = holidays[dateKey] !== undefined
-  
-  if (isWeekend || isHoliday) {
-    // Ne pas permettre la sélection des weekends et jours fériés
+  if (isWeekendOrHoliday(date)) {
     return
   }
   

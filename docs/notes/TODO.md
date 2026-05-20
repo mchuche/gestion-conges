@@ -3,7 +3,8 @@
 ## À faire
 
 ### Fonctionnalités
-- [ ] **Collègues travaillant week-end / jours fériés** : aujourd’hui week-ends et fériés sont grisés et souvent non sélectionnables (`Calendar.vue`, plages « jours ouvrés »). Prévoir plus tard un profil ou mode (ex. calendrier de service, repos compensateurs, pose possible ces jours-là) — voir note produit ci-dessous.
+- [x] **Pose week-end / férié (option utilisateur)** : préférence `allowWeekendHolidayLeave` en Configuration.
+- [ ] **Collègues travaillant week-end / jours fériés (suite)** : travail en service, repos compensateurs, matrice ETP — voir note ci-dessous.
 - [ ] Demande utilisateur → admin pour ajouter un type Absence/Événement au socle (`GlobalLeaveType`)
 - [ ] Partage disponibilité entre amis (hors équipe / matrice)
 
