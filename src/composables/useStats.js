@@ -70,22 +70,22 @@ export function useStats() {
       
       const leaveInfo = getLeaveForDate(date)
       
-      // Ne compter que les congés (category: 'leave') avec quota valide (> 0)
+      // Ne compter que les absences (category: absence) avec quota valide (> 0)
       if (leaveInfo.full) {
         const config = getLeaveTypeConfig(leaveInfo.full)
-        if (config && config.category === 'leave' && hasValidQuota(leaveInfo.full, currentYear)) {
+        if (config && config.category === 'absence' && hasValidQuota(leaveInfo.full, currentYear)) {
           usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1
         }
       } else {
         if (leaveInfo.morning) {
           const config = getLeaveTypeConfig(leaveInfo.morning)
-          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.morning, currentYear)) {
+          if (config && config.category === 'absence' && hasValidQuota(leaveInfo.morning, currentYear)) {
             usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5
           }
         }
         if (leaveInfo.afternoon) {
           const config = getLeaveTypeConfig(leaveInfo.afternoon)
-          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.afternoon, currentYear)) {
+          if (config && config.category === 'absence' && hasValidQuota(leaveInfo.afternoon, currentYear)) {
             usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5
           }
         }
@@ -99,7 +99,14 @@ export function useStats() {
 
     leaveTypesStore.leaveTypes.forEach(typeConfig => {
       const quota = quotasStore.getQuota(currentYear, typeConfig.id)
-      if (quota !== null && quota !== undefined && quota > 0 && typeConfig.category === 'leave') {
+      const inMainBalance = uiStore.isTypeInMainBalance(typeConfig.id)
+      if (
+        inMainBalance &&
+        quota !== null &&
+        quota !== undefined &&
+        quota > 0 &&
+        typeConfig.category === 'absence'
+      ) {
         totalQuotas += quota
         const used = usedDays[typeConfig.id] || 0
         totalUsed += used
@@ -154,19 +161,19 @@ export function useStats() {
       
       if (leaveInfo.full) {
         const config = getLeaveTypeConfig(leaveInfo.full)
-        if (config && config.category === 'leave' && hasValidQuota(leaveInfo.full, currentYear)) {
+        if (config && config.category === 'absence' && hasValidQuota(leaveInfo.full, currentYear)) {
           usedDays[leaveInfo.full] = (usedDays[leaveInfo.full] || 0) + 1
         }
       } else {
         if (leaveInfo.morning) {
           const config = getLeaveTypeConfig(leaveInfo.morning)
-          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.morning, currentYear)) {
+          if (config && config.category === 'absence' && hasValidQuota(leaveInfo.morning, currentYear)) {
             usedDays[leaveInfo.morning] = (usedDays[leaveInfo.morning] || 0) + 0.5
           }
         }
         if (leaveInfo.afternoon) {
           const config = getLeaveTypeConfig(leaveInfo.afternoon)
-          if (config && config.category === 'leave' && hasValidQuota(leaveInfo.afternoon, currentYear)) {
+          if (config && config.category === 'absence' && hasValidQuota(leaveInfo.afternoon, currentYear)) {
             usedDays[leaveInfo.afternoon] = (usedDays[leaveInfo.afternoon] || 0) + 0.5
           }
         }
@@ -176,8 +183,8 @@ export function useStats() {
     // Créer les données de quotas par type
     const quotas = []
     leaveTypesStore.leaveTypes.forEach(typeConfig => {
-      // Ne montrer que les congés (category: 'leave')
-      if (typeConfig.category !== 'leave') {
+      // Ne montrer que les absences (category: absence)
+      if (typeConfig.category !== 'absence') {
         return
       }
       

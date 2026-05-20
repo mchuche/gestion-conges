@@ -93,7 +93,7 @@ function formatDate(date) {
 }
 
 // Trouver les périodes de congés consécutives
-// Regroupe tous les congés de catégorie 'leave' ensemble, même s'ils sont de types différents
+// Regroupe toutes les absences (catégorie absence), même si types différents
 // Inclut les weekends et jours fériés dans les périodes
 const leavePeriods = computed(() => {
   const currentYear = getYear(uiStore.currentDate || new Date())
@@ -112,17 +112,17 @@ const leavePeriods = computed(() => {
     // Vérifier si c'est un jour férié
     const isHoliday = holidays[dateKey] !== undefined
     
-    // Vérifier si c'est un congé de catégorie 'leave'
+    // Vérifier si c'est une absence
     const leaveInfo = getLeaveForDate(date)
     const isLeave = leaveInfo && leaveInfo.full && (() => {
       const config = getLeaveTypeConfig(leaveInfo.full)
-      return config && config.category === 'leave'
+      return config && config.category === 'absence'
     })()
     
     return isLeave || isWeekend || isHoliday
   }
   
-  // Trier toutes les dates avec congés de catégorie 'leave' (journées complètes uniquement)
+  // Trier les dates en absence (journées complètes uniquement)
   const datesWithLeaves = []
   Object.keys(leavesStore.leaves).forEach(dateKey => {
     // Ignorer les demi-journées pour les périodes
@@ -137,7 +137,7 @@ const leavePeriods = computed(() => {
         const leaveInfo = getLeaveForDate(date)
         if (leaveInfo.full) {
           const config = getLeaveTypeConfig(leaveInfo.full)
-          if (config && config.category === 'leave') {
+          if (config && config.category === 'absence') {
             datesWithLeaves.push({ date, typeId: leaveInfo.full, config })
           }
         }
@@ -197,10 +197,10 @@ const leavePeriods = computed(() => {
       const periodKey = getDateKey(currentPeriodDate)
       const periodLeave = getLeaveForDate(currentPeriodDate)
       
-      // Si c'est un congé de catégorie 'leave', l'ajouter aux types
+      // Si c'est une absence, l'ajouter aux types
       if (periodLeave && periodLeave.full) {
         const periodConfig = getLeaveTypeConfig(periodLeave.full)
-        if (periodConfig && periodConfig.category === 'leave') {
+        if (periodConfig && periodConfig.category === 'absence') {
           typesInPeriod.add(periodConfig.name)
         }
       }

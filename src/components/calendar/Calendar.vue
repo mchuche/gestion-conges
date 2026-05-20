@@ -112,6 +112,7 @@ async function loadAllData() {
       leaveTypesStore.loadLeaveTypes(),
       quotasStore.loadQuotas(),
       uiStore.loadSelectedCountry(),
+      uiStore.loadMainBalanceTypeIds(),
       uiStore.loadTheme(),
       uiStore.loadFullWidth()
     ])

@@ -358,10 +358,10 @@ export const useLeavesStore = defineStore('leaves', () => {
       if (yearFromKey === year) {
         const leaveTypeId = leaves.value[dateKey]
         const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
-        const category = leaveType?.category || 'leave'
-        
-        // Supprimer seulement les congés de catégorie 'leave'
-        if (category === 'leave') {
+        const category = leaveType?.category || 'absence'
+
+        // Supprimer seulement les absences (catégorie absence)
+        if (category === 'absence') {
           delete newLeaves[dateKey]
           // Supprimer aussi du mapping si présent
           Object.keys(newLeaveIdMap).forEach(id => {
@@ -389,9 +389,9 @@ export const useLeavesStore = defineStore('leaves', () => {
       if (yearFromKey === year) {
         const leaveTypeId = leaves.value[dateKey]
         const leaveType = leaveTypesStore.getLeaveType(leaveTypeId)
-        const category = leaveType?.category || 'leave'
-        
-        // Supprimer seulement les événements de catégorie 'event'
+        const category = leaveType?.category || 'absence'
+
+        // Supprimer seulement les événements (catégorie event)
         if (category === 'event') {
           delete newLeaves[dateKey]
           // Supprimer aussi du mapping si présent

@@ -1,4 +1,5 @@
-import { IsIn, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { LEAVE_TYPE_CATEGORY_VALUES } from '../../leave-types/leave-type-category';
 
 export class UpdateGlobalLeaveTypeDto {
   @IsOptional()
@@ -13,10 +14,14 @@ export class UpdateGlobalLeaveTypeDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['leave', 'event'])
+  @IsIn(LEAVE_TYPE_CATEGORY_VALUES)
   category?: string;
 
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  eligibleForMainBalance?: boolean;
 }

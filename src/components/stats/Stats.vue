@@ -1,11 +1,11 @@
 <template>
   <div class="stats">
     <div class="stat-card">
-      <span class="stat-label">Jours posés</span>
+      <span class="stat-label">Jours posés (mon résumé)</span>
       <span class="stat-value">{{ formatNumber(stats.totalUsed) }}</span>
     </div>
     <div class="stat-card">
-      <span class="stat-label">Jours restants</span>
+      <span class="stat-label">Jours restants (mon résumé)</span>
       <span class="stat-value">{{ formatNumber(stats.totalRemaining) }}/{{ formatNumber(stats.totalQuotas) }}</span>
     </div>
   </div>

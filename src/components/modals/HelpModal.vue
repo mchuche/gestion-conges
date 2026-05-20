@@ -16,8 +16,8 @@
         <section class="help-section">
           <h4>🎨 Types de congés</h4>
           <ul>
-            <li><strong>Congés</strong> : Comptent dans les quotas (ex: Congé Payé, RTT)</li>
-            <li><strong>Événements</strong> : Ne comptent pas dans les quotas (ex: Maladie, Télétravail, Formation)</li>
+            <li><strong>Absences</strong> : Retirent la présence (ETP) et peuvent avoir un quota (CP, RTT, maladie, grève…)</li>
+            <li><strong>Événements</strong> : Présence conservée, pas de quota (ex: télétravail, formation)</li>
             <li>Les couleurs sont personnalisables dans la configuration</li>
           </ul>
         </section>

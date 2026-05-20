@@ -123,7 +123,7 @@
                   <div class="admin-leave-type-meta">
                     <span>Label: <strong>{{ type.label }}</strong></span>
                     <span>•</span>
-                    <span>Catégorie: <strong>{{ type.category === 'leave' ? 'Congé' : 'Événement' }}</strong></span>
+                    <span>Catégorie: <strong>{{ leaveTypeCategoryLabel(type.category) }}</strong></span>
                   </div>
                 </div>
                 <div class="admin-leave-type-actions">
@@ -169,7 +169,7 @@
                     class="admin-settings-textarea"
                     :class="{ 'admin-settings-textarea-error': errors.length > 0 }"
                     rows="15"
-                    placeholder='[{"id": "congé-payé", "name": "Congé Payé", "label": "CP", "color": "#4a90e2", "category": "leave"}, ...]'
+                    placeholder='[{"id": "congé-payé", "name": "Congé Payé", "label": "CP", "color": "#4a90e2", "category": "absence"}, ...]'
                   ></textarea>
                   <ErrorMessage name="defaultLeaveTypes" class="field-error" />
                 </Field>
@@ -298,6 +298,7 @@ import { useRouter } from 'vue-router'
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import { useAuthStore } from '../../stores/auth'
+import { leaveTypeCategoryLabel } from '../../constants/leaveTypeCategory'
 import {
   fetchAdminStats,
   fetchAdminUsers,
@@ -516,13 +517,19 @@ async function loadSettings() {
     if (leaveTypes == null || !Array.isArray(leaveTypes)) {
       leaveTypes = fallbackTypes
     } else {
-      const eventTypes = ['télétravail', 'formation', 'grève', 'maladie']
-      leaveTypes = leaveTypes.map((type) => ({
-        ...type,
-        category:
-          type.category ||
-          (eventTypes.includes(type.id) ? 'event' : 'leave'),
-      }))
+      // Ancienne donnée : leave → absence ; maladie/grève n'étaient plus des event
+      const legacyEventIds = ['télétravail', 'formation']
+      leaveTypes = leaveTypes.map((type) => {
+        let category = type.category
+        if (category === 'leave') category = 'absence'
+        if (!category) {
+          category = legacyEventIds.includes(type.id) ? 'event' : 'absence'
+        }
+        if (['maladie', 'grève'].includes(type.id) && category === 'event') {
+          category = 'absence'
+        }
+        return { ...type, category }
+      })
     }
 
     let quotas = data.defaultQuotas
@@ -560,17 +567,19 @@ async function onSaveSettingsSubmit(values) {
     return
   }
 
-  const validCategories = ['leave', 'event']
+  const validCategories = ['absence', 'event']
   if (!Array.isArray(leaveTypes)) {
     showErrorToast('Types par défaut : un tableau JSON est attendu.')
     return
   }
   for (const type of leaveTypes) {
     if (!type.category) {
-      type.category = 'leave'
+      type.category = 'absence'
+    } else if (type.category === 'leave') {
+      type.category = 'absence'
     } else if (!validCategories.includes(type.category)) {
       showErrorToast(
-        `Catégorie invalide pour « ${type.name || type.id} » : utilisez leave ou event.`,
+        `Catégorie invalide pour « ${type.name || type.id} » : utilisez absence ou event.`,
       )
       return
     }
@@ -609,7 +618,7 @@ async function loadGlobalLeaveTypes() {
       id: t.id,
       name: t.name,
       label: t.label,
-      category: t.category || 'leave',
+      category: t.category === 'leave' ? 'absence' : (t.category || 'absence'),
     }))
 
     devLogger.log('[AdminView] Types de congés globaux chargés:', globalLeaveTypes.value.length)
@@ -628,7 +637,7 @@ async function handleAddGlobalLeaveType() {
       <input id="swal-name" class="swal2-input" placeholder="Nom (ex: Congé Payé)" required>
       <input id="swal-label" class="swal2-input" placeholder="Label (ex: CP)" maxlength="10" required>
       <select id="swal-category" class="swal2-select">
-        <option value="leave">Congé</option>
+        <option value="absence">Absence</option>
         <option value="event">Événement</option>
       </select>
     `,
@@ -663,7 +672,7 @@ async function handleAddGlobalLeaveType() {
         id,
         name: formValues.name,
         label: formValues.label,
-        category: formValues.category || 'leave',
+        category: formValues.category || 'absence',
       })
 
       success('Type de congé ajouté avec succès')
@@ -682,7 +691,7 @@ async function handleEditGlobalLeaveType(type) {
       <input id="swal-name" class="swal2-input" value="${type.name}" placeholder="Nom" required>
       <input id="swal-label" class="swal2-input" value="${type.label}" placeholder="Label" maxlength="10" required>
       <select id="swal-category" class="swal2-select">
-        <option value="leave" ${type.category === 'leave' ? 'selected' : ''}>Congé</option>
+        <option value="absence" ${type.category === 'absence' || type.category === 'leave' ? 'selected' : ''}>Absence</option>
         <option value="event" ${type.category === 'event' ? 'selected' : ''}>Événement</option>
       </select>
     `,
@@ -709,7 +718,7 @@ async function handleEditGlobalLeaveType(type) {
       await updateGlobalLeaveType(type.id, {
         name: formValues.name,
         label: formValues.label,
-        category: formValues.category || 'leave',
+        category: formValues.category === 'leave' ? 'absence' : (formValues.category || 'absence'),
       })
 
       success('Type de congé modifié avec succès')

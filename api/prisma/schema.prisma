@@ -84,8 +84,11 @@ model GlobalLeaveType {
   id       String @id
   name     String
   label    String
-  category String @default("leave")
+  /// absence = retire l'ETP ; event = présence conservée (voir leave-type-category.ts)
+  category String @default("absence")
   sortOrder Int   @default(0)
+  /// Peut être coché par l'utilisateur dans « Mon résumé congés » (bandeau).
+  eligibleForMainBalance Boolean @default(true)
 }
 
 /// Personnalisation couleur par utilisateur.
@@ -201,6 +204,8 @@ model UserPreferences {
   eventOpacity            Float    @default(0.15)
   holidayWeekendIntensity String   @default("normal")
   themeMode               String   @default("auto")
+  /// IDs GlobalLeaveType inclus dans le bandeau « Jours restants » (choix perso).
+  mainBalanceTypeIds      Json     @default("[]")
   updatedAt               DateTime @updatedAt
 }
 

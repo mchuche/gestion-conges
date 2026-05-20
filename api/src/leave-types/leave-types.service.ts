@@ -22,6 +22,7 @@ export type MergedLeaveTypeDto = {
   label: string;
   color: string;
   category: string;
+  eligible_for_main_balance: boolean;
 };
 
 /**
@@ -67,7 +68,8 @@ export class LeaveTypesService {
         name: g.name,
         label: g.label,
         color: c.color,
-        category: g.category || 'leave',
+        category: g.category || 'absence',
+        eligible_for_main_balance: g.eligibleForMainBalance ?? true,
       };
     });
   }

@@ -271,34 +271,12 @@ function colorWithOpacity(color, opacity = 0.3) {
   return color
 }
 
-// Liste des types d'événements connus (fallback si le type n'est pas trouvé dans la config)
-// Ces types sont définis comme événements dans global_leave_types avec category='event'
-const KNOWN_EVENT_TYPES = ['permanence', 'télétravail', 'maladie', 'formation', 'grève']
-
-// Fonction helper pour vérifier si un type est un événement connu
-function isKnownEventType(leaveTypeId) {
-  if (!leaveTypeId || typeof leaveTypeId !== 'string') {
-    return false
-  }
-  return KNOWN_EVENT_TYPES.includes(leaveTypeId)
-}
-
-// Fonction pour vérifier si un type est un événement (avec fallback)
+// Événement = category event dans GlobalLeaveType (source API, pas de liste en dur)
 function checkIsEvent(leaveTypeId) {
   if (!leaveTypeId) return false
-  
-  // D'abord, essayer de trouver la config
   const config = getLeaveTypeConfig(leaveTypeId)
-  if (config) {
-    const isEvent = config.category === 'event'
-    logger.debug(`[PresenceDayCell] checkIsEvent: type=${leaveTypeId}, config trouvée, category=${config.category}, isEvent=${isEvent}`)
-    return isEvent
-  }
-  
-  // Si la config n'est pas trouvée, utiliser le fallback
-  const isKnown = isKnownEventType(leaveTypeId)
-  logger.debug(`[PresenceDayCell] checkIsEvent: type=${leaveTypeId}, config non trouvée, isKnownEvent=${isKnown}, KNOWN_EVENT_TYPES=${KNOWN_EVENT_TYPES.join(', ')}`)
-  return isKnown
+  if (!config) return false
+  return config.category === 'event'
 }
 
 // Computed properties pour vérifier si les demi-journées sont des événements
@@ -344,19 +322,9 @@ const showLetter = computed(() => {
 // Fonction pour obtenir la première lettre du type de congé/événement
 function getFirstLetter(leaveTypeId) {
   if (!leaveTypeId) return ''
-  // Retourner la première lettre en majuscule
-  return leaveTypeId.charAt(0).toUpperCase()
-}
-
-// Vérifier si c'est un événement (avec fallback pour les types connus)
-function isEventType(leaveTypeId) {
-  if (!leaveTypeId) return false
   const config = getLeaveTypeConfig(leaveTypeId)
-  if (config) {
-    return config.category === 'event'
-  }
-  // Fallback : vérifier si c'est un type d'événement connu
-  return isKnownEventType(leaveTypeId)
+  const source = config?.label || leaveTypeId
+  return source.charAt(0).toUpperCase()
 }
 
 const cellStyle = computed(() => {

@@ -2,29 +2,43 @@
 
 Ce document décrit le **modèle métier actuel** (Nest + Prisma), pas une procédure SQL à rejouer à la main.
 
+## Catégories (`GlobalLeaveType.category`)
+
+| Valeur | Libellé UI | Effet |
+|--------|------------|--------|
+| **`absence`** | Absence | Retire l’ETP (matrice de présence), quotas possibles (CP, RTT, maladie, grève…) |
+| **`event`** | Événement | Présence conservée, pas de quota (télétravail, formation…) |
+
+L’ancienne valeur **`leave`** a été renommée en **`absence`** (alpha) : le mot « congé » ne couvrait pas maladie / grève.
+
+Constantes code : `api/src/leave-types/leave-type-category.ts`, `src/constants/leaveTypeCategory.js`.
+
 ## Idée générale
 
 - **`GlobalLeaveType`** : référentiel des types (id stable, nom, libellé, catégorie). Géré côté **administration**.
 - **`LeaveTypeCustomization`** : par utilisateur, personnalisation (couleur, etc.) liée à un type global.
-- **Quotas** : toujours par utilisateur / année / type (voir schéma Prisma et stores front `leaveTypes` / `quotas`).
+- **Quotas** : par utilisateur / année / type, en pratique pour les types **`absence`**.
 
-Les anciennes instructions « exécuter un script dans le SQL Editor » concernaient une stack abandonnée ; aujourd’hui le schéma est porté par **`api/prisma/schema.prisma`** et les migrations dans **`api/prisma/migrations/`**.
+## Déploiement (bases existantes)
 
-## Ce que tu dois faire en pratique
+1. `npm run migrate` — migration `20260520180000_category_absence`
+2. `npm run prisma:seed` — types globaux + correction éventuelle de `default_leave_types` dans `AppSetting`
 
-1. **Nouvelle base** : `cd api && npx prisma migrate deploy` (après `docker compose up` et `.env` avec `DATABASE_URL`).
-2. **Données de base** : le **seed** Prisma (`api/prisma/seed.js`) peut initialiser les `GlobalLeaveType` ; adapte si besoin.
-3. **Évolution du schéma** : modifier `schema.prisma`, générer une migration Prisma, déployer — ne pas copier-coller d’anciens scripts SQL sauf migration de données ponctuelle que tu maîtrises.
+En alpha, un `npm run db:reset` repart aussi d’un état propre.
 
 ## Pour les administrateurs (UI)
 
-- Gérer les labels / types globaux depuis l’interface **Admin** de l’app (selon les écrans implémentés).
+- Gérer les types globaux depuis **Admin** (catégorie Absence / Événement).
 - Les utilisateurs ajustent couleurs / quotas depuis la **configuration** (⚙️).
+
+## Bandeau « Jours restants » (individu)
+
+- **`UserPreferences.mainBalanceTypeIds`** : types cochés par l’utilisateur (Configuration ⚙️).
+- **`GlobalLeaveType.eligibleForMainBalance`** : l’admin peut exclure un type du choix (ex. enfant malade = `false`).
+- Défaut nouveau compte : `congé-payé`, `rtt`, `jours-hiver`.
 
 ## Compatibilité front
 
-Le store `leaveTypes` expose des identifiants alignés sur les **types globaux** pour le calendrier et les filtres ; les détails d’implémentation sont dans `src/stores/leaveTypes.js` et les appels **`src/services/api.js`**.
+Le store `leaveTypes` normalise encore `leave` → `absence` si une vieille réponse API traîne.
 
-## Fichiers SQL historiques
-
-D’éventuels scripts de transition très anciens sont rangés sous **`docs/archive/`** (hors chemin d’installation standard). Pour toute nouvelle installation ou évolution, rester sur **Prisma**.
+Fichiers : `src/stores/leaveTypes.js`, `src/stores/ui.js`, `src/composables/useStats.js`.

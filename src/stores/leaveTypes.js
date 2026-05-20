@@ -39,7 +39,7 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
   const leaveTypesByCategory = computed(() => {
     const result = { leave: [], event: [] }
     leaveTypes.value.forEach(type => {
-      const category = type.category || 'leave'
+      const category = type.category || 'absence'
       if (result[category]) {
         result[category].push(type)
       }
@@ -53,7 +53,7 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
   }
 
   const getLeaveTypesByCategory = (category) => {
-    return leaveTypes.value.filter(t => (t.category || 'leave') === category)
+    return leaveTypes.value.filter(t => (t.category || 'absence') === category)
   }
 
   // Fusionner les types globaux avec les personnalisations utilisateur
@@ -66,7 +66,8 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
         name: globalType.name,
         label: globalType.label,
         color: customization?.color || DEFAULT_COLORS[globalType.id] || '#4a90e2',
-        category: globalType.category || 'leave'
+        category: globalType.category || 'absence',
+        eligible_for_main_balance: globalType.eligible_for_main_balance !== false,
       }
     })
   }
@@ -92,12 +93,19 @@ export const useLeaveTypesStore = defineStore('leaveTypes', () => {
       const data = await apiJson('/leave-types', { method: 'GET' })
       const list = data.leaveTypes || []
 
-      globalLeaveTypes.value = list.map((t) => ({
-        id: t.id,
-        name: t.name,
-        label: t.label,
-        category: t.category || 'leave',
-      }))
+      globalLeaveTypes.value = list.map((t) => {
+        let category = t.category === 'leave' ? 'absence' : (t.category || 'absence')
+        if (['maladie', 'grève'].includes(t.id) && category === 'event') {
+          category = 'absence'
+        }
+        return {
+          id: t.id,
+          name: t.name,
+          label: t.label,
+          category,
+          eligible_for_main_balance: t.eligible_for_main_balance !== false,
+        }
+      })
 
       userCustomizations.value = {}
       list.forEach((t) => {

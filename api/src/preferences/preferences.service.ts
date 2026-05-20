@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PatchPreferencesDto } from './dto/patch-preferences.dto';
+import {
+  DEFAULT_MAIN_BALANCE_TYPE_IDS,
+  normalizeMainBalanceTypeIds,
+} from './main-balance-defaults';
 
 @Injectable()
 export class PreferencesService {
@@ -12,6 +17,7 @@ export class PreferencesService {
     eventOpacity: number;
     holidayWeekendIntensity: string;
     themeMode: string;
+    mainBalanceTypeIds: Prisma.JsonValue;
   }) {
     return {
       selected_country: p.selectedCountry,
@@ -19,7 +25,21 @@ export class PreferencesService {
       event_opacity: p.eventOpacity,
       holiday_weekend_intensity: p.holidayWeekendIntensity,
       theme_mode: p.themeMode,
+      main_balance_type_ids: normalizeMainBalanceTypeIds(p.mainBalanceTypeIds),
     };
+  }
+
+  /** Ne garde que les types existants et éligibles au bandeau principal. */
+  private async sanitizeMainBalanceTypeIds(ids: string[]): Promise<string[]> {
+    if (ids.length === 0) return [...DEFAULT_MAIN_BALANCE_TYPE_IDS];
+
+    const eligible = await this.prisma.globalLeaveType.findMany({
+      where: { eligibleForMainBalance: true, id: { in: ids } },
+      select: { id: true },
+    });
+    const allowed = new Set(eligible.map((r) => r.id));
+    const filtered = ids.filter((id) => allowed.has(id));
+    return filtered.length > 0 ? filtered : [...DEFAULT_MAIN_BALANCE_TYPE_IDS];
   }
 
   async getMine(userId: string) {
@@ -28,14 +48,30 @@ export class PreferencesService {
     });
     if (!p) {
       p = await this.prisma.userPreferences.create({
-        data: { userId },
+        data: {
+          userId,
+          mainBalanceTypeIds: [...DEFAULT_MAIN_BALANCE_TYPE_IDS],
+        },
       });
     }
     return this.toResponse(p);
   }
 
   async patch(userId: string, dto: PatchPreferencesDto) {
-    return this.prisma.userPreferences.upsert({
+    let mainBalancePatch: Prisma.InputJsonValue | undefined;
+    if (dto.mainBalanceTypeIds !== undefined) {
+      if (!Array.isArray(dto.mainBalanceTypeIds)) {
+        throw new BadRequestException(
+          'mainBalanceTypeIds doit être un tableau de chaînes',
+        );
+      }
+      const sanitized = await this.sanitizeMainBalanceTypeIds(
+        dto.mainBalanceTypeIds,
+      );
+      mainBalancePatch = sanitized;
+    }
+
+    const row = await this.prisma.userPreferences.upsert({
       where: { userId },
       create: {
         userId,
@@ -46,6 +82,9 @@ export class PreferencesService {
           holidayWeekendIntensity: dto.holidayWeekendIntensity,
         }),
         ...(dto.themeMode != null && { themeMode: dto.themeMode }),
+        ...(mainBalancePatch !== undefined && {
+          mainBalanceTypeIds: mainBalancePatch,
+        }),
       },
       update: {
         ...(dto.selectedCountry != null && { selectedCountry: dto.selectedCountry }),
@@ -55,7 +94,12 @@ export class PreferencesService {
           holidayWeekendIntensity: dto.holidayWeekendIntensity,
         }),
         ...(dto.themeMode != null && { themeMode: dto.themeMode }),
+        ...(mainBalancePatch !== undefined && {
+          mainBalanceTypeIds: mainBalancePatch,
+        }),
       },
     });
+
+    return this.toResponse(row);
   }
 }

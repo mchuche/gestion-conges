@@ -296,9 +296,11 @@ export class AdminService {
 
         label: data.label,
 
-        category: data.category ?? 'leave',
+        category: data.category ?? 'absence',
 
         sortOrder,
+
+        eligibleForMainBalance: data.eligibleForMainBalance ?? true,
 
       },
 

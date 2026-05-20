@@ -3,9 +3,9 @@
 ## À faire
 
 ### Fonctionnalités
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ] **Collègues travaillant week-end / jours fériés** : aujourd’hui week-ends et fériés sont grisés et souvent non sélectionnables (`Calendar.vue`, plages « jours ouvrés »). Prévoir plus tard un profil ou mode (ex. calendrier de service, repos compensateurs, pose possible ces jours-là) — voir note produit ci-dessous.
+- [ ] Demande utilisateur → admin pour ajouter un type Absence/Événement au socle (`GlobalLeaveType`)
+- [ ] Partage disponibilité entre amis (hors équipe / matrice)
 
 ### Corrections de bugs
 - [x] probleme d'enregistrement des jours de congé
@@ -47,6 +47,21 @@
 
 ## Notes
 
-<!-- Ajoutez vos notes ici -->
+### Week-end et jours fériés (travail occasionnel)
+
+**Contexte (2026-05)** : certains collègues travaillent parfois le samedi/dimanche ou un jour férié. L’app actuelle part du principe **jours ouvrés** = lun–ven hors fériés.
+
+**Comportement actuel à connaître** :
+- Clic / sélection bloqués sur week-end et fériés dans le calendrier annuel.
+- `calculateWorkingDays` / `DateRangeModal` : exclusion week-end + fériés (pays `UserPreferences.selectedCountry`).
+- Matrice présence : cellules week-end/férié atténuées ; ETP souvent vide ces jours.
+
+**Pistes plus tard (à trancher)** :
+- Préférence utilisateur « je peux travailler week-ends / fériés » (ou jours de service fixes).
+- Type d’événement « travail week-end » / « permanence » + comptage dédié.
+- Repos compensateurs (absence dédiée admin) liés aux jours travaillés hors calendrier standard.
+- Ne pas casser le cas majoritaire (agents lun–ven).
+
+**Priorité produit** : individu d’abord ; matrice équipe en bonus.
 
 

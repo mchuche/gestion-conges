@@ -145,13 +145,13 @@ export function calculateWorkingDaysFromDates(dates, country = 'FR', getPublicHo
 // Types de congés par défaut
 export function getDefaultLeaveTypes() {
   return [
-    { id: 'congé-payé', name: 'Congé Payé', label: 'P', color: '#4a90e2', category: 'leave' },
-    { id: 'rtt', name: 'RTT', label: 'RTT', color: '#50c878', category: 'leave' },
-    { id: 'jours-hiver', name: 'Jours Hiver', label: 'JH', color: '#95a5a6', category: 'leave' },
-    { id: 'maladie', name: 'Maladie', label: 'Maladie', color: '#e74c3c', category: 'event' },
+    { id: 'congé-payé', name: 'Congé Payé', label: 'P', color: '#4a90e2', category: 'absence' },
+    { id: 'rtt', name: 'RTT', label: 'RTT', color: '#50c878', category: 'absence' },
+    { id: 'jours-hiver', name: 'Jours Hiver', label: 'JH', color: '#95a5a6', category: 'absence' },
+    { id: 'maladie', name: 'Maladie', label: 'Maladie', color: '#e74c3c', category: 'absence' },
     { id: 'télétravail', name: 'Télétravail', label: 'T', color: '#9b59b6', category: 'event' },
     { id: 'formation', name: 'Formation', label: 'Form', color: '#f39c12', category: 'event' },
-    { id: 'grève', name: 'Grève', label: 'Grève', color: '#c0392b', category: 'event' }
+    { id: 'grève', name: 'Grève', label: 'Grève', color: '#c0392b', category: 'absence' }
   ]
 }
 

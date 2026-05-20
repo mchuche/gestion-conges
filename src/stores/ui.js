@@ -9,6 +9,7 @@ import { apiJson } from '../services/api'
 import logger from '../services/logger'
 import { useAuthStore } from './auth'
 import { getDateKey } from '../services/utils'
+import { normalizeMainBalanceTypeIds } from '../constants/mainBalanceDefaults'
 
 export const useUIStore = defineStore('ui', () => {
   // State
@@ -31,6 +32,8 @@ export const useUIStore = defineStore('ui', () => {
   const themeMode = ref('auto') // 'auto', 'light' ou 'dark' (préférence utilisateur)
   const fullWidth = ref(true)
   const minimizeHeader = ref(false) // Mode header minimal
+  /** IDs des types inclus dans le bandeau « Jours restants » (préférence utilisateur). */
+  const mainBalanceTypeIds = ref([])
 
   // Formats de vue annuelle autorisés
   const ALLOWED_YEAR_VIEW_FORMATS = ['columns', 'presence-vertical']
@@ -158,6 +161,9 @@ export const useUIStore = defineStore('ui', () => {
     if (p.theme_mode && ['auto', 'light', 'dark'].includes(p.theme_mode)) {
       themeMode.value = p.theme_mode
     }
+    if (p.main_balance_type_ids) {
+      mainBalanceTypeIds.value = normalizeMainBalanceTypeIds(p.main_balance_type_ids)
+    }
   }
 
   /** PATCH partiel ; invalide le cache pour le prochain GET. */
@@ -169,6 +175,37 @@ export const useUIStore = defineStore('ui', () => {
       body: JSON.stringify(partial),
     })
     prefsCache = null
+  }
+
+  async function loadMainBalanceTypeIds() {
+    const authStore = useAuthStore()
+    if (!authStore.user) {
+      mainBalanceTypeIds.value = []
+      return
+    }
+    try {
+      const p = await fetchPreferencesPayload()
+      applyPreferencesPayload(p)
+    } catch (err) {
+      logger.error('Erreur chargement résumé congés:', err)
+      mainBalanceTypeIds.value = normalizeMainBalanceTypeIds([])
+    }
+  }
+
+  async function saveMainBalanceTypeIds(ids) {
+    const authStore = useAuthStore()
+    if (!authStore.user) return
+    const normalized = normalizeMainBalanceTypeIds(ids)
+    mainBalanceTypeIds.value = normalized
+    await patchPreferences({ mainBalanceTypeIds: normalized })
+  }
+
+  function isTypeInMainBalance(typeId) {
+    const ids =
+      mainBalanceTypeIds.value.length > 0
+        ? mainBalanceTypeIds.value
+        : normalizeMainBalanceTypeIds([])
+    return ids.includes(typeId)
   }
 
   async function loadSelectedCountry() {
@@ -654,6 +691,7 @@ export const useUIStore = defineStore('ui', () => {
     // Événements récurrents
     selectedEventTypeId.value = null
     recurringEventDateRange.value = null
+    mainBalanceTypeIds.value = []
   }
 
   function reset() {
@@ -704,6 +742,7 @@ export const useUIStore = defineStore('ui', () => {
     themeMode,
     fullWidth,
     minimizeHeader,
+    mainBalanceTypeIds,
     showModal,
     showConfigModal,
     showHelpModal,
@@ -723,6 +762,9 @@ export const useUIStore = defineStore('ui', () => {
     setViewMode,
     setYearViewFormat,
     setConfigYear,
+    loadMainBalanceTypeIds,
+    saveMainBalanceTypeIds,
+    isTypeInMainBalance,
     loadSelectedCountry,
     saveSelectedCountry,
     setSelectedCountry,

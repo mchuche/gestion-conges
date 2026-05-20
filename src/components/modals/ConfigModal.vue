@@ -71,6 +71,30 @@
           <p class="opacity-hint">Règle l'intensité des couleurs pour les jours fériés et weekends</p>
         </div>
 
+        <!-- Bandeau « Jours restants » : choix personnel -->
+        <div class="main-balance-config">
+          <h4>Mon résumé congés (bandeau)</h4>
+          <p class="config-hint">
+            Cochez les types à inclure dans « Jours restants » en haut du calendrier.
+            Les autres types (ex. enfant malade) restent visibles dans le détail ci-dessous.
+          </p>
+          <div v-if="mainBalanceEligibleTypes.length === 0" class="config-hint">
+            Aucun type éligible pour le moment.
+          </div>
+          <label
+            v-for="type in mainBalanceEligibleTypes"
+            :key="`mb-${type.id}`"
+            class="main-balance-option"
+          >
+            <input
+              type="checkbox"
+              :checked="uiStore.isTypeInMainBalance(type.id)"
+              @change="toggleMainBalanceType(type.id, $event.target.checked)"
+            />
+            <span>{{ type.name }} <span class="type-label-hint">({{ type.label }})</span></span>
+          </label>
+        </div>
+
         <!-- Liste des types de congés -->
         <div class="leave-types-config">
           <h4>Personnalisation des types de congés :</h4>
@@ -85,7 +109,7 @@
                 <div class="leave-type-name-display">{{ type.name }}</div>
                 <div class="leave-type-label-display">{{ type.label }}</div>
                 <div class="leave-type-category-display">
-                  {{ type.category === 'event' ? 'Événement' : 'Congé' }}
+                  {{ type.category === 'event' ? 'Événement' : 'Absence' }}
                 </div>
               </div>
               <input
@@ -102,7 +126,7 @@
                 placeholder="Quota (vide = illimité)"
                 min="0"
                 :disabled="type.category === 'event'"
-                :title="type.category === 'event' ? 'Les événements n\'ont pas de quota' : 'Quota pour ce congé'"
+                :title="type.category === 'event' ? 'Les événements n\'ont pas de quota' : 'Quota pour cette absence'"
                 @input="handleQuotaChange(type.id)"
               />
             </div>
@@ -188,6 +212,29 @@ const availableYears = computed(() => {
 
 const leaveTypes = computed(() => leaveTypesStore.leaveTypes)
 
+/** Types que l'utilisateur peut cocher pour le bandeau (catalogue admin). */
+const mainBalanceEligibleTypes = computed(() =>
+  leaveTypes.value.filter(
+    (t) => t.category === 'absence' && t.eligible_for_main_balance !== false,
+  ),
+)
+
+function toggleMainBalanceType(typeId, checked) {
+  const current = [...uiStore.mainBalanceTypeIds]
+  if (checked) {
+    if (!current.includes(typeId)) current.push(typeId)
+  } else {
+    const next = current.filter((id) => id !== typeId)
+    if (next.length === 0) {
+      showErrorToast('Gardez au moins un type dans votre résumé congés.')
+      return
+    }
+    uiStore.mainBalanceTypeIds = next
+    return
+  }
+  uiStore.mainBalanceTypeIds = current
+}
+
 const quotas = ref({})
 
 // Charger les quotas pour l'année sélectionnée
@@ -257,6 +304,7 @@ watch(showModal, async (isOpen) => {
         devLogger.log('[ConfigModal] Chargement des types de congés...')
         await leaveTypesStore.loadLeaveTypes()
       }
+      await uiStore.loadMainBalanceTypeIds()
       devLogger.log('[ConfigModal] LeaveTypes chargés:', leaveTypes.value.length)
       await loadQuotas()
       devLogger.log('[ConfigModal] Quotas chargés:', quotas.value)
@@ -280,7 +328,7 @@ onMounted(async () => {
 async function loadQuotas() {
   quotas.value = {}
   for (const type of leaveTypes.value) {
-    if (type.category === 'leave') {
+    if (type.category === 'absence') {
       const quota = quotasStore.getQuota(configYear.value, type.id)
       quotas.value[type.id] = quota !== null && quota !== undefined ? quota : ''
     }
@@ -356,7 +404,7 @@ async function handleResetLeavesForCurrentYear() {
     title: '⚠️ ATTENTION',
     html: 'Cette action est <strong style="color: #e74c3c;">irréversible</strong> !<br><br>' +
           `Voulez-vous vraiment supprimer <strong>TOUS</strong> vos congés de l'année ${currentYear} ?<br><br>` +
-          'Tous les congés (catégorie "congé") de cette année seront définitivement supprimés.',
+          'Toutes les absences (catégorie absence) de cette année seront définitivement supprimées.',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: 'Oui, supprimer',
@@ -448,6 +496,7 @@ async function handleResetEventsForCurrentYear() {
 
 async function handleSave() {
   try {
+    await uiStore.saveMainBalanceTypeIds([...uiStore.mainBalanceTypeIds])
     // Sauvegarder les types (les changements sont déjà dans le store via v-model)
     await leaveTypesStore.saveLeaveTypes()
     // Sauvegarder les quotas
@@ -601,6 +650,33 @@ function closeModal() {
   font-size: 0.85em;
   color: var(--text-color);
   opacity: 0.7;
+}
+
+.main-balance-config {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--bg-color);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.main-balance-config h4 {
+  margin-bottom: 8px;
+  color: var(--text-color);
+}
+
+.main-balance-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.type-label-hint {
+  opacity: 0.75;
+  font-size: 0.9em;
 }
 
 .leave-types-config {

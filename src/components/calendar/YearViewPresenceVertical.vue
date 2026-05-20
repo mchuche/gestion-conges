@@ -118,15 +118,15 @@ function removeEmailDomain(emailOrName) {
   return atIndex !== -1 ? emailOrName.substring(0, atIndex) : emailOrName
 }
 
-function isLeaveCategoryLeave(leaveTypeId) {
-  // "Présent = pas en congé" : on retire uniquement les types de catégorie 'leave'.
-  // Les événements (category='event') ne retirent rien.
+function isAbsenceCategory(leaveTypeId) {
+  // Présent = pas en absence : on retire l'ETP pour category === 'absence'.
+  // Les événements (category event) ne retirent rien.
   const t = leaveTypesStore.getLeaveType(leaveTypeId)
   if (!t) {
-    // Si on ne trouve pas le type, on considère conservateur: c'est un congé (donc non présent).
+    // Type inconnu : par prudence, traiter comme absence (non présent).
     return true
   }
-  return (t.category || 'leave') === 'leave'
+  return (t.category || 'absence') === 'absence'
 }
 
 function getPresenceEtpForDay(dateKey) {
@@ -144,10 +144,10 @@ function getPresenceEtpForDay(dateKey) {
     let etp = 1
 
     if (fullType) {
-      etp = isLeaveCategoryLeave(fullType) ? 0 : 1
+      etp = isAbsenceCategory(fullType) ? 0 : 1
     } else {
-      const morningIsLeave = morningType ? isLeaveCategoryLeave(morningType) : false
-      const afternoonIsLeave = afternoonType ? isLeaveCategoryLeave(afternoonType) : false
+      const morningIsLeave = morningType ? isAbsenceCategory(morningType) : false
+      const afternoonIsLeave = afternoonType ? isAbsenceCategory(afternoonType) : false
       etp = 1 - (morningIsLeave ? 0.5 : 0) - (afternoonIsLeave ? 0.5 : 0)
       if (etp < 0) etp = 0
     }

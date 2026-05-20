@@ -53,11 +53,11 @@
         </div>
 
         <div class="leave-types-container">
-          <!-- Section Congés -->
+          <!-- Section absences (catégorie absence : CP, RTT, maladie…) -->
           <div class="leave-types-section" v-if="leaveTypesList.length > 0">
             <h4 class="section-title">
               <span class="section-icon">🏖️</span>
-              Congés
+              Absences
             </h4>
             <div class="leave-buttons-grid">
               <button
