@@ -47,4 +47,15 @@ export class PatchPreferencesDto {
   @IsOptional()
   @IsBoolean()
   allowWeekendHolidayLeave?: boolean;
+
+  /** Afficher les vacances scolaires (couleur du chiffre du jour). */
+  @IsOptional()
+  @IsBoolean()
+  showSchoolHolidays?: boolean;
+
+  /** Zone académique A, B ou C. */
+  @IsOptional()
+  @IsString()
+  @IsIn(['A', 'B', 'C', 'a', 'b', 'c'])
+  schoolHolidayZone?: string;
 }

@@ -208,6 +208,10 @@ model UserPreferences {
   mainBalanceTypeIds      Json     @default("[]")
   /// Si true : pose possible les samedi, dimanche et jours fériés (défaut = jours ouvrés seulement).
   allowWeekendHolidayLeave Boolean @default(false)
+  /// Afficher les vacances scolaires (couleur du chiffre du jour). Désactivé = style calendrier inchangé.
+  showSchoolHolidays      Boolean  @default(false)
+  /// Zone académique : A, B ou C (null = non renseigné).
+  schoolHolidayZone       String?
   updatedAt               DateTime @updatedAt
 }
 

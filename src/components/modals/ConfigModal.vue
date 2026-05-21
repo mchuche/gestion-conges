@@ -71,6 +71,35 @@
           <p class="opacity-hint">Règle l'intensité des couleurs pour les jours fériés et weekends</p>
         </div>
 
+        <!-- Vacances scolaires (essai : couleur du chiffre du jour) -->
+        <div class="school-holidays-config">
+          <h4>Vacances scolaires (essai)</h4>
+          <p class="config-hint">
+            Colore uniquement le <strong>chiffre du jour</strong> (orange / jaune). Les badges congé / événement ne changent pas.
+            Décoché par défaut — même rendu qu’avant.
+          </p>
+          <label for="schoolHolidayZoneSelect">Zone académique :</label>
+          <select
+            id="schoolHolidayZoneSelect"
+            v-model="schoolHolidayZoneLocal"
+            @change="handleSchoolHolidayZoneChange"
+          >
+            <option value="">— Choisir une zone —</option>
+            <option value="A">Zone A</option>
+            <option value="B">Zone B</option>
+            <option value="C">Zone C</option>
+          </select>
+          <label class="main-balance-option school-holidays-toggle">
+            <input
+              type="checkbox"
+              :checked="uiStore.showSchoolHolidays"
+              :disabled="!schoolHolidayZoneLocal"
+              @change="handleShowSchoolHolidaysChange($event.target.checked)"
+            />
+            <span>Afficher les vacances scolaires</span>
+          </label>
+        </div>
+
         <!-- Pose les week-ends et jours fériés (profil individuel) -->
         <div class="weekend-holiday-leave-option">
           <label class="main-balance-option">
@@ -211,6 +240,7 @@ const configYear = computed({
 const weekStartDay = ref('0')
 const eventOpacityPercent = ref('15')
 const holidayWeekendIntensity = ref('normal')
+const schoolHolidayZoneLocal = ref('')
 
 const currentYear = computed(() => {
   const date = uiStore.currentDate
@@ -314,6 +344,11 @@ watch(showModal, async (isOpen) => {
         logger.error('[ConfigModal] Erreur lors du chargement de holidayWeekendIntensity:', e)
         holidayWeekendIntensity.value = 'normal'
       }
+      if (typeof uiStore.loadAllowWeekendHolidayLeave === 'function') {
+        await uiStore.loadAllowWeekendHolidayLeave()
+      }
+      schoolHolidayZoneLocal.value = uiStore.schoolHolidayZone || ''
+
       // S'assurer que les types de congés sont chargés
       if (leaveTypes.value.length === 0) {
         devLogger.log('[ConfigModal] Chargement des types de congés...')
@@ -376,6 +411,25 @@ function handleEventOpacityChange() {
   } catch (e) {
     logger.error('[ConfigModal] Erreur lors de la modification de eventOpacity:', e)
   }
+}
+
+async function handleSchoolHolidayZoneChange() {
+  const zone = schoolHolidayZoneLocal.value || null
+  if (!zone) {
+    if (uiStore.showSchoolHolidays) {
+      await uiStore.saveSchoolHolidaysPrefs({ show: false, zone: null })
+    }
+    return
+  }
+  await uiStore.saveSchoolHolidaysPrefs({ zone, show: uiStore.showSchoolHolidays })
+}
+
+async function handleShowSchoolHolidaysChange(checked) {
+  if (!schoolHolidayZoneLocal.value) return
+  await uiStore.saveSchoolHolidaysPrefs({
+    show: checked,
+    zone: schoolHolidayZoneLocal.value,
+  })
 }
 
 function handleAllowWeekendHolidayLeaveChange(checked) {
@@ -671,6 +725,29 @@ function closeModal() {
   font-size: 0.85em;
   color: var(--text-color);
   opacity: 0.7;
+}
+
+.school-holidays-config {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.school-holidays-config h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1em;
+}
+
+.school-holidays-config select {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.school-holidays-toggle {
+  display: block;
+  margin-top: 0.5rem;
 }
 
 .weekend-holiday-leave-option {

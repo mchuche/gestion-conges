@@ -36,6 +36,9 @@ export const useUIStore = defineStore('ui', () => {
   const mainBalanceTypeIds = ref([])
   /** Pose autorisée les samedi, dimanche et jours fériés. */
   const allowWeekendHolidayLeave = ref(false)
+  /** Essai vacances scolaires : couleur du chiffre du jour (désactivé = calendrier inchangé). */
+  const showSchoolHolidays = ref(false)
+  const schoolHolidayZone = ref(null)
 
   // Formats de vue annuelle autorisés
   const ALLOWED_YEAR_VIEW_FORMATS = ['columns', 'presence-vertical']
@@ -169,6 +172,13 @@ export const useUIStore = defineStore('ui', () => {
     if (p.allow_weekend_holiday_leave != null) {
       allowWeekendHolidayLeave.value = Boolean(p.allow_weekend_holiday_leave)
     }
+    if (p.show_school_holidays != null) {
+      showSchoolHolidays.value = Boolean(p.show_school_holidays)
+    }
+    if (p.school_holiday_zone !== undefined) {
+      const z = p.school_holiday_zone
+      schoolHolidayZone.value = z && ['A', 'B', 'C'].includes(z) ? z : null
+    }
   }
 
   /** PATCH partiel ; invalide le cache pour le prochain GET. */
@@ -202,6 +212,21 @@ export const useUIStore = defineStore('ui', () => {
     if (!authStore.user) return
     allowWeekendHolidayLeave.value = Boolean(value)
     await patchPreferences({ allowWeekendHolidayLeave: allowWeekendHolidayLeave.value })
+  }
+
+  async function saveSchoolHolidaysPrefs({ show, zone }) {
+    const authStore = useAuthStore()
+    if (!authStore.user) return
+    if (show !== undefined) showSchoolHolidays.value = Boolean(show)
+    if (zone !== undefined) {
+      const z = zone ? String(zone).toUpperCase() : null
+      schoolHolidayZone.value = z && ['A', 'B', 'C'].includes(z) ? z : null
+    }
+    const body = { showSchoolHolidays: showSchoolHolidays.value }
+    if (schoolHolidayZone.value) {
+      body.schoolHolidayZone = schoolHolidayZone.value
+    }
+    await patchPreferences(body)
   }
 
   async function loadMainBalanceTypeIds() {
@@ -772,6 +797,9 @@ export const useUIStore = defineStore('ui', () => {
     minimizeHeader,
     mainBalanceTypeIds,
     allowWeekendHolidayLeave,
+    showSchoolHolidays,
+    schoolHolidayZone,
+    saveSchoolHolidaysPrefs,
     showModal,
     showConfigModal,
     showHelpModal,

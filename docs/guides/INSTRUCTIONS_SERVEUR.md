@@ -6,16 +6,23 @@
 
 ## Démarrer le front
 
-### Option 1 — Scripts (recommandé)
+### Option 1 — Stack complète (BDD + API + front, 3 fenêtres)
 
 Depuis la racine du dépôt :
+
+- **`npm run dev:stack`**
+- ou **`.\scripts\start-dev-stack.ps1`** / **`scripts\start-dev-stack.bat`**
+
+Voir aussi **`docs/MEMO_DEMARRAGE.md`**.
+
+### Option 2 — Front seul
 
 - **Windows (PowerShell)** : `.\scripts\start-dev.ps1`
 - **Windows (cmd)** : `scripts\start-dev.bat`
 
-Les scripts font un `cd` vers la racine du repo et lancent `npm run dev`.
+Ces scripts lancent uniquement `npm run dev`.
 
-### Option 2 — Commande directe
+### Option 3 — Commande directe
 
 À la racine du dépôt :
 

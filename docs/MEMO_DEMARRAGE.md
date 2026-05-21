@@ -92,7 +92,7 @@ VITE_API_URL=http://localhost:3000
 **`api/.env`** (Nest + Prisma) — ligne **essentielle** pour joindre Postgres Docker :
 
 ```env
-DATABASE_URL="postgresql://gestion:gestion_dev@localhost:5433/gestion_conges?schema=public"
+DATABASE_URL="postgresql://gestion:gestion_dev@127.0.0.1:5433/gestion_conges?schema=public"
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
 JWT_ACCESS_SECRET=change-me-access-secret-min-32-chars
@@ -115,9 +115,21 @@ Ces commandes s’exécutent **sur ton PC** (Node) mais appliquent le schéma **
 
 **Base locale cassée / migrations en échec (dev, données perdues) :** `npm run db:reset`
 
-### 4. Lancer (2 terminaux)
+### 4. Lancer (3 terminaux ou script unique)
 
-**Terminal 1 — API :**
+**Option rapide — 3 fenêtres automatiques (Windows) :**
+
+```powershell
+npm run dev:stack
+# ou : .\scripts\start-dev-stack.ps1
+# ou double-clic : scripts\start-dev-stack.bat
+```
+
+Ouvre **PostgreSQL** (Docker + logs), **API** (`npm run api:dev`) et **Front** (`npm run dev`) dans des fenêtres séparées.
+
+**Après un reboot PC :** le script attend d’abord **Docker Desktop** (jusqu’à 2 min), démarre Postgres, vérifie `pg_isready`, puis ouvre API et Front. Lancez Docker Desktop si besoin avant `npm run dev:stack`.
+
+**Option manuelle — Terminal 1 — API :**
 
 ```bash
 npm run api:dev

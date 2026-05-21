@@ -19,7 +19,10 @@ export class PreferencesService {
     themeMode: string;
     mainBalanceTypeIds: Prisma.JsonValue;
     allowWeekendHolidayLeave: boolean;
+    showSchoolHolidays: boolean;
+    schoolHolidayZone: string | null;
   }) {
+    const zone = p.schoolHolidayZone?.trim().toUpperCase() || null;
     return {
       selected_country: p.selectedCountry,
       week_start_day: p.weekStartDay,
@@ -28,7 +31,15 @@ export class PreferencesService {
       theme_mode: p.themeMode,
       main_balance_type_ids: normalizeMainBalanceTypeIds(p.mainBalanceTypeIds),
       allow_weekend_holiday_leave: p.allowWeekendHolidayLeave,
+      show_school_holidays: p.showSchoolHolidays,
+      school_holiday_zone: zone && ['A', 'B', 'C'].includes(zone) ? zone : null,
     };
+  }
+
+  private normalizeSchoolHolidayZone(value?: string | null): string | null {
+    if (value == null || value === '') return null;
+    const z = value.trim().toUpperCase();
+    return ['A', 'B', 'C'].includes(z) ? z : null;
   }
 
   /** Ne garde que les types existants et éligibles au bandeau principal. */
@@ -90,6 +101,12 @@ export class PreferencesService {
         ...(dto.allowWeekendHolidayLeave != null && {
           allowWeekendHolidayLeave: dto.allowWeekendHolidayLeave,
         }),
+        ...(dto.showSchoolHolidays != null && {
+          showSchoolHolidays: dto.showSchoolHolidays,
+        }),
+        ...(dto.schoolHolidayZone !== undefined && {
+          schoolHolidayZone: this.normalizeSchoolHolidayZone(dto.schoolHolidayZone),
+        }),
       },
       update: {
         ...(dto.selectedCountry != null && { selectedCountry: dto.selectedCountry }),
@@ -104,6 +121,12 @@ export class PreferencesService {
         }),
         ...(dto.allowWeekendHolidayLeave != null && {
           allowWeekendHolidayLeave: dto.allowWeekendHolidayLeave,
+        }),
+        ...(dto.showSchoolHolidays != null && {
+          showSchoolHolidays: dto.showSchoolHolidays,
+        }),
+        ...(dto.schoolHolidayZone !== undefined && {
+          schoolHolidayZone: this.normalizeSchoolHolidayZone(dto.schoolHolidayZone),
         }),
       },
     });

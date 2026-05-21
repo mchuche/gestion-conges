@@ -6,7 +6,11 @@
     @mousedown="handleMouseDown"
   >
     <template v-if="list">
-      <span class="day-date">{{ dayNumber }}</span>
+      <span
+        class="day-date"
+        :class="{ 'school-holiday-day-number': isSchoolHolidayDayNumber }"
+        :title="schoolHolidayDayTitle"
+      >{{ dayNumber }}</span>
       <span class="day-letter">{{ dayLetter }}</span>
       <div v-if="hasLeave" class="leave-badges">
         <span
@@ -44,7 +48,11 @@
       </div>
     </template>
     <template v-else>
-      <span class="day-number">{{ dayNumber }}</span>
+      <span
+        class="day-number"
+        :class="{ 'school-holiday-day-number': isSchoolHolidayDayNumber }"
+        :title="schoolHolidayDayTitle"
+      >{{ dayNumber }}</span>
       <div v-if="hasLeave" class="leave-badges">
       <span
         v-if="leaveInfo.full"
@@ -92,6 +100,7 @@ import { useLeaves } from '../../composables/useLeaves'
 import { today, isSameDay, isBefore, getDay } from '../../services/dateUtils'
 import { getDateKey } from '../../services/utils'
 import { getPublicHolidays } from '../../services/holidays'
+import { getSchoolHolidayForDate } from '../../services/school-holidays'
 
 const props = defineProps({
   date: {
@@ -134,6 +143,17 @@ const isHoliday = computed(() => {
   const year = props.date.getFullYear()
   const holidays = getPublicHolidays(uiStore.selectedCountry, year)
   return holidays[dateKey.value] !== undefined
+})
+
+/** Vacances scolaires : essai visuel sur le chiffre du jour uniquement (option Configuration). */
+const schoolHolidayInfo = computed(() => {
+  if (!uiStore.showSchoolHolidays || !uiStore.schoolHolidayZone) return null
+  return getSchoolHolidayForDate(uiStore.schoolHolidayZone, dateKey.value)
+})
+const isSchoolHolidayDayNumber = computed(() => !!schoolHolidayInfo.value)
+const schoolHolidayDayTitle = computed(() => {
+  if (!schoolHolidayInfo.value) return undefined
+  return `${schoolHolidayInfo.value.name} — zone ${uiStore.schoolHolidayZone}`
 })
 
 const isSelected = computed(() => {
@@ -413,6 +433,24 @@ function handleMouseDown(event) {
 .day-number {
   font-size: 0.9em;
   font-weight: 500;
+}
+
+/* Vacances scolaires (essai) — chiffre du jour ; orange/jaune (lisible en mode clair et foncé) */
+.day-number.school-holiday-day-number,
+.day-date.school-holiday-day-number {
+  color: var(--school-holiday-number-color, #d97706);
+  font-weight: 700;
+}
+
+[data-theme="dark"] .day-number.school-holiday-day-number,
+[data-theme="dark"] .day-date.school-holiday-day-number {
+  color: var(--school-holiday-number-color-dark, #fbbf24);
+  font-weight: 700;
+}
+
+.year-view-day.multi-selected .school-holiday-day-number,
+.calendar-day.multi-selected .school-holiday-day-number {
+  color: inherit;
 }
 
 .year-view-day .day-number {
