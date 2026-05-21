@@ -39,12 +39,15 @@ export const useUIStore = defineStore('ui', () => {
   /** Essai vacances scolaires : couleur du chiffre du jour (désactivé = calendrier inchangé). */
   const showSchoolHolidays = ref(false)
   const schoolHolidayZone = ref(null)
+  /** Griser jours / congés passés (true = comportement historique). */
+  const grayPastLeaves = ref(true)
 
   // Formats de vue annuelle autorisés
-  const ALLOWED_YEAR_VIEW_FORMATS = ['columns', 'presence-vertical']
+  const ALLOWED_YEAR_VIEW_FORMATS = ['columns', 'notes', 'presence-vertical']
   
   // Modales
   const showModal = ref(false)
+  const showDayNoteModal = ref(false)
   const showConfigModal = ref(false)
   const showHelpModal = ref(false)
   const showTeamsModal = ref(false)
@@ -179,6 +182,19 @@ export const useUIStore = defineStore('ui', () => {
       const z = p.school_holiday_zone
       schoolHolidayZone.value = z && ['A', 'B', 'C'].includes(z) ? z : null
     }
+    if (p.gray_past_leaves != null) {
+      grayPastLeaves.value = Boolean(p.gray_past_leaves)
+    }
+    applyGrayPastLeavesDom()
+  }
+
+  /** Attribut HTML lu par le CSS global (évite de dupliquer la logique dans chaque composant jour). */
+  function applyGrayPastLeavesDom() {
+    if (typeof document === 'undefined') return
+    document.documentElement.setAttribute(
+      'data-gray-past-leaves',
+      grayPastLeaves.value ? 'true' : 'false',
+    )
   }
 
   /** PATCH partiel ; invalide le cache pour le prochain GET. */
@@ -204,6 +220,36 @@ export const useUIStore = defineStore('ui', () => {
     } catch (err) {
       logger.error('Erreur chargement option week-end/férié:', err)
       allowWeekendHolidayLeave.value = false
+    }
+  }
+
+  async function loadGrayPastLeaves() {
+    const authStore = useAuthStore()
+    if (!authStore.user) {
+      grayPastLeaves.value = true
+      applyGrayPastLeavesDom()
+      return
+    }
+    try {
+      const p = await fetchPreferencesPayload()
+      applyPreferencesPayload(p)
+    } catch (err) {
+      logger.error('Erreur chargement grisage passé:', err)
+      grayPastLeaves.value = true
+      applyGrayPastLeavesDom()
+    }
+  }
+
+  async function saveGrayPastLeaves(value) {
+    const authStore = useAuthStore()
+    if (!authStore.user) return
+    grayPastLeaves.value = Boolean(value)
+    applyGrayPastLeavesDom()
+    try {
+      await patchPreferences({ grayPastLeaves: grayPastLeaves.value })
+    } catch (err) {
+      logger.error('Erreur sauvegarde grisage passé:', err)
+      throw err
     }
   }
 
@@ -635,6 +681,22 @@ export const useUIStore = defineStore('ui', () => {
     clearSelectedDates()
   }
 
+  /** Carnet : modale note du jour (vue « Notes »). */
+  function openDayNoteModal(date) {
+    if (showModal.value) showModal.value = false
+    if (showRecurringEventModal.value) showRecurringEventModal.value = false
+    if (showDateRangeModal.value) showDateRangeModal.value = false
+    selectedDate.value = date
+    selectedTargetUserId.value = null
+    clearSelectedDates()
+    showDayNoteModal.value = true
+  }
+
+  function closeDayNoteModal() {
+    showDayNoteModal.value = false
+    selectedDate.value = null
+  }
+
   function openConfigModal() {
     logger.debug('[UIStore] openConfigModal appelé, showConfigModal avant:', showConfigModal.value)
     showConfigModal.value = true
@@ -739,12 +801,15 @@ export const useUIStore = defineStore('ui', () => {
     showLeaveRecapModal.value = false
     showRecurringEventModal.value = false
     showDateRangeModal.value = false
+    showDayNoteModal.value = false
 
     // Événements récurrents
     selectedEventTypeId.value = null
     recurringEventDateRange.value = null
     mainBalanceTypeIds.value = []
     allowWeekendHolidayLeave.value = false
+    grayPastLeaves.value = true
+    applyGrayPastLeavesDom()
   }
 
   function reset() {
@@ -761,6 +826,8 @@ export const useUIStore = defineStore('ui', () => {
     weekStartDay.value = 0
     eventOpacity.value = 0.15
     holidayWeekendIntensity.value = 'normal'
+    grayPastLeaves.value = true
+    applyGrayPastLeavesDom()
     ctrlKeyPressed.value = false
     theme.value = 'light'
     themeMode.value = 'auto'
@@ -799,12 +866,17 @@ export const useUIStore = defineStore('ui', () => {
     allowWeekendHolidayLeave,
     showSchoolHolidays,
     schoolHolidayZone,
+    grayPastLeaves,
     saveSchoolHolidaysPrefs,
+    loadGrayPastLeaves,
+    saveGrayPastLeaves,
+    applyGrayPastLeavesDom,
     showModal,
     showConfigModal,
     showHelpModal,
     showTeamsModal,
     showLeaveRecapModal,
+    showDayNoteModal,
     // Getters
     isMultiSelectActive,
     // Actions
@@ -851,6 +923,8 @@ export const useUIStore = defineStore('ui', () => {
     loadMinimizeHeader,
     openModal,
     closeModal,
+    openDayNoteModal,
+    closeDayNoteModal,
     openConfigModal,
     closeConfigModal,
     openHelpModal,

@@ -391,7 +391,7 @@ function handleMouseDown(event) {
 
 .calendar-day.past-day,
 .year-view-day.past-day {
-  opacity: 0.7;
+  opacity: var(--past-leave-opacity);
 }
 
 /* Weekends - Harmonisé avec vue colonnes */
@@ -594,7 +594,7 @@ function handleMouseDown(event) {
 }
 
 .calendar-day-list.past-day {
-  opacity: 0.6;
+  opacity: var(--past-leave-opacity);
 }
 
 /* Weekends - Vue liste - Mode clair */

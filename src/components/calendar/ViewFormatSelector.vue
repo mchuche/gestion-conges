@@ -12,7 +12,17 @@
         :aria-selected="selectedFormat === 'columns'"
         @click="setFormat('columns')"
       >
-        Vue Annuelle
+        Congés
+      </button>
+      <button
+        type="button"
+        class="format-segment"
+        :class="{ active: selectedFormat === 'notes' }"
+        role="tab"
+        :aria-selected="selectedFormat === 'notes'"
+        @click="setFormat('notes')"
+      >
+        Notes
       </button>
       <button
         type="button"
@@ -33,7 +43,8 @@
       @change="handleFormatChange"
       class="format-select"
     >
-      <option value="columns">Vue Annuelle</option>
+      <option value="columns">Congés</option>
+      <option value="notes">Notes</option>
       <option value="presence-vertical">Matrice de Présence</option>
     </select>
   </div>

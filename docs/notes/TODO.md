@@ -49,7 +49,7 @@
 
 ### Vue annuelle « Notes » (carnet type Excel)
 
-**Statut** : idée — pas prioritaire.
+**Statut** : implémenté (format « Notes » dans le sélecteur de vue).
 
 **Contexte** : l’ancien tableur = année en colonnes (jour + lettre L/M/… + texte libre), en plus des couleurs congés/scolaires. L’app actuelle gère bien les **types** de congé ; il manque un **carnet par jour**.
 

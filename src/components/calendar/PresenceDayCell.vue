@@ -448,7 +448,7 @@ function handleMouseDown(event) {
 }
 
 .year-presence-day-cell.past-day {
-  opacity: 0.7;
+  opacity: var(--past-leave-opacity);
 }
 
 /* Weekends - Vue présence */

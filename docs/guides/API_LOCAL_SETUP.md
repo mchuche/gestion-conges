@@ -51,7 +51,9 @@ Ce fichier complète avec :
 | GET | `/quotas` | Bearer | `{ byYear: { [year]: { [leaveTypeId]: number } } }` |
 | PUT | `/quotas` | Bearer | Body `{ "byYear": { ... } }` (remplace les quotas de l’utilisateur) |
 | GET | `/preferences` | Bearer | Préférences UI en **snake_case** (`selected_country`, `week_start_day`, `event_opacity`, `holiday_weekend_intensity`, `theme_mode`) |
-| PATCH | `/preferences` | Bearer | Champs optionnels en **camelCase** (`selectedCountry`, `weekStartDay`, `eventOpacity`, `holidayWeekendIntensity`, `themeMode`) |
+| PATCH | `/preferences` | Bearer | Champs optionnels en **camelCase** (`selectedCountry`, `weekStartDay`, `eventOpacity`, `holidayWeekendIntensity`, `themeMode`, `showSchoolHolidays`, `schoolHolidayZone`, …) |
+| GET | `/day-notes?year=2026` | Bearer | `{ items: [{ dateKey, text, updatedAt }] }` — carnet (notes non vides) |
+| PATCH | `/day-notes` | Bearer | Body `{ dateKey, text }` — texte vide = suppression |
 | GET | `/recurring-events` | Bearer | `{ events: [...] }` (règles sérialisées en snake_case pour le front) |
 | GET | `/recurring-events/team?userIds=id1,id2` | Bearer | `{ byUser: { [userId]: events[] } }` (actifs seulement) |
 | POST | `/recurring-events` | Bearer | Création (DTO camelCase : `leaveTypeId`, `recurrenceType`, `recurrencePattern`, `startDate`, etc.) |

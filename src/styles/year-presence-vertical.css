@@ -178,7 +178,7 @@
 }
 
 .year-presence-vertical-view .year-presence-day-cell.past-day {
-    opacity: 0.7;
+    opacity: var(--past-leave-opacity);
 }
 
 .year-presence-vertical-view .year-presence-day-cell.weekend {
@@ -359,7 +359,7 @@
 }
 
 .year-presence-vertical-total-cell.past-day {
-    opacity: 0.7;
+    opacity: var(--past-leave-opacity);
 }
 
 /* Mode sombre */

@@ -28,7 +28,7 @@
 }
 
 .year-presence-day-cell.past-day {
-    opacity: 0.7;
+    opacity: var(--past-leave-opacity);
 }
 
 .year-presence-day-cell.weekend {

@@ -1,5 +1,8 @@
 <template>
-  <div class="calendar-container" :class="{ 'minimized': minimizeHeader }">
+  <div
+    class="calendar-container"
+    :class="{ minimized: minimizeHeader, 'notes-format': yearViewFormat === 'notes' }"
+  >
     <div class="calendar-header">
       <div class="header-controls-row">
         <div class="header-controls">
@@ -28,16 +31,20 @@
       </div>
     </div>
 
-    <Stats class="stats" />
-    <Quotas class="leave-quotas" />
-    
+    <Stats v-if="yearViewFormat !== 'notes'" class="stats" />
+    <Quotas v-if="yearViewFormat !== 'notes'" class="leave-quotas" />
+
     <HelpHint />
-    
+
     <div id="semesterCalendar" :class="calendarViewClass">
       <YearViewColumns
         v-if="yearViewFormat === 'columns'"
         @day-click="handleDayClick"
         @day-mousedown="handleDayMouseDown"
+      />
+      <YearViewNotes
+        v-if="yearViewFormat === 'notes'"
+        @day-click="handleNotesDayClick"
       />
       <YearViewPresenceVertical
         v-if="yearViewFormat === 'presence-vertical'"
@@ -58,7 +65,9 @@ import { useLeaveTypesStore } from '../../stores/leaveTypes'
 import { useQuotasStore } from '../../stores/quotas'
 import { useAuthStore } from '../../stores/auth'
 import YearViewColumns from './YearViewColumns.vue'
+import YearViewNotes from './YearViewNotes.vue'
 import YearViewPresenceVertical from './YearViewPresenceVertical.vue'
+import { useDayNotesStore } from '../../stores/dayNotes'
 import ViewFormatSelector from './ViewFormatSelector.vue'
 import TeamSelector from '../common/TeamSelector.vue'
 import Stats from '../stats/Stats.vue'
@@ -75,6 +84,7 @@ const { isWeekendOrHoliday } = useLeaves()
 const leaveTypesStore = useLeaveTypesStore()
 const quotasStore = useQuotasStore()
 const authStore = useAuthStore()
+const dayNotesStore = useDayNotesStore()
 
 // Watcher pour mettre à jour l'affichage visuel des sélections
 watch(() => uiStore.selectedDates, () => {
@@ -93,8 +103,12 @@ const currentYearTitle = computed(() => `Année ${currentYear.value}`)
 const calendarTitle = computed(() => {
   if (yearViewFormat.value === 'presence-vertical') {
     return `Matrice de Présence ${currentYear.value}`
-  } else if (yearViewFormat.value === 'columns') {
-    return `Vue Annuelle ${currentYear.value}`
+  }
+  if (yearViewFormat.value === 'notes') {
+    return `Carnet ${currentYear.value}`
+  }
+  if (yearViewFormat.value === 'columns') {
+    return `Congés ${currentYear.value}`
   }
   return currentYearTitle.value
 })
@@ -103,25 +117,37 @@ const calendarViewClass = computed(() => {
   if (yearViewFormat.value === 'presence-vertical') {
     return 'year-presence-vertical-view'
   }
+  if (yearViewFormat.value === 'notes') {
+    return 'year-notes-view-wrapper'
+  }
   return ''
 })
 
 async function loadAllData() {
   try {
-    // Charger toutes les données en parallèle
+    const year = currentYear.value
     await Promise.all([
       leavesStore.loadLeaves(),
       leaveTypesStore.loadLeaveTypes(),
       quotasStore.loadQuotas(),
+      dayNotesStore.loadForYear(year),
       uiStore.loadSelectedCountry(),
       uiStore.loadMainBalanceTypeIds(),
       uiStore.loadAllowWeekendHolidayLeave(),
       uiStore.loadTheme(),
-      uiStore.loadFullWidth()
+      uiStore.loadFullWidth(),
     ])
     logger.log('Toutes les données chargées')
   } catch (err) {
     logger.error('Erreur lors du chargement des données:', err)
+  }
+}
+
+/** Vue Notes : clic ouvre le carnet (tous les jours, y compris week-end / férié). */
+function handleNotesDayClick(date, event) {
+  uiStore.openDayNoteModal(date)
+  if (event?.stopPropagation) {
+    event.stopPropagation()
   }
 }
 
@@ -244,6 +270,25 @@ function handleDayMouseDown(date, event, targetUserId = null) {
 }
 
 
+watch(currentYear, async (year) => {
+  if (authStore.user) {
+    await dayNotesStore.loadForYear(year)
+  }
+})
+
+watch(
+  () => uiStore.yearViewFormat,
+  async (format) => {
+    if (format === 'notes' && authStore.user) {
+      await Promise.all([
+        dayNotesStore.loadForYear(currentYear.value),
+        leavesStore.loadLeaves(),
+        leaveTypesStore.loadLeaveTypes(),
+      ])
+    }
+  },
+)
+
 onMounted(async () => {
   await loadAllData()
 })
@@ -253,6 +298,15 @@ onMounted(async () => {
 .calendar-container {
   width: 100%;
   padding: 20px;
+}
+
+/* Vue Notes : moins de marge autour de la grille (effet feuille Excel) */
+.calendar-container.notes-format {
+  padding: 8px 10px;
+}
+
+.calendar-container.notes-format #semesterCalendar {
+  margin: 0;
 }
 
 /* Mode minimisé - calendar-container prend tout l'espace de la fenêtre */

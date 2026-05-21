@@ -21,6 +21,7 @@ export class PreferencesService {
     allowWeekendHolidayLeave: boolean;
     showSchoolHolidays: boolean;
     schoolHolidayZone: string | null;
+    grayPastLeaves: boolean;
   }) {
     const zone = p.schoolHolidayZone?.trim().toUpperCase() || null;
     return {
@@ -33,6 +34,7 @@ export class PreferencesService {
       allow_weekend_holiday_leave: p.allowWeekendHolidayLeave,
       show_school_holidays: p.showSchoolHolidays,
       school_holiday_zone: zone && ['A', 'B', 'C'].includes(zone) ? zone : null,
+      gray_past_leaves: p.grayPastLeaves,
     };
   }
 
@@ -107,6 +109,7 @@ export class PreferencesService {
         ...(dto.schoolHolidayZone !== undefined && {
           schoolHolidayZone: this.normalizeSchoolHolidayZone(dto.schoolHolidayZone),
         }),
+        ...(dto.grayPastLeaves != null && { grayPastLeaves: dto.grayPastLeaves }),
       },
       update: {
         ...(dto.selectedCountry != null && { selectedCountry: dto.selectedCountry }),
@@ -128,6 +131,7 @@ export class PreferencesService {
         ...(dto.schoolHolidayZone !== undefined && {
           schoolHolidayZone: this.normalizeSchoolHolidayZone(dto.schoolHolidayZone),
         }),
+        ...(dto.grayPastLeaves != null && { grayPastLeaves: dto.grayPastLeaves }),
       },
     });
 

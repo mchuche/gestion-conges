@@ -29,8 +29,24 @@ model User {
   leaveQuotas         LeaveQuota[]
   userPreferences     UserPreferences?
   recurringEvents     RecurringEvent[]
+  dayNotes            DayNote[]
   appSettingsUpdated  AppSetting[]       @relation("AppSettingUpdatedBy")
   auditLogs           AuditLog[]
+}
+
+/// Note libre par jour (carnet annuel — indépendant des types de congé).
+model DayNote {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Clé calendrier YYYY-MM-DD (journée entière).
+  dateKey   String
+  text      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dateKey])
+  @@index([userId])
 }
 
 /// Paramètres globaux de l’application (équivalent `app_settings` PocketBase).
@@ -212,6 +228,8 @@ model UserPreferences {
   showSchoolHolidays      Boolean  @default(false)
   /// Zone académique : A, B ou C (null = non renseigné).
   schoolHolidayZone       String?
+  /// Si true : jours passés atténués (opacity) dans toutes les vues calendrier.
+  grayPastLeaves          Boolean  @default(true)
   updatedAt               DateTime @updatedAt
 }
 

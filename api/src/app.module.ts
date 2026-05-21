@@ -14,6 +14,7 @@ import { QuotasModule } from './quotas/quotas.module';
 import { PreferencesModule } from './preferences/preferences.module';
 import { RecurringEventsModule } from './recurring-events/recurring-events.module';
 import { AdminModule } from './admin/admin.module';
+import { DayNotesModule } from './day-notes/day-notes.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AdminModule } from './admin/admin.module';
     PreferencesModule,
     RecurringEventsModule,
     AdminModule,
+    DayNotesModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

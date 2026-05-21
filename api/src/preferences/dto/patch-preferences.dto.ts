@@ -58,4 +58,9 @@ export class PatchPreferencesDto {
   @IsString()
   @IsIn(['A', 'B', 'C', 'a', 'b', 'c'])
   schoolHolidayZone?: string;
+
+  /** Griser les jours / congés passés dans le calendrier. */
+  @IsOptional()
+  @IsBoolean()
+  grayPastLeaves?: boolean;
 }

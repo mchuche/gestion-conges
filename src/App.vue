@@ -19,6 +19,7 @@
       <LeaveRecapModal />
       <DateRangeModal />
       <RecurringEventModal />
+      <DayNoteModal />
       
       <!-- Système de toasts -->
       <ToastContainer />
@@ -37,6 +38,7 @@ import { useLeavesStore } from './stores/leaves'
 import { useLeaveTypesStore } from './stores/leaveTypes'
 import { useQuotasStore } from './stores/quotas'
 import { useTeamsStore } from './stores/teams'
+import { useDayNotesStore } from './stores/dayNotes'
 import { useNotificationsStore } from './stores/notifications'
 import AuthModal from './components/auth/AuthModal.vue'
 import Header from './components/header/Header.vue'
@@ -47,6 +49,7 @@ import TeamsModal from './components/modals/TeamsModal.vue'
 import LeaveRecapModal from './components/modals/LeaveRecapModal.vue'
 import DateRangeModal from './components/modals/DateRangeModal.vue'
 import RecurringEventModal from './components/modals/RecurringEventModal.vue'
+import DayNoteModal from './components/modals/DayNoteModal.vue'
 import ToastContainer from './components/common/ToastContainer.vue'
 import logger from './services/logger'
 
@@ -58,6 +61,7 @@ const leavesStore = useLeavesStore()
 const leaveTypesStore = useLeaveTypesStore()
 const quotasStore = useQuotasStore()
 const teamsStore = useTeamsStore()
+const dayNotesStore = useDayNotesStore()
 const notificationsStore = useNotificationsStore()
 
 // Utiliser les computed du store pour la réactivité
@@ -98,6 +102,7 @@ watch(
         quotasStore.reset?.()
         recurringEventsStore.reset?.()
         teamsStore.reset?.()
+        dayNotesStore.clear?.()
       } catch (err) {
         logger.error('[App] Erreur lors du reset des stores au logout:', err)
       }
@@ -206,7 +211,12 @@ onMounted(async () => {
     if (typeof uiStore.loadHolidayWeekendIntensity === 'function') {
       await uiStore.loadHolidayWeekendIntensity()
     }
-    
+    if (typeof uiStore.loadGrayPastLeaves === 'function') {
+      await uiStore.loadGrayPastLeaves()
+    } else if (typeof uiStore.applyGrayPastLeavesDom === 'function') {
+      uiStore.applyGrayPastLeavesDom()
+    }
+
     // Charger les événements récurrents
     if (authStore.isAuthenticated && typeof recurringEventsStore.loadRecurringEvents === 'function') {
       await recurringEventsStore.loadRecurringEvents()
