@@ -3352,3 +3352,43 @@ button svg + span,
     margin-left: 6px;
 }
 
+/* Mobile : carte pleine largeur, sans bandes grises autour (body + marges container) */
+@media (max-width: 768px) {
+    body,
+    body.full-width {
+        padding: 0;
+    }
+
+    .container,
+    .container.full-width,
+    .main-container .container {
+        max-width: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 8px 10px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    header,
+    .app-header {
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+    }
+
+    .header-top {
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+
+    .calendar-container {
+        padding: 8px 0;
+        margin-bottom: 12px;
+        border-radius: 0;
+    }
+
+    .stats,
+    .leave-quotas {
+        margin-bottom: 12px;
+    }
+}

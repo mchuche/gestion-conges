@@ -275,4 +275,14 @@ onMounted(async () => {
     transform: translateY(0);
   }
 }
+
+@media (max-width: 768px) {
+  .main-container .container {
+    max-width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
 </style>

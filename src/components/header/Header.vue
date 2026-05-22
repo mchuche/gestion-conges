@@ -395,13 +395,19 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    margin-bottom: 12px;
+  }
+
   .header-top {
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
+    margin-bottom: 10px;
   }
   
   .header-top h1 {
     font-size: 1.5em;
+    padding-left: 0;
   }
   
   .header-right {

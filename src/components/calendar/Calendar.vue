@@ -437,6 +437,18 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .calendar-container {
+    padding: 8px 0;
+  }
+
+  .calendar-container.notes-format {
+    padding: 6px 0;
+  }
+
+  .calendar-header {
+    margin-bottom: 12px;
+  }
+
   .header-controls-row {
     flex-direction: column;
     align-items: stretch;
