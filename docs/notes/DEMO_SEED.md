@@ -4,6 +4,12 @@
 
 Peupler la base avec **5 utilisateurs fictifs**, **2 équipes** et des **congés / événements sur 2025–2026** (profils différents : été, RTT, télétravail le mardi, etc.) pour tester calendrier, quotas et matrice sans saisie manuelle.
 
+## Dépannage connexion préprod
+
+Voir **`PREPROD_ADMIN_RECOVERY.md`** si le bootstrap refuse ou si les comptes démo ne se connectent pas.
+
+Emails **exactes** : `*@demo.gestion-conges.test` — mot de passe **`Demo2026!`**.
+
 ## Comptes créés
 
 | Email | Rôle fictif |

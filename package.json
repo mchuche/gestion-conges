@@ -20,6 +20,7 @@
     "prisma:generate": "npm run prisma:generate --prefix api",
     "prisma:studio": "npm run prisma:studio --prefix api",
     "bootstrap-admin": "npm run bootstrap-admin --prefix api",
+    "list-admins": "npm run list-admins --prefix api",
     "promote-super-admin": "npm run promote-super-admin --prefix api",
     "prisma:seed": "npm run prisma:seed --prefix api",
     "prisma:seed-demo": "npm run prisma:seed-demo --prefix api",

@@ -34,6 +34,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           # Activer le jeu de démo : secret ou variable PREPROD_DEMO_SEED = 1 ou true
           PREPROD_DEMO_SEED: ${{ secrets.PREPROD_DEMO_SEED || vars.PREPROD_DEMO_SEED || '' }}
+          PROMOTE_SUPER_ADMIN_EMAIL: ${{ secrets.PROMOTE_SUPER_ADMIN_EMAIL || vars.PROMOTE_SUPER_ADMIN_EMAIL || '' }}
         run: |
           set -euo pipefail
           INSTALL_DIR="${{ runner.temp }}/ssh-deploy"
@@ -63,6 +64,10 @@ jobs:
             docker compose exec -T -e ALLOW_DEMO_SEED=1 api npm run prisma:seed-demo
           else
             echo "Seed démo ignoré (définir PREPROD_DEMO_SEED=1 dans GitHub Actions)"
+          fi
+          if [ -n "${PROMOTE_SUPER_ADMIN_EMAIL}" ]; then
+            echo "Promotion super_admin : ${PROMOTE_SUPER_ADMIN_EMAIL}"
+            docker compose exec -T -e PROMOTE_SUPER_ADMIN_EMAIL="${PROMOTE_SUPER_ADMIN_EMAIL}" api npm run promote-super-admin
           fi
           echo "Preprod deploy OK — \$(git rev-parse --short HEAD)"
           EOF

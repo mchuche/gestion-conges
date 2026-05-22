@@ -81,10 +81,15 @@ async function runBootstrapAdmin(prisma) {
 
   const existingSuper = await prisma.appAdmin.findFirst({
     where: { role: 'super_admin' },
+    include: { user: { select: { email: true } } },
   });
   if (existingSuper) {
+    const who = existingSuper.user?.email ?? existingSuper.userId;
     console.log(
-      '[bootstrap-admin] Un compte super_admin existe déjà — aucune modification.',
+      `[bootstrap-admin] Un super_admin existe déjà (${who}) — bootstrap ignoré.`,
+    );
+    console.log(
+      '[bootstrap-admin] Pour VOTRE compte : npm run promote-super-admin avec PROMOTE_SUPER_ADMIN_EMAIL.',
     );
     return;
   }
