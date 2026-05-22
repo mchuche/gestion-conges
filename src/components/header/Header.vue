@@ -29,14 +29,6 @@
           <span v-else-if="theme === 'dark'">☀️</span>
           <span v-else>🌙</span>
         </button>
-        <button
-          class="full-width-toggle"
-          :class="{ active: fullWidth }"
-          @click="toggleFullWidth"
-          title="Pleine largeur"
-        >
-          ⛶
-        </button>
         <Menu as="div" class="menu-dropdown">
           <MenuButton class="menu-btn" title="Menu">
             ☰
@@ -128,7 +120,6 @@ const showNotifications = ref(false)
 
 const theme = computed(() => uiStore.theme)
 const themeMode = computed(() => uiStore.themeMode)
-const fullWidth = computed(() => uiStore.fullWidth)
 const minimizeHeader = computed(() => uiStore.minimizeHeader)
 
 const themeTitle = computed(() => {
@@ -140,10 +131,6 @@ const themeTitle = computed(() => {
 
 function toggleTheme() {
   uiStore.toggleTheme()
-}
-
-function toggleFullWidth() {
-  uiStore.toggleFullWidth()
 }
 
 function toggleMinimizeHeader() {
@@ -266,8 +253,7 @@ onMounted(() => {
 }
 
 .notifications-toggle,
-.theme-toggle,
-.full-width-toggle {
+.theme-toggle {
   background: var(--primary-color);
   color: white;
   border: none;
@@ -285,8 +271,7 @@ onMounted(() => {
 }
 
 .notifications-toggle:hover,
-.theme-toggle:hover,
-.full-width-toggle:hover {
+.theme-toggle:hover {
   background: #357abd;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
@@ -307,10 +292,6 @@ onMounted(() => {
   font-size: 0.65em;
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.full-width-toggle.active {
-  background: var(--secondary-color);
 }
 
 .menu-dropdown {

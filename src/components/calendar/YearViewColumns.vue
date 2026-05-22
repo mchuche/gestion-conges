@@ -81,13 +81,14 @@ const emit = defineEmits(['day-click', 'day-mousedown'])
 </script>
 
 <style scoped>
+/* Pas de padding ici : aligné avec stats/quotas (marge = calendar-container uniquement) */
 .year-columns-view {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 8px;
   max-width: 100%;
-  padding: 15px;
-  background: var(--bg-color, #f5f5f5);
+  padding: 0;
+  background: transparent;
   min-height: calc(100vh - 300px);
   width: 100%;
   box-sizing: border-box;
@@ -166,7 +167,7 @@ const emit = defineEmits(['day-click', 'day-mousedown'])
 @media (max-width: 600px) {
   .year-columns-view {
     grid-template-columns: repeat(2, 1fr);
-    padding: 10px;
+    padding: 0;
     gap: 6px;
   }
 

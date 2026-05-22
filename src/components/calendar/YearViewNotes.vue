@@ -187,8 +187,8 @@ function rowTitle(day) {
   gap: 0;
   max-width: 100%;
   padding: 0;
-  background: var(--card-bg, white);
-  border: 1px solid var(--border-color, #d0d0d0);
+  background: transparent;
+  border: none;
   min-height: calc(100vh - 300px);
   width: 100%;
   box-sizing: border-box;

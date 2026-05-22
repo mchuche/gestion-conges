@@ -5,7 +5,7 @@
     
     <!-- Application principale -->
     <div v-else class="main-container" id="mainContainer">
-      <div :class="['container', { 'full-width': fullWidth }]">
+      <div class="container full-width">
         <Header v-if="!isAdminPage" />
         
         <!-- Router view pour afficher les pages -->
@@ -66,7 +66,6 @@ const notificationsStore = useNotificationsStore()
 
 // Utiliser les computed du store pour la réactivité
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const fullWidth = computed(() => uiStore.fullWidth)
 const isAdminPage = computed(() => route.name === 'admin')
 
 // Nettoyage global au logout (Realtime + données utilisateur)
@@ -121,15 +120,6 @@ watch(
     }
   }
 )
-
-// Appliquer la classe full-width au body
-watch(fullWidth, (value) => {
-  if (value) {
-    document.body.classList.add('full-width')
-  } else {
-    document.body.classList.remove('full-width')
-  }
-}, { immediate: true })
 
 // Suivre l'état de la touche Ctrl/Cmd pour la sélection multiple
 function setupCtrlTracking() {
@@ -187,14 +177,7 @@ onMounted(async () => {
       await uiStore.loadThemePreference()
     }
     
-    // Charger le fullWidth au démarrage
-    if (typeof uiStore.loadFullWidth === 'function') {
-      uiStore.loadFullWidth()
-      // Appliquer immédiatement
-      if (uiStore.fullWidth) {
-        document.body.classList.add('full-width')
-      }
-    }
+    document.body.classList.add('full-width')
     // Charger le minimizeHeader au démarrage
     if (typeof uiStore.loadMinimizeHeader === 'function') {
       uiStore.loadMinimizeHeader()
@@ -231,7 +214,7 @@ onMounted(async () => {
 #app {
   width: 100%;
   min-height: 100vh;
-  background: var(--bg-color, #f5f5f5);
+  background: var(--card-bg);
 }
 
 .main-container {
@@ -244,9 +227,9 @@ onMounted(async () => {
   max-width: 1200px;
   margin: 0 auto;
   background: var(--card-bg, white);
-  border-radius: 4px;
-  box-shadow: 0 20px 60px var(--shadow-color, rgba(0, 0, 0, 0.3));
-  padding: 30px;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px 14px;
   animation: fadeIn 0.5s ease-in;
   transition: background 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease;
 }
@@ -280,9 +263,10 @@ onMounted(async () => {
   .main-container .container {
     max-width: 100%;
     margin: 0;
-    padding: 8px 10px;
+    padding: 6px 8px;
     border-radius: 0;
     box-shadow: none;
+    background: var(--card-bg);
   }
 }
 </style>

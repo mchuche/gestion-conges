@@ -30,7 +30,6 @@ export const useUIStore = defineStore('ui', () => {
   const ctrlKeyPressed = ref(false)
   const theme = ref('light') // 'light' ou 'dark' (thème effectif)
   const themeMode = ref('auto') // 'auto', 'light' ou 'dark' (préférence utilisateur)
-  const fullWidth = ref(true)
   const minimizeHeader = ref(false) // Mode header minimal
   /** IDs des types inclus dans le bandeau « Jours restants » (préférence utilisateur). */
   const mainBalanceTypeIds = ref([])
@@ -595,33 +594,6 @@ export const useUIStore = defineStore('ui', () => {
     loadThemePreference()
   }
 
-  function toggleFullWidth() {
-    fullWidth.value = !fullWidth.value
-    localStorage.setItem('fullWidth', fullWidth.value.toString())
-    // Appliquer immédiatement la classe au body
-    if (fullWidth.value) {
-      document.body.classList.add('full-width')
-    } else {
-      document.body.classList.remove('full-width')
-    }
-  }
-
-  function loadFullWidth() {
-    const saved = localStorage.getItem('fullWidth')
-    if (saved !== null) {
-      fullWidth.value = saved === 'true'
-    } else {
-      // Par défaut, activer le mode pleine largeur
-      fullWidth.value = true
-    }
-    // Appliquer immédiatement la classe au body
-    if (fullWidth.value) {
-      document.body.classList.add('full-width')
-    } else {
-      document.body.classList.remove('full-width')
-    }
-  }
-
   function toggleMinimizeHeader() {
     minimizeHeader.value = !minimizeHeader.value
     localStorage.setItem('minimizeHeader', minimizeHeader.value.toString())
@@ -779,7 +751,7 @@ export const useUIStore = defineStore('ui', () => {
 
   /**
    * Nettoyage "logout" : vider les sélections et fermer les modales,
-   * sans toucher aux préférences UI (thème, fullWidth, etc.).
+   * sans toucher aux préférences UI (thème, etc.).
    * On invalide quand même le cache serveur pour le prochain utilisateur.
    */
   function resetForLogout() {
@@ -831,7 +803,6 @@ export const useUIStore = defineStore('ui', () => {
     ctrlKeyPressed.value = false
     theme.value = 'light'
     themeMode.value = 'auto'
-    fullWidth.value = false
     minimizeHeader.value = false
     showModal.value = false
     showConfigModal.value = false
@@ -860,7 +831,6 @@ export const useUIStore = defineStore('ui', () => {
     ctrlKeyPressed,
     theme,
     themeMode,
-    fullWidth,
     minimizeHeader,
     mainBalanceTypeIds,
     allowWeekendHolidayLeave,
@@ -917,8 +887,6 @@ export const useUIStore = defineStore('ui', () => {
     saveThemePreference,
     getSystemTheme,
     getEffectiveTheme,
-    toggleFullWidth,
-    loadFullWidth,
     toggleMinimizeHeader,
     loadMinimizeHeader,
     openModal,

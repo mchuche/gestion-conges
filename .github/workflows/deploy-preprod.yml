@@ -32,6 +32,8 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
           DEPLOY_PATH: ${{ secrets.PREPROD_DEPLOY_PATH || '/opt/gestion-conges' }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Activer le jeu de démo : secret ou variable PREPROD_DEMO_SEED = 1 ou true
+          PREPROD_DEMO_SEED: ${{ secrets.PREPROD_DEMO_SEED || vars.PREPROD_DEMO_SEED || '' }}
         run: |
           set -euo pipefail
           INSTALL_DIR="${{ runner.temp }}/ssh-deploy"
@@ -55,5 +57,12 @@ jobs:
           git reset --hard origin/develop
           docker compose --env-file .env.docker --profile docker up -d --build
           docker compose exec -T api npm run migrate:deploy
+          docker compose exec -T api npm run prisma:seed
+          if [ "${PREPROD_DEMO_SEED}" = "1" ] || [ "${PREPROD_DEMO_SEED}" = "true" ]; then
+            echo "PREPROD_DEMO_SEED actif — peuplement comptes fictifs..."
+            docker compose exec -T -e ALLOW_DEMO_SEED=1 api npm run prisma:seed-demo
+          else
+            echo "Seed démo ignoré (définir PREPROD_DEMO_SEED=1 dans GitHub Actions)"
+          fi
           echo "Preprod deploy OK — \$(git rev-parse --short HEAD)"
           EOF

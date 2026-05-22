@@ -121,6 +121,16 @@ Le runner self-hosted utilise les mêmes secrets ; il doit pouvoir joindre les I
 | `PREPROD_DEPLOY_PATH` | `/opt/gestion-conges` | Dossier git sur préprod |
 | `PROD_DEPLOY_PATH` | `/opt/gestion-conges` | Dossier git sur prod |
 
+### Préprod — données de démo (optionnel)
+
+| Secret **ou** variable Actions | Valeur | Effet après chaque deploy `develop` |
+|-------------------------------|--------|-------------------------------------|
+| `PREPROD_DEMO_SEED` | `1` ou `true` | Exécute `prisma:seed-demo` (5 utilisateurs, 2 équipes, congés 2025–2026) |
+
+Sans cette valeur, le deploy applique seulement `prisma:seed` (types globaux). **Jamais** sur la prod (`deploy-prod.yml`).
+
+Voir **`docs/notes/DEMO_SEED.md`** (comptes `@demo.gestion-conges.test`, mot de passe `Demo2026!`).
+
 ### `PROD_SSH_HOST` : quelle valeur ?
 
 - Prod sur le **même LAN** que le runner → IP locale (ex. `192.168.0.51`) ou hostname local.

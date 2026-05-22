@@ -55,9 +55,9 @@ html[data-gray-past-leaves="false"] {
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+    background: var(--card-bg);
     min-height: 100vh;
-    padding: 20px;
+    padding: 0;
     color: var(--text-color);
     transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
                 color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -69,26 +69,18 @@ body {
                 color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: var(--card-bg);
-    border-radius: 4px;
-    box-shadow: 0 20px 60px var(--shadow-color);
-    padding: 30px;
-    animation: fadeIn 0.5s ease-in;
-    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-                max-width 0.3s ease,
-                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Mode pleine largeur */
+/* Pleine largeur uniquement (bouton retiré du header) */
+.container,
 .container.full-width {
     max-width: 100%;
     margin: 0;
+    background: var(--card-bg);
     border-radius: 0;
-    padding: 20px;
+    box-shadow: none;
+    padding: 12px 14px;
+    animation: fadeIn 0.5s ease-in;
+    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body.full-width {
@@ -137,31 +129,6 @@ header {
     display: flex;
     align-items: center;
     gap: 15px;
-}
-
-.full-width-toggle {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    width: 45px;
-    height: 45px;
-    border-radius: 4px;
-    font-size: 1.3em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.full-width-toggle:hover {
-    background: #357abd;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-}
-
-.full-width-toggle.active {
-    background: var(--secondary-color);
 }
 
 /* Menu déroulant */
@@ -384,14 +351,16 @@ body.minimal-header .header-controls .nav-center-group {
     transform: translateX(-50%);
 }
 
-/* Sur mobile, en mode minimal, garder la colonne pour les sélecteurs */
+/* Sur mobile, en mode minimal : grille header app (pas la barre calendrier) */
 @media (max-width: 768px) {
-    body.minimal-header .header-controls {
+    body.minimal-header .app-header .header-controls,
+    body.minimal-header header .header-controls:not(.calendar-nav-bar) {
         flex-direction: column;
     }
     
     /* Forcer l'affichage du bouton minimizeHeaderBtn en mode minimal sur mobile */
-    body.minimal-header .header-controls #minimizeHeaderBtn {
+    body.minimal-header .app-header .header-controls #minimizeHeaderBtn,
+    body.minimal-header header .header-controls:not(.calendar-nav-bar) #minimizeHeaderBtn {
         display: flex !important;
         order: 0;
         align-self: flex-start;
@@ -401,7 +370,8 @@ body.minimal-header .header-controls .nav-center-group {
         flex-shrink: 0;
     }
     
-    body.minimal-header .header-controls .nav-center-group {
+    body.minimal-header .app-header .header-controls .nav-center-group,
+    body.minimal-header header .header-controls:not(.calendar-nav-bar) .nav-center-group {
         position: static;
         transform: none;
         order: 1;
@@ -410,40 +380,23 @@ body.minimal-header .header-controls .nav-center-group {
         gap: 8px;
     }
     
-    body.minimal-header .header-controls .full-width-toggle {
-        order: 2;
-        margin-left: 0;
-        align-self: flex-start;
-        margin-top: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    
-    /* Réduire drastiquement le gap du grid en mode minimal-header sur mobile */
-    body.minimal-header .header-controls {
+    body.minimal-header .app-header .header-controls,
+    body.minimal-header header .header-controls:not(.calendar-nav-bar) {
         gap: 2px !important;
     }
-}
 
-/* Positionner le bouton full-width à droite en mode minimal */
-body.minimal-header .header-controls .full-width-toggle {
-    margin-left: auto;
-    order: 999;
-    position: relative;
-    z-index: 1;
+    /* Calendrier : une ligne vert | ◀ | titre | ▶ */
+    body.minimal-header .calendar-header .header-controls.calendar-nav-bar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+    }
 }
 
 /* Réduire drastiquement la taille des boutons en mode minimal-header */
 body.minimal-header .header-controls .nav-btn {
-    width: 35px;
-    height: 35px;
-    font-size: 1em;
-    padding: 0;
-}
-
-body.minimal-header .header-controls .full-width-toggle {
     width: 35px;
     height: 35px;
     font-size: 1em;
@@ -640,8 +593,8 @@ body.minimal-header #currentMonth {
 .calendar-container {
     background: var(--bg-color);
     border-radius: 4px;
-    padding: 20px;
     margin-bottom: 20px;
+    /* padding horizontal : Calendar.vue (alignement stats / quotas / grille) */
 }
 
 
@@ -1729,15 +1682,6 @@ html[data-gray-past-leaves="false"] .year-notes-day-row.is-past {
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-
-    .container {
-        padding: 15px;
-        border-radius: 15px;
-    }
-
     header h1 {
         font-size: 1.8em;
     }
@@ -1815,7 +1759,6 @@ html[data-gray-past-leaves="false"] .year-notes-day-row.is-past {
     
     /* S'assurer que tous les boutons d'icônes sont alignés */
     .header-right .theme-toggle,
-    .header-right .full-width-toggle,
     .header-right .menu-btn,
     .header-right .logout-btn {
         display: flex;
@@ -1871,15 +1814,6 @@ html[data-gray-past-leaves="false"] .year-notes-day-row.is-past {
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-
-    .container {
-        padding: 15px;
-        border-radius: 15px;
-    }
-
     header h1 {
         font-size: 1.8em;
     }
@@ -1957,7 +1891,6 @@ html[data-gray-past-leaves="false"] .year-notes-day-row.is-past {
     
     /* S'assurer que tous les boutons d'icônes sont alignés */
     .header-right .theme-toggle,
-    .header-right .full-width-toggle,
     .header-right .menu-btn,
     .header-right .logout-btn {
         display: flex;
@@ -1972,7 +1905,9 @@ html[data-gray-past-leaves="false"] .year-notes-day-row.is-past {
         min-width: 180px;
     }
     
-    .header-controls {
+    /* Grille mobile : header app uniquement (pas la barre Congés 2026 du calendrier) */
+    .app-header .header-controls,
+    header .header-controls:not(.calendar-nav-bar) {
         display: grid;
         grid-template-columns: auto 1fr auto;
         grid-template-rows: auto auto auto;
@@ -1980,47 +1915,51 @@ html[data-gray-past-leaves="false"] .year-notes-day-row.is-past {
         align-items: center;
     }
     
-    /* Le bouton minimizeHeaderBtn est maintenant dans header-top */
-    .header-controls #minimizeHeaderBtn {
+    .app-header .header-controls #minimizeHeaderBtn,
+    header .header-controls:not(.calendar-nav-bar) #minimizeHeaderBtn {
         display: none;
     }
     
-    .header-controls #prevMonth {
+    .app-header .header-controls #prevMonth,
+    header .header-controls:not(.calendar-nav-bar) #prevMonth {
         grid-column: 1;
         grid-row: 1;
     }
     
-    .header-controls #currentMonth {
+    .app-header .header-controls #currentMonth,
+    header .header-controls:not(.calendar-nav-bar) #currentMonth {
         grid-column: 2;
         grid-row: 1;
         text-align: center;
         margin: 0;
     }
     
-    .header-controls #nextMonth {
+    .app-header .header-controls #nextMonth,
+    header .header-controls:not(.calendar-nav-bar) #nextMonth {
         grid-column: 3;
         grid-row: 1;
     }
     
-    /* Sélecteur de vue sur la ligne 2 */
-    .header-controls #yearViewFormatSelect {
+    .app-header .header-controls #yearViewFormatSelect,
+    header .header-controls:not(.calendar-nav-bar) #yearViewFormatSelect {
         grid-column: 1 / -1;
         grid-row: 2;
         width: 100%;
         margin: 2px 0;
-        display: block !important; /* Forcer l'affichage sur mobile */
+        display: block !important;
     }
     
-    /* Sélecteur d'équipe sur la ligne 3 */
-    .header-controls .team-select {
+    .app-header .header-controls .team-select,
+    header .header-controls:not(.calendar-nav-bar) .team-select {
         grid-column: 1 / -1;
         grid-row: 3;
         width: 100%;
         margin: 2px 0;
-        display: block !important; /* Forcer l'affichage sur mobile */
+        display: block !important;
     }
     
-    .header-controls #viewToggle {
+    .app-header .header-controls #viewToggle,
+    header .header-controls:not(.calendar-nav-bar) #viewToggle {
         display: none;
     }
 
@@ -2078,7 +2017,6 @@ html[data-gray-past-leaves="false"] .year-notes-day-row.is-past {
     
     /* S'assurer que tous les boutons d'icônes sont alignés sur mobile */
     .header-top .header-right .theme-toggle,
-    .header-top .header-right .full-width-toggle,
     .header-top .header-right .menu-btn,
     .header-top .header-right .logout-btn {
         display: flex;
@@ -3352,11 +3290,15 @@ button svg + span,
     margin-left: 6px;
 }
 
-/* Mobile : carte pleine largeur, sans bandes grises autour (body + marges container) */
+/* Mobile : plein écran, une seule couleur de fond (plus de cadre gris) */
 @media (max-width: 768px) {
     body,
-    body.full-width {
+    body.full-width,
+    #app,
+    .main-container {
         padding: 0;
+        margin: 0;
+        background: var(--card-bg);
     }
 
     .container,
@@ -3365,30 +3307,38 @@ button svg + span,
         max-width: 100%;
         width: 100%;
         margin: 0;
-        padding: 8px 10px;
+        padding: 6px 8px;
         border-radius: 0;
         box-shadow: none;
+        background: var(--card-bg);
     }
 
     header,
     .app-header {
-        margin-bottom: 12px;
-        padding-bottom: 8px;
+        margin-bottom: 10px;
+        padding-bottom: 6px;
     }
 
     .header-top {
-        margin-bottom: 10px;
-        gap: 10px;
+        margin-bottom: 8px;
+        gap: 8px;
     }
 
     .calendar-container {
-        padding: 8px 0;
-        margin-bottom: 12px;
+        padding: 0;
+        margin-bottom: 8px;
         border-radius: 0;
+        background: transparent;
+    }
+
+    .year-columns-view,
+    .year-notes-view,
+    .year-presence-vertical-view {
+        background: transparent !important;
     }
 
     .stats,
     .leave-quotas {
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 }

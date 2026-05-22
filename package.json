@@ -22,6 +22,7 @@
     "bootstrap-admin": "npm run bootstrap-admin --prefix api",
     "promote-super-admin": "npm run promote-super-admin --prefix api",
     "prisma:seed": "npm run prisma:seed --prefix api",
+    "prisma:seed-demo": "npm run prisma:seed-demo --prefix api",
     "docker-stack": "docker compose --profile docker up -d --build",
     "docker-stack-lan": "docker compose --env-file .env.docker --profile docker up -d --build"
   },

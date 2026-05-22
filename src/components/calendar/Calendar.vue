@@ -5,7 +5,8 @@
   >
     <div class="calendar-header">
       <div class="header-controls-row">
-        <div class="header-controls">
+        <!-- Une ligne : vert (réduire header) | ◀ | titre | ▶ -->
+        <div class="header-controls calendar-nav-bar">
           <button
             v-if="minimizeHeader"
             id="minimizeHeaderBtn"
@@ -16,11 +17,11 @@
           >
             <Icon :name="minimizeHeader ? 'chevrons-down' : 'chevrons-up'" />
           </button>
-          <button class="nav-btn" @click="previousYear" title="Année précédente">
+          <button class="nav-btn nav-btn-prev" @click="previousYear" title="Année précédente">
             ◀
           </button>
-          <h2 id="currentMonth">{{ calendarTitle }}</h2>
-          <button class="nav-btn" @click="nextYear" title="Année suivante">
+          <h2 id="currentMonth" class="calendar-nav-title">{{ calendarTitle }}</h2>
+          <button class="nav-btn nav-btn-next" @click="nextYear" title="Année suivante">
             ▶
           </button>
         </div>
@@ -135,7 +136,6 @@ async function loadAllData() {
       uiStore.loadMainBalanceTypeIds(),
       uiStore.loadAllowWeekendHolidayLeave(),
       uiStore.loadTheme(),
-      uiStore.loadFullWidth(),
     ])
     logger.log('Toutes les données chargées')
   } catch (err) {
@@ -295,14 +295,25 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Même zone utile pour en-tête, stats, quotas et grille annuelle */
 .calendar-container {
   width: 100%;
-  padding: 20px;
+  box-sizing: border-box;
+  padding: 0;
+  background: transparent;
+}
+
+.calendar-container .stats,
+.calendar-container .leave-quotas,
+.calendar-container #semesterCalendar {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Vue Notes : moins de marge autour de la grille (effet feuille Excel) */
 .calendar-container.notes-format {
-  padding: 8px 10px;
+  padding: 0;
 }
 
 .calendar-container.notes-format #semesterCalendar {
@@ -337,13 +348,26 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.header-controls {
+/* Barre de navigation année : toujours sur une seule ligne */
+.header-controls.calendar-nav-bar {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 20px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
+  width: 100%;
+}
+
+.calendar-nav-title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .calendar-header-options {
@@ -359,10 +383,11 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.calendar-header h2 {
+.calendar-header h2,
+.calendar-nav-title {
   margin: 0;
   color: var(--text-color, #2c3e50);
-  font-size: 2em;
+  font-size: 1.5em;
 }
 
 .nav-btn {
@@ -437,35 +462,64 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
-  .calendar-container {
-    padding: 8px 0;
-  }
-
+  .calendar-container,
   .calendar-container.notes-format {
-    padding: 6px 0;
+    padding: 0;
+    background: transparent;
   }
 
   .calendar-header {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+    background: transparent;
   }
 
   .header-controls-row {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
 
-  .header-controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+  .calendar-header .header-controls.calendar-nav-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    grid-template-columns: unset !important;
+    grid-template-rows: unset !important;
+    justify-content: flex-start;
+    gap: 6px;
   }
 
-  .calendar-header h2 {
-    font-size: 1.5em;
+  .calendar-header .header-controls.calendar-nav-bar #currentMonth {
+    grid-column: unset !important;
+    grid-row: unset !important;
+  }
+
+  .calendar-nav-title {
+    font-size: 1.15em;
+  }
+
+  .nav-btn,
+  .header-controls .minimize-header-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    font-size: 1.1em;
+    flex-shrink: 0;
   }
 
   .calendar-header-options {
-    justify-content: center;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .calendar-header-options :deep(.view-format-selector) {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .calendar-header-options :deep(select) {
+    width: 100%;
+    max-width: 100%;
   }
 }
 </style>
